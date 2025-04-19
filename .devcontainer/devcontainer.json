@@ -1,0 +1,49 @@
+{
+  "name": "Go Backend + React Frontend App",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "app",
+  "workspaceFolder": "/workspaces",
+
+  // Configure tool-specific properties.
+  "customizations": {
+    // Configure properties specific to VS Code.
+    "vscode": {
+      // Add the IDs of extensions you want installed when the container is created.
+      "extensions": [
+        // Go Extensions
+        "golang.go",
+
+        // Frontend & General Extensions
+        "dbaeumer.vscode-eslint", // Still useful for frontend
+        "esbenp.prettier-vscode", // Still useful for frontend
+        "ms-azuretools.vscode-docker",
+        "orta.vscode-jest", // If using Jest for frontend
+        "firsttris.vscode-jest-runner",
+        "christian-kohler.path-intellisense",
+        "formulahendry.auto-rename-tag",
+        "VisualStudioExptTeam.vscodeintellicode",
+        "pflannery.vscode-versionlens",
+
+        // Markdown & Draw.io Extensions
+        "yzhang.markdown-all-in-one", // Markdown support
+        "DavidAnson.vscode-markdownlint", // Markdown linting
+        "hediet.vscode-drawio", // Draw.io integration
+
+        // GitHub Copilot
+        "github.copilot",
+        "github.copilot-chat", // Add Copilot Chat
+
+        // Tailwind CSS
+        "bradlc.vscode-tailwindcss" // Add Tailwind CSS IntelliSense
+      ]
+    }
+  },
+
+  // Use 'forwardPorts' to make a list of ports inside the container available locally.
+  "forwardPorts": [3000, 8080], // Forward frontend (3000) and Go backend (8080 typical for Go)
+
+  // Comment out connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
+  // Running as vscode user provided by the Go dev container image
+  "remoteUser": "vscode"
+  // "remoteUser": "root" // Run as root to allow global npm installs and apt-get in postCreate
+}
