@@ -45,6 +45,22 @@
   // Use 'forwardPorts' to make a list of ports inside the container available locally.
   "forwardPorts": [3000, 8080], // Forward frontend (3000) and Go backend (8080 typical for Go)
 
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+      "version": "latest",
+      "moby": false // Install Docker CLI only, don't run the daemon
+    }
+  },
+
+  // Mount the host Docker socket into the container
+  "mounts": [
+    "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"
+  ],
+
+  // Optional: Ensure the user running in the container has permissions for the Docker socket
+  // This might be needed depending on your setup
+  "postCreateCommand": "sudo chown $(whoami) /var/run/docker.sock",
+
   // Comment out connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
   // Running as vscode user provided by the Go dev container image
   "remoteUser": "vscode"
