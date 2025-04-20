@@ -1,34 +1,34 @@
 import { useState, useEffect } from "react";
-import reactLogo from "./assets/react.svg";
-import viteLogo from "/vite.svg";
 import "./App.css";
 
 function App() {
   const [count, setCount] = useState(0);
-  const [message, setMessage] = useState("Loading..."); // Add state for the message
+  const [message, setMessage] = useState("Loading...");
 
-  // Fetch data from backend API on component mount
   useEffect(() => {
-    fetch("http://localhost:8080/api") // Assuming backend runs on port 8080
-      .then((response) => response.json())
+    // 環境変数 VITE_API_HOST を読み込む。未定義の場合は /api をデフォルトとする
+    const apiHost = import.meta.env.API_HOST;
+    const apiUrl = apiHost ? `http://${apiHost}/api` : "/api"; // VITE_API_HOST があればそれを使い、なければ /api を使う
+
+    console.log(`Fetching data from: ${apiUrl}`); // デバッグ用にURLをログ出力
+
+    fetch(apiUrl) // 修正されたAPI URLを使用
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      })
       .then((data) => setMessage(data.message))
       .catch((error) => {
         console.error("Error fetching data:", error);
         setMessage("Failed to load message from backend.");
       });
-  }, []); // Empty dependency array ensures this runs only once on mount
+  }, []);
 
   return (
     <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1 className="text-red-500">Vite + React</h1>
+      <h1>Vite + React</h1>
       {/* Display the message from the backend */}
       <p>Message from backend: {message}</p>
       <div className="card">
