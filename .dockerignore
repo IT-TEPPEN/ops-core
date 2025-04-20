@@ -1,0 +1,12 @@
+# .dockerignore
+.git
+.gitignore
+.vscode
+node_modules
+frontend/node_modules
+frontend/dist
+backend/tmp
+backend/server # Compiled binary if exists locally
+*.log
+Dockerfile
+.dockerignore
