@@ -39,4 +39,3 @@ We propose the following methods for OpsCore to access external repositories, of
 * **Cons:**
   * **Access Keys:** Requires secure storage and management of keys within OpsCore; potential for keys to have overly broad permissions if not carefully created (especially classic PATs); users need to manage key lifecycle (rotation, revocation).
   * **Application Method:** More complex initial implementation for OpsCore (OAuth flows, app registration); potentially slightly more complex setup for users the first time they authorize the application.
-

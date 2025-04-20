@@ -28,9 +28,17 @@ We will use **`golang-migrate/migrate`** for managing database schema migrations
     * `{version}_{description}.down.sql`: Contains the SQL statements to revert the change.
     * Example: `0001_create_repository_configurations_table.up.sql`, `0001_create_repository_configurations_table.down.sql`
 2. **Applying Migrations:** Migrations will be applied using the `migrate` CLI tool or potentially integrated into the application's deployment process.
-    * `migrate -database ${DATABASE_URL} -path backend/db/migrations up`
+
+    ```sh
+    migrate -database ${DATABASE_URL} -path backend/db/migrations up
+    ```
+
 3. **Rolling Back Migrations:** Rollbacks (if necessary) are performed using the `.down.sql` files.
-    * `migrate -database ${DATABASE_URL} -path backend/db/migrations down 1` (Rolls back the last migration)
+
+    ```sh
+    migrate -database ${DATABASE_URL} -path backend/db/migrations down 1 # Rolls back the last migration
+    ```
+
 4. **Version Tracking:** `golang-migrate/migrate` uses a dedicated table in the database (usually `schema_migrations`) to track which migrations have been applied.
 
 ## Migration Rules

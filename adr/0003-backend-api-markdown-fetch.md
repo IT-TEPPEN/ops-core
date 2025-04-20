@@ -14,7 +14,7 @@ We define the backend API endpoint for fetching Markdown files from external rep
 
 **Endpoint:**
 
-```
+```http
 GET /api/v1/repositories/{config_id}/file
 ```
 

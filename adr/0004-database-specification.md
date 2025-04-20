@@ -7,6 +7,7 @@ Accepted
 ## Context
 
 OpsCore requires persistent storage for various data, including but not limited to:
+
 * External repository configurations (URL, provider type, access credentials as defined in ADR 0002).
 * User information and authentication details (if user accounts are implemented).
 * Potentially caching mechanisms or other application state.
@@ -17,6 +18,7 @@ A robust database solution is needed to manage this data reliably and securely.
 We will use **PostgreSQL** as the primary database for OpsCore.
 
 **Rationale:**
+
 * **Familiarity:** The team has existing experience with PostgreSQL, reducing the learning curve and speeding up development.
 * **Reliability and Robustness:** PostgreSQL is well-regarded for its data integrity, ACID compliance, stability, and performance.
 * **Features:** It offers a rich feature set, including support for JSONB, full-text search, various indexing options, and extensibility, which could be beneficial for future enhancements.
