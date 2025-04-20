@@ -13,6 +13,8 @@ RUN npm install -g npm@latest vite concurrently
 
 # Install Go tools
 RUN go install github.com/air-verse/air@latest # For live reloading Go apps
+RUN chown -R vscode /go/pkg/mod
+RUN chmod -R u+w /go/pkg/mod
 
 # Set back to non-root user
 USER vscode
