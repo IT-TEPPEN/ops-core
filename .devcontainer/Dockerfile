@@ -9,7 +9,7 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
     && apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/*
 
 # Install global node packages
-RUN npm install -g npm@latest vite
+RUN npm install -g npm@latest vite concurrently
 
 # Install Go tools
 RUN go install github.com/air-verse/air@latest # For live reloading Go apps
