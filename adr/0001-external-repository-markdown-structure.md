@@ -32,7 +32,11 @@ We decided to adopt the following rules for storing operational procedure Markdo
     ---
     ```
 
-    *   `type`: Indicates the kind of document. **Currently supported values are `procedure` and `knowledge`.**
+    * `title`: Descriptive title of the procedure.
+    * `owner`: Team name or email responsible for the procedure.
+    * `version`: Version identifier (Semantic Versioning or date recommended).
+    * `type`: Indicates the kind of document. **Currently supported values are `procedure` and `knowledge`.**
+    * `tags`: A list of relevant tags for filtering/searching.
 
 5. **Content Structure:** While flexible, it is highly recommended to use consistent headings for clarity:
     * `## Prerequisites`: Any requirements before starting the procedure.
@@ -45,10 +49,10 @@ We decided to adopt the following rules for storing operational procedure Markdo
 ## Consequences
 
 * **Pros:**
-    * **Increased Flexibility:** OpsCore administrators can configure specific directories and files, adapting to various repository structures.
-    * Standardization (via metadata and recommended structure) simplifies OpsCore's parsing logic for selected documents.
-    * Consistent structure improves readability and maintainability for human operators.
-    * Metadata enables richer features in OpsCore (filtering, search, ownership tracking).
+  * **Increased Flexibility:** OpsCore administrators can configure specific directories and files, adapting to various repository structures.
+  * Standardization (via metadata and recommended structure) simplifies OpsCore's parsing logic for selected documents.
+  * Consistent structure improves readability and maintainability for human operators.
+  * Metadata enables richer features in OpsCore (filtering, search, ownership tracking).
 * **Cons:**
-    * Requires clear configuration within OpsCore to specify target directories and files.
-    * Teams managing external repositories still need to ensure the selected files adhere to the metadata and content structure recommendations.
+  * Requires clear configuration within OpsCore to specify target directories and files.
+  * Teams managing external repositories still need to ensure the selected files adhere to the metadata and content structure recommendations.
