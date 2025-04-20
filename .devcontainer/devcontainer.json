@@ -34,7 +34,10 @@
         "github.copilot-chat", // Add Copilot Chat
 
         // Tailwind CSS
-        "bradlc.vscode-tailwindcss" // Add Tailwind CSS IntelliSense
+        "bradlc.vscode-tailwindcss", // Add Tailwind CSS IntelliSense
+
+        // toml support
+        "tamasfe.even-better-toml"
       ]
     }
   },
