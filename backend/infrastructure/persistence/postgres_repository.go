@@ -103,6 +103,40 @@ func (r *PostgresRepository) FindByID(ctx context.Context, id string) (*model.Re
 	return model.ReconstructRepository(repoID, name, url, createdAt, updatedAt), nil
 }
 
+// FindAll retrieves all repositories from the PostgreSQL database.
+func (r *PostgresRepository) FindAll(ctx context.Context) ([]*model.Repository, error) {
+	query := `
+		SELECT id, name, url, created_at, updated_at
+		FROM repositories
+		ORDER BY created_at DESC;
+	`
+
+	rows, err := r.db.Query(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query repositories: %w", err)
+	}
+	defer rows.Close()
+
+	var repositories []*model.Repository
+	for rows.Next() {
+		var id, name, url string
+		var createdAt, updatedAt time.Time
+
+		if err := rows.Scan(&id, &name, &url, &createdAt, &updatedAt); err != nil {
+			return nil, fmt.Errorf("failed to scan repository row: %w", err)
+		}
+
+		repo := model.ReconstructRepository(id, name, url, createdAt, updatedAt)
+		repositories = append(repositories, repo)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating over repository rows: %w", err)
+	}
+
+	return repositories, nil
+}
+
 // SaveManagedFiles saves the list of selected file paths for a repository.
 // It first deletes existing entries for the repoID and then inserts the new ones.
 func (r *PostgresRepository) SaveManagedFiles(ctx context.Context, repoID string, filePaths []string) error {

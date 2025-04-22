@@ -33,6 +33,8 @@ var (
 // RepositoryUseCase defines the interface for repository related use cases.
 type RepositoryUseCase interface {
 	Register(ctx context.Context, repoURL string) (*model.Repository, error) // Return created repository
+	// ListRepositories retrieves all registered repositories
+	ListRepositories(ctx context.Context) ([]*model.Repository, error)
 	// ListFiles retrieves the file structure for a given repository ID.
 	ListFiles(ctx context.Context, repoID string) ([]*model.FileNode, error) // Use model.FileNode
 	// SelectFiles marks specific files within a repository as manageable.
@@ -120,6 +122,17 @@ func (uc *repositoryUseCase) Register(ctx context.Context, repoURL string) (*mod
 
 	// 6. Return the newly created repository
 	return newRepo, nil
+}
+
+// ListRepositories implements the logic for retrieving all registered repositories.
+func (uc *repositoryUseCase) ListRepositories(ctx context.Context) ([]*model.Repository, error) {
+	// Get all repositories from the repository layer
+	repos, err := uc.repo.FindAll(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve repositories: %w", err)
+	}
+
+	return repos, nil
 }
 
 // ListFiles implements the logic for listing files in a repository.

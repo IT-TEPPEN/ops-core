@@ -60,6 +60,11 @@ type GetMarkdownResponse struct {
 	Content string `json:"content" example:"# Project Title\\n\\n## ADR 1\\n..."` // Concatenated Markdown content
 }
 
+// ListRepositoriesResponse represents the response for listing all repositories
+type ListRepositoriesResponse struct {
+	Repositories []RepositoryResponse `json:"repositories"`
+}
+
 // RepositoryHandler holds dependencies for repository handlers.
 type RepositoryHandler struct {
 	repoUseCase repository.RepositoryUseCase
@@ -279,5 +284,43 @@ func (h *RepositoryHandler) GetSelectedMarkdown(c *gin.Context) {
 	c.JSON(http.StatusOK, GetMarkdownResponse{
 		RepoID:  repoId,
 		Content: markdownContent,
+	})
+}
+
+// ListRepositories godoc
+// @Summary List all repositories
+// @Description Retrieves a list of all repositories registered in OpsCore
+// @Tags repositories
+// @Produce json
+// @Success 200 {object} ListRepositoriesResponse "Successfully retrieved repositories"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /repositories [get]
+func (h *RepositoryHandler) ListRepositories(c *gin.Context) {
+	requestID := c.GetString("request_id") // ミドルウェアから設定されたリクエストID
+
+	h.logger.Info("Listing all repositories", "request_id", requestID)
+
+	repos, err := h.repoUseCase.ListRepositories(c.Request.Context())
+	if err != nil {
+		h.logger.Error("Failed to list repositories", "request_id", requestID, "error", err.Error())
+		c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_ERROR", Message: "Failed to retrieve repositories"})
+		return
+	}
+
+	// Map domain models to response DTOs
+	repoResponses := make([]RepositoryResponse, 0, len(repos))
+	for _, repo := range repos {
+		repoResponses = append(repoResponses, RepositoryResponse{
+			ID:        repo.ID(),
+			Name:      repo.Name(),
+			URL:       repo.URL(),
+			CreatedAt: repo.CreatedAt(),
+			UpdatedAt: repo.UpdatedAt(),
+		})
+	}
+
+	h.logger.Info("Successfully listed repositories", "request_id", requestID, "repo_count", len(repos))
+	c.JSON(http.StatusOK, ListRepositoriesResponse{
+		Repositories: repoResponses,
 	})
 }

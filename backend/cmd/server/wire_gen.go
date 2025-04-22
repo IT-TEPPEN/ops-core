@@ -23,17 +23,6 @@ import (
 
 // Injectors from wire.go:
 
-// InitializeRepositoryUseCase initializes the RepositoryUseCase with its dependencies.
-func InitializeRepositoryUseCase() (repository.RepositoryUseCase, error) {
-	repositoryRepository := persistence.NewInMemoryRepository()
-	gitManager, err := provideGitManager()
-	if err != nil {
-		return nil, err
-	}
-	repositoryUseCase := repository.NewRepositoryUseCase(repositoryRepository, gitManager)
-	return repositoryUseCase, nil
-}
-
 // InitializeAPI initializes all dependencies for the API handlers, using Postgres.
 func InitializeAPI(db *pgxpool.Pool) (*handlers.RepositoryHandler, error) {
 	repositoryRepository := persistence.NewPostgresRepository(db)

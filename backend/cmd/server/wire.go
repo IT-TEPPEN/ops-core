@@ -82,16 +82,6 @@ func provideHandlerLogger() handlers.Logger {
 	return &SlogLoggerAdapter{logger: provideAppLogger()}
 }
 
-// InitializeRepositoryUseCase initializes the RepositoryUseCase with its dependencies.
-func InitializeRepositoryUseCase() (repoUseCase.RepositoryUseCase, error) {
-	wire.Build(
-		provideGitManager,
-		persistence.NewInMemoryRepository,
-		repoUseCase.NewRepositoryUseCase,
-	)
-	return nil, nil
-}
-
 // InitializeAPI initializes all dependencies for the API handlers, using Postgres.
 func InitializeAPI(db *pgxpool.Pool) (*handlers.RepositoryHandler, error) {
 	wire.Build(

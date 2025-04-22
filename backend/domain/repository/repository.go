@@ -13,6 +13,8 @@ type Repository interface {
 	FindByURL(ctx context.Context, url string) (*model.Repository, error)
 	// FindByID retrieves a repository by its ID. Returns nil if not found.
 	FindByID(ctx context.Context, id string) (*model.Repository, error)
+	// FindAll retrieves all repositories.
+	FindAll(ctx context.Context) ([]*model.Repository, error)
 	// SaveManagedFiles saves the list of file paths selected for management for a given repository.
 	// This should replace any existing selection for the repository.
 	SaveManagedFiles(ctx context.Context, repoID string, filePaths []string) error

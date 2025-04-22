@@ -27,7 +27,7 @@ func main() {
 	databaseUrl := os.Getenv("DATABASE_URL")
 	if databaseUrl == "" {
 		// Provide a default for local development if needed, but env var is better
-		databaseUrl = "postgres://user:password@localhost:5432/opscore_db?sslmode=disable"
+		databaseUrl = "postgres://opscore_user:opscore_password@db:5432/opscore_db?sslmode=disable"
 		fmt.Println("Warning: DATABASE_URL environment variable not set, using default.")
 	}
 
@@ -80,6 +80,7 @@ func main() {
 	{
 		// Repository routes - use methods from the initialized handler
 		v1.POST("/repositories", repoHandler.RegisterRepository)
+		v1.GET("/repositories", repoHandler.ListRepositories) // Adding this route to list all repositories
 		v1.GET("/repositories/:repoId/files", repoHandler.ListRepositoryFiles)
 		v1.POST("/repositories/:repoId/files/select", repoHandler.SelectRepositoryFiles)
 		v1.GET("/repositories/:repoId/markdown", repoHandler.GetSelectedMarkdown)
