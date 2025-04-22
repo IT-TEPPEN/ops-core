@@ -1,0 +1,345 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "This is the API documentation for the OpsCore backend service.",
+        "title": "OpsCore Backend API",
+        "contact": {},
+        "version": "1.0"
+    },
+    "host": "localhost:8080",
+    "basePath": "/api/v1",
+    "paths": {
+        "/repositories": {
+            "post": {
+                "description": "Add a new repository to be managed by OpsCore by providing its Git URL.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "repositories"
+                ],
+                "summary": "Register a new repository",
+                "parameters": [
+                    {
+                        "description": "Repository URL",
+                        "name": "repository",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.RegisterRepositoryRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Repository registered successfully",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.RepositoryResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body or URL format",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Repository with this URL already exists",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/repositories/{repoId}/files": {
+            "get": {
+                "description": "Retrieves a list of files and directories within a specified repository.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "repositories"
+                ],
+                "summary": "List files in a repository",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Repository ID",
+                        "name": "repoId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved file list",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ListFilesResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid repository ID format",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Repository not found",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/repositories/{repoId}/files/select": {
+            "post": {
+                "description": "Marks specific files within a repository as manageable by OpsCore.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "repositories"
+                ],
+                "summary": "Select manageable files in a repository",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Repository ID",
+                        "name": "repoId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "List of file paths to select",
+                        "name": "files",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.SelectFilesRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Files selected successfully",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.SelectFilesResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body or repository ID",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Repository not found",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/repositories/{repoId}/markdown": {
+            "get": {
+                "description": "Retrieves the concatenated content of all selected Markdown files for a given repository.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "repositories"
+                ],
+                "summary": "Get selected Markdown content from a repository",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Repository ID",
+                        "name": "repoId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved Markdown content",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.GetMarkdownResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid repository ID format",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Repository not found or no files selected",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "handlers.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string",
+                    "example": "INVALID_REQUEST"
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Invalid request body"
+                }
+            }
+        },
+        "handlers.FileNode": {
+            "type": "object",
+            "properties": {
+                "path": {
+                    "type": "string",
+                    "example": "src/main.go"
+                },
+                "type": {
+                    "description": "\"file\" or \"dir\"",
+                    "type": "string",
+                    "example": "file"
+                }
+            }
+        },
+        "handlers.GetMarkdownResponse": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "description": "Concatenated Markdown content",
+                    "type": "string",
+                    "example": "# Project Title\\n\\n## ADR 1\\n..."
+                },
+                "repoId": {
+                    "type": "string",
+                    "example": "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+                }
+            }
+        },
+        "handlers.ListFilesResponse": {
+            "type": "object",
+            "properties": {
+                "files": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handlers.FileNode"
+                    }
+                }
+            }
+        },
+        "handlers.RegisterRepositoryRequest": {
+            "type": "object",
+            "required": [
+                "url"
+            ],
+            "properties": {
+                "url": {
+                    "type": "string",
+                    "example": "https://github.com/user/repo.git"
+                }
+            }
+        },
+        "handlers.RepositoryResponse": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string",
+                    "example": "2025-04-22T10:00:00Z"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "repo"
+                },
+                "updated_at": {
+                    "type": "string",
+                    "example": "2025-04-22T10:00:00Z"
+                },
+                "url": {
+                    "type": "string",
+                    "example": "https://github.com/user/repo.git"
+                }
+            }
+        },
+        "handlers.SelectFilesRequest": {
+            "type": "object",
+            "required": [
+                "filePaths"
+            ],
+            "properties": {
+                "filePaths": {
+                    "description": "List of file paths to select",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "[\"README.md\"",
+                        " \"docs/adr/0001.md\"]"
+                    ]
+                }
+            }
+        },
+        "handlers.SelectFilesResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "example": "Files selected successfully"
+                },
+                "repoId": {
+                    "type": "string",
+                    "example": "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+                },
+                "selectedFiles": {
+                    "type": "integer",
+                    "example": 2
+                }
+            }
+        }
+    }
+}

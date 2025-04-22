@@ -1,0 +1,234 @@
+basePath: /api/v1
+definitions:
+  handlers.ErrorResponse:
+    properties:
+      code:
+        example: INVALID_REQUEST
+        type: string
+      message:
+        example: Invalid request body
+        type: string
+    type: object
+  handlers.FileNode:
+    properties:
+      path:
+        example: src/main.go
+        type: string
+      type:
+        description: '"file" or "dir"'
+        example: file
+        type: string
+    type: object
+  handlers.GetMarkdownResponse:
+    properties:
+      content:
+        description: Concatenated Markdown content
+        example: '# Project Title\n\n## ADR 1\n...'
+        type: string
+      repoId:
+        example: a1b2c3d4-e5f6-7890-1234-567890abcdef
+        type: string
+    type: object
+  handlers.ListFilesResponse:
+    properties:
+      files:
+        items:
+          $ref: '#/definitions/handlers.FileNode'
+        type: array
+    type: object
+  handlers.RegisterRepositoryRequest:
+    properties:
+      url:
+        example: https://github.com/user/repo.git
+        type: string
+    required:
+    - url
+    type: object
+  handlers.RepositoryResponse:
+    properties:
+      created_at:
+        example: "2025-04-22T10:00:00Z"
+        type: string
+      id:
+        example: a1b2c3d4-e5f6-7890-1234-567890abcdef
+        type: string
+      name:
+        example: repo
+        type: string
+      updated_at:
+        example: "2025-04-22T10:00:00Z"
+        type: string
+      url:
+        example: https://github.com/user/repo.git
+        type: string
+    type: object
+  handlers.SelectFilesRequest:
+    properties:
+      filePaths:
+        description: List of file paths to select
+        example:
+        - '["README.md"'
+        - ' "docs/adr/0001.md"]'
+        items:
+          type: string
+        type: array
+    required:
+    - filePaths
+    type: object
+  handlers.SelectFilesResponse:
+    properties:
+      message:
+        example: Files selected successfully
+        type: string
+      repoId:
+        example: a1b2c3d4-e5f6-7890-1234-567890abcdef
+        type: string
+      selectedFiles:
+        example: 2
+        type: integer
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: This is the API documentation for the OpsCore backend service.
+  title: OpsCore Backend API
+  version: "1.0"
+paths:
+  /repositories:
+    post:
+      consumes:
+      - application/json
+      description: Add a new repository to be managed by OpsCore by providing its
+        Git URL.
+      parameters:
+      - description: Repository URL
+        in: body
+        name: repository
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.RegisterRepositoryRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Repository registered successfully
+          schema:
+            $ref: '#/definitions/handlers.RepositoryResponse'
+        "400":
+          description: Invalid request body or URL format
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "409":
+          description: Repository with this URL already exists
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Register a new repository
+      tags:
+      - repositories
+  /repositories/{repoId}/files:
+    get:
+      description: Retrieves a list of files and directories within a specified repository.
+      parameters:
+      - description: Repository ID
+        in: path
+        name: repoId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved file list
+          schema:
+            $ref: '#/definitions/handlers.ListFilesResponse'
+        "400":
+          description: Invalid repository ID format
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Repository not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: List files in a repository
+      tags:
+      - repositories
+  /repositories/{repoId}/files/select:
+    post:
+      consumes:
+      - application/json
+      description: Marks specific files within a repository as manageable by OpsCore.
+      parameters:
+      - description: Repository ID
+        in: path
+        name: repoId
+        required: true
+        type: string
+      - description: List of file paths to select
+        in: body
+        name: files
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.SelectFilesRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Files selected successfully
+          schema:
+            $ref: '#/definitions/handlers.SelectFilesResponse'
+        "400":
+          description: Invalid request body or repository ID
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Repository not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Select manageable files in a repository
+      tags:
+      - repositories
+  /repositories/{repoId}/markdown:
+    get:
+      description: Retrieves the concatenated content of all selected Markdown files
+        for a given repository.
+      parameters:
+      - description: Repository ID
+        in: path
+        name: repoId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved Markdown content
+          schema:
+            $ref: '#/definitions/handlers.GetMarkdownResponse'
+        "400":
+          description: Invalid repository ID format
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Repository not found or no files selected
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Get selected Markdown content from a repository
+      tags:
+      - repositories
+swagger: "2.0"
