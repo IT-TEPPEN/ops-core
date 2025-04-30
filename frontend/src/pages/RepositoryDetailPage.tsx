@@ -29,7 +29,7 @@ function RepositoryDetailPage() {
     text: string;
   } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   // Access token state
   const [accessToken, setAccessToken] = useState<string>("");
   const [isUpdatingToken, setIsUpdatingToken] = useState(false);
@@ -76,7 +76,7 @@ function RepositoryDetailPage() {
 
     try {
       const response = await fetch(`${apiUrl}/repositories/${repoId}/files`);
-      
+
       if (response.status === 400) {
         // Check if this is an access token error
         const errorData = await response.json();
@@ -88,11 +88,11 @@ function RepositoryDetailPage() {
           return;
         }
       }
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       const data = await response.json();
       setFiles(data.files);
     } catch (err) {
@@ -162,11 +162,11 @@ function RepositoryDetailPage() {
       setIsSubmitting(false);
     }
   };
-  
+
   // Handle access token update
   const handleTokenSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!accessToken.trim()) {
       setTokenMessage({
         type: "error",
@@ -174,40 +174,36 @@ function RepositoryDetailPage() {
       });
       return;
     }
-    
+
     setIsUpdatingToken(true);
     setTokenMessage(null);
-    
+
     try {
-      const response = await fetch(
-        `${apiUrl}/repositories/${repoId}/token`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ accessToken }),
-        }
-      );
-      
+      const response = await fetch(`${apiUrl}/repositories/${repoId}/token`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ accessToken }),
+      });
+
       const data = await response.json();
-      
+
       if (!response.ok) {
         throw new Error(data.message || "Failed to update access token");
       }
-      
+
       setTokenMessage({
         type: "success",
         text: "Access token updated successfully!",
       });
-      
+
       // Clear the form and refetch files
       setAccessToken("");
       setNeedsToken(false);
       fetchFiles();
-      
     } catch (err) {
-      const message = 
+      const message =
         err instanceof Error ? err.message : "An unknown error occurred";
       setTokenMessage({ type: "error", text: message });
     } finally {
@@ -254,18 +250,24 @@ function RepositoryDetailPage() {
           </p>
         </div>
       )}
-      
+
       {/* Access Token Form */}
       {repository && (needsToken || fileError) && (
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
-          <h2 className="text-xl font-semibold mb-4">Repository Access Token</h2>
+          <h2 className="text-xl font-semibold mb-4">
+            Repository Access Token
+          </h2>
           <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-            This repository requires an access token to view files. Please enter a valid access token below.
+            This repository requires an access token to view files. Please enter
+            a valid access token below.
           </p>
-          
+
           <form onSubmit={handleTokenSubmit} className="space-y-4">
             <div>
-              <label htmlFor="accessToken" className="block text-sm font-medium mb-1">
+              <label
+                htmlFor="accessToken"
+                className="block text-sm font-medium mb-1"
+              >
                 Access Token
               </label>
               <input
@@ -278,10 +280,11 @@ function RepositoryDetailPage() {
                 required
               />
               <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                For GitHub repositories, create a personal access token with 'repo' scope.
+                For GitHub repositories, create a personal access token with
+                'repo' scope.
               </p>
             </div>
-            
+
             <div>
               <button
                 type="submit"
@@ -293,7 +296,7 @@ function RepositoryDetailPage() {
                 {isUpdatingToken ? "Updating..." : "Update Access Token"}
               </button>
             </div>
-            
+
             {tokenMessage && (
               <div
                 className={`mt-4 p-3 rounded ${
@@ -332,7 +335,8 @@ function RepositoryDetailPage() {
             No markdown files found in this repository.
           </div>
         ) : (
-          !needsToken && !fileError && (
+          !needsToken &&
+          !fileError && (
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="overflow-y-auto max-h-96 border border-gray-200 dark:border-gray-700 rounded p-2">
                 <table className="min-w-full">
