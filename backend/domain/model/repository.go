@@ -5,33 +5,36 @@ import "time"
 // Repository represents a registered code repository.
 // Fields are based on ADR-0005.
 type Repository struct {
-	id        string    // Unique identifier (e.g., UUID)
-	name      string    // Repository name (e.g., derived from URL)
-	url       string    // Git repository URL
-	createdAt time.Time // Timestamp of registration
-	updatedAt time.Time // Timestamp of last update
+	id          string    // Unique identifier (e.g., UUID)
+	name        string    // Repository name (e.g., derived from URL)
+	url         string    // Git repository URL
+	accessToken string    // Access token for private repositories (e.g., PAT, Deploy Key)
+	createdAt   time.Time // Timestamp of registration
+	updatedAt   time.Time // Timestamp of last update
 }
 
 // NewRepository creates a new Repository instance.
-func NewRepository(id, name, url string) *Repository {
+func NewRepository(id, name, url, accessToken string) *Repository {
 	now := time.Now()
 	return &Repository{
-		id:        id,
-		name:      name,
-		url:       url,
-		createdAt: now,
-		updatedAt: now,
+		id:          id,
+		name:        name,
+		url:         url,
+		accessToken: accessToken,
+		createdAt:   now,
+		updatedAt:   now,
 	}
 }
 
 // ReconstructRepository reconstructs a Repository from persistence data.
-func ReconstructRepository(id, name, url string, createdAt, updatedAt time.Time) *Repository {
+func ReconstructRepository(id, name, url, accessToken string, createdAt, updatedAt time.Time) *Repository {
 	return &Repository{
-		id:        id,
-		name:      name,
-		url:       url,
-		createdAt: createdAt,
-		updatedAt: updatedAt,
+		id:          id,
+		name:        name,
+		url:         url,
+		accessToken: accessToken,
+		createdAt:   createdAt,
+		updatedAt:   updatedAt,
 	}
 }
 
@@ -50,6 +53,11 @@ func (r *Repository) URL() string {
 	return r.url
 }
 
+// AccessToken returns the repository access token.
+func (r *Repository) AccessToken() string {
+	return r.accessToken
+}
+
 // CreatedAt returns the timestamp when the repository was registered.
 func (r *Repository) CreatedAt() time.Time {
 	return r.createdAt
@@ -63,4 +71,10 @@ func (r *Repository) UpdatedAt() time.Time {
 // SetUpdatedAt updates the updatedAt timestamp to the current time.
 func (r *Repository) SetUpdatedAt() {
 	r.updatedAt = time.Now()
+}
+
+// SetAccessToken updates the access token for the repository.
+func (r *Repository) SetAccessToken(token string) {
+	r.accessToken = token
+	r.SetUpdatedAt()
 }

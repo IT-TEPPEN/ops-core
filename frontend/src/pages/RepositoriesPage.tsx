@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 
 interface Repository {
@@ -20,31 +20,81 @@ function RepositoriesPage() {
     text: string;
   } | null>(null);
 
-  // API base URL
-  const apiHost = import.meta.env.VITE_API_HOST;
-  const apiUrl = apiHost ? `http://${apiHost}/api/v1` : "/api";
+  // Prevent multiple fetch calls
+  const fetchControllerRef = useRef<AbortController | null>(null);
+  const isMounted = useRef(true);
 
-  // Fetch repositories on component mount
+  // API base URL - directly use the base URL to avoid recalculation
+  const apiHost = import.meta.env.VITE_API_HOST || window.location.host;
+  const apiUrl = `${window.location.protocol}//${apiHost}/api/v1`;
+
+  // Fetch repositories on component mount with better cleanup
   useEffect(() => {
+    isMounted.current = true;
     fetchRepositories();
+
+    return () => {
+      isMounted.current = false;
+      if (fetchControllerRef.current) {
+        fetchControllerRef.current.abort();
+      }
+    };
   }, []);
 
   const fetchRepositories = async () => {
+    // Don't fetch if already loading
+    if (isLoading) return;
+
     setIsLoading(true);
     setError(null);
 
+    // Abort previous request if it exists
+    if (fetchControllerRef.current) {
+      fetchControllerRef.current.abort();
+    }
+
+    // Create new controller for this request
+    fetchControllerRef.current = new AbortController();
+
     try {
-      const response = await fetch(`${apiUrl}/repositories`);
+      console.time("repositoriesFetch"); // Add timing measurement
+
+      const response = await fetch(`${apiUrl}/repositories`, {
+        signal: fetchControllerRef.current.signal,
+        headers: {
+          "Cache-Control": "max-age=60", // Cache for 60 seconds
+        },
+      });
+
+      console.timeEnd("repositoriesFetch"); // Log fetch time
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
+
       const data = await response.json();
-      setRepositories(data.repositories);
+
+      // Only update state if component is still mounted
+      if (isMounted.current) {
+        setRepositories(data.repositories);
+      }
     } catch (err) {
-      setError("Failed to load repositories. Please try again later.");
-      console.error("Error fetching repositories:", err);
+      // Check if this is just an abort error (not a real error)
+      if (err instanceof DOMException && err.name === "AbortError") {
+        console.log("Fetch aborted");
+        return;
+      }
+
+      // Only update state if component is still mounted
+      if (isMounted.current) {
+        setError("Failed to load repositories. Please try again later.");
+        console.error("Error fetching repositories:", err);
+      }
     } finally {
-      setIsLoading(false);
+      // Only update state if component is still mounted
+      if (isMounted.current) {
+        setIsLoading(false);
+      }
     }
   };
 

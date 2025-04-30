@@ -20,5 +20,7 @@ type Repository interface {
 	SaveManagedFiles(ctx context.Context, repoID string, filePaths []string) error
 	// GetManagedFiles retrieves the list of file paths selected for management for a given repository.
 	GetManagedFiles(ctx context.Context, repoID string) ([]string, error)
+	// UpdateAccessToken updates the access token for a repository.
+	UpdateAccessToken(ctx context.Context, repoID string, accessToken string) error
 	// TODO: Add other necessary methods (e.g., List, Delete)
 }

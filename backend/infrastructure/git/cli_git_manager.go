@@ -36,7 +36,7 @@ func (g *cliGitManager) getLocalPath(repo *model.Repository) string {
 }
 
 // runGitCommand executes a git command in the specified directory.
-func (g *cliGitManager) runGitCommand(ctx context.Context, dir string, args ...string) ([]byte, error) {
+func (g *cliGitManager) runGitCommand(ctx context.Context, dir string, repo *model.Repository, args ...string) ([]byte, error) {
 	if len(args) == 0 {
 		return nil, fmt.Errorf("no git command specified")
 	}
@@ -70,18 +70,51 @@ func (g *cliGitManager) runGitCommand(ctx context.Context, dir string, args ...s
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 
-	// 追加のセキュリティ制限：環境変数を制限する
-	cmd.Env = []string{
+	// アクセストークンがある場合は、環境変数として設定
+	env := []string{
 		"PATH=" + os.Getenv("PATH"), // 最小限のPATH環境変数のみ設定
 		"HOME=" + os.Getenv("HOME"), // Gitはホームディレクトリを必要とすることがある
 		"GIT_TERMINAL_PROMPT=0",     // インタラクティブプロンプトを無効化
 	}
+
+	// リポジトリにアクセストークンがあれば、それを使用
+	if repo != nil && repo.AccessToken() != "" {
+		// URLにトークンを含める代わりに、Git認証情報ヘルパーを使用
+		credsEnv := fmt.Sprintf("GIT_ASKPASS=%s", createGitAskPassScript(repo.AccessToken()))
+		env = append(env, credsEnv)
+	}
+
+	cmd.Env = env
 
 	err := cmd.Run()
 	if err != nil {
 		return nil, fmt.Errorf("git command failed: %v\nArgs: %v\nStderr: %s\nError: %w", args[0], args, stderr.String(), err)
 	}
 	return stdout.Bytes(), nil
+}
+
+// createGitAskPassScript creates a temporary script that provides the access token to Git
+func createGitAskPassScript(token string) string {
+	// 一時ディレクトリにスクリプトを作成
+	tempDir := os.TempDir()
+	scriptPath := filepath.Join(tempDir, "git-askpass.sh")
+
+	// スクリプトの内容を作成
+	scriptContent := fmt.Sprintf(`#!/bin/sh
+echo "%s"
+`, token)
+
+	// 既存のファイルがあれば削除
+	os.Remove(scriptPath)
+
+	// スクリプトをファイルに書き込み
+	err := os.WriteFile(scriptPath, []byte(scriptContent), 0700)
+	if err != nil {
+		fmt.Printf("Warning: Failed to create Git askpass script: %v\n", err)
+		return ""
+	}
+
+	return scriptPath
 }
 
 // EnsureCloned clones or updates the repository.
@@ -92,7 +125,9 @@ func (g *cliGitManager) EnsureCloned(ctx context.Context, repo *model.Repository
 	if _, err := os.Stat(localPath); os.IsNotExist(err) {
 		// Directory does not exist, clone the repository
 		fmt.Printf("Cloning repository %s to %s\n", repo.URL(), localPath)
-		_, err := g.runGitCommand(ctx, g.baseClonePath, "clone", repo.URL(), localPath)
+
+		// アクセストークンがある場合は、URL内に埋め込まずに認証に使用する
+		_, err := g.runGitCommand(ctx, g.baseClonePath, repo, "clone", repo.URL(), localPath)
 		if err != nil {
 			return "", fmt.Errorf("failed to clone repository %s: %w", repo.URL(), err)
 		}
@@ -100,13 +135,13 @@ func (g *cliGitManager) EnsureCloned(ctx context.Context, repo *model.Repository
 		// Directory exists, update the repository (fetch + reset or pull)
 		fmt.Printf("Updating repository %s in %s\n", repo.URL(), localPath)
 		// Using fetch + reset --hard to ensure clean state, adjust if needed
-		_, err := g.runGitCommand(ctx, localPath, "fetch", "origin")
+		_, err := g.runGitCommand(ctx, localPath, repo, "fetch", "origin")
 		if err != nil {
 			return "", fmt.Errorf("failed to fetch repository %s: %w", repo.URL(), err)
 		}
 		// Determine the default branch (e.g., main or master) or use HEAD
 		// For simplicity, using origin/HEAD which usually points to the default branch
-		_, err = g.runGitCommand(ctx, localPath, "reset", "--hard", "origin/HEAD") // Adjust branch if necessary
+		_, err = g.runGitCommand(ctx, localPath, repo, "reset", "--hard", "origin/HEAD") // Adjust branch if necessary
 		if err != nil {
 			// Attempt pull as a fallback? Or just report error.
 			return "", fmt.Errorf("failed to reset repository %s: %w", repo.URL(), err)
@@ -120,8 +155,8 @@ func (g *cliGitManager) EnsureCloned(ctx context.Context, repo *model.Repository
 }
 
 // ListRepositoryFiles lists all files tracked by git.
-func (g *cliGitManager) ListRepositoryFiles(ctx context.Context, localPath string) ([]string, error) {
-	output, err := g.runGitCommand(ctx, localPath, "ls-tree", "-r", "--name-only", "HEAD")
+func (g *cliGitManager) ListRepositoryFiles(ctx context.Context, localPath string, repo *model.Repository) ([]string, error) {
+	output, err := g.runGitCommand(ctx, localPath, repo, "ls-tree", "-r", "--name-only", "HEAD")
 	if err != nil {
 		return nil, fmt.Errorf("failed to list files in %s: %w", localPath, err)
 	}
@@ -138,12 +173,12 @@ func (g *cliGitManager) ListRepositoryFiles(ctx context.Context, localPath strin
 }
 
 // ValidateFilesExist checks if files exist in the git repository index.
-func (g *cliGitManager) ValidateFilesExist(ctx context.Context, localPath string, filePaths []string) error {
+func (g *cliGitManager) ValidateFilesExist(ctx context.Context, localPath string, filePaths []string, repo *model.Repository) error {
 	if len(filePaths) == 0 {
 		return nil // Nothing to validate
 	}
 	args := append([]string{"ls-files", "--error-unmatch", "--"}, filePaths...)
-	_, err := g.runGitCommand(ctx, localPath, args...)
+	_, err := g.runGitCommand(ctx, localPath, repo, args...)
 	if err != nil {
 		// Error indicates one or more files were not found
 		return fmt.Errorf("one or more specified files do not exist in the repository at %s: %w", localPath, err)
@@ -152,7 +187,7 @@ func (g *cliGitManager) ValidateFilesExist(ctx context.Context, localPath string
 }
 
 // ReadManagedFileContent reads the content of a specific file.
-func (g *cliGitManager) ReadManagedFileContent(ctx context.Context, localPath string, filePath string) ([]byte, error) {
+func (g *cliGitManager) ReadManagedFileContent(ctx context.Context, localPath string, filePath string, repo *model.Repository) ([]byte, error) {
 	// セキュリティ強化: filePath内の危険な文字列をチェック
 	if strings.Contains(filePath, "..") || strings.Contains(filePath, "~") {
 		return nil, fmt.Errorf("invalid file path containing potentially dangerous sequences: %s", filePath)
@@ -160,7 +195,7 @@ func (g *cliGitManager) ReadManagedFileContent(ctx context.Context, localPath st
 
 	// GitリポジトリのファイルのみにアクセスするためにLSしたファイルリストと検証する
 	// これにより、Gitトラッキング対象のファイル以外へのアクセスを防ぐ
-	files, err := g.ListRepositoryFiles(ctx, localPath)
+	files, err := g.ListRepositoryFiles(ctx, localPath, repo)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list repository files for validation: %w", err)
 	}

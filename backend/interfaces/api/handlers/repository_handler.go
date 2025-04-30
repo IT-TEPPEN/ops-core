@@ -13,7 +13,13 @@ import (
 
 // RegisterRepositoryRequest represents the request body for registering a repository
 type RegisterRepositoryRequest struct {
-	URL string `json:"url" binding:"required" example:"https://github.com/user/repo.git"`
+	URL         string `json:"url" binding:"required" example:"https://github.com/user/repo.git"`
+	AccessToken string `json:"accessToken" example:"ghp_1234567890abcdefghijklmnopqrstuvwxyz"` // Optional access token for private repositories
+}
+
+// UpdateAccessTokenRequest represents the request body for updating a repository's access token
+type UpdateAccessTokenRequest struct {
+	AccessToken string `json:"accessToken" binding:"required" example:"ghp_1234567890abcdefghijklmnopqrstuvwxyz"`
 }
 
 // RepositoryResponse represents the standard response format for a repository
@@ -91,11 +97,11 @@ func NewRepositoryHandler(uc repository.RepositoryUseCase, logger Logger) *Repos
 
 // RegisterRepository godoc
 // @Summary Register a new repository
-// @Description Add a new repository to be managed by OpsCore by providing its Git URL.
+// @Description Add a new repository to be managed by OpsCore by providing its Git URL and optional access token.
 // @Tags repositories
 // @Accept  json
 // @Produce  json
-// @Param   repository body RegisterRepositoryRequest true "Repository URL"
+// @Param   repository body RegisterRepositoryRequest true "Repository information"
 // @Success 201 {object} RepositoryResponse "Repository registered successfully"
 // @Failure 400 {object} ErrorResponse "Invalid request body or URL format"
 // @Failure 409 {object} ErrorResponse "Repository with this URL already exists"
@@ -112,7 +118,7 @@ func (h *RepositoryHandler) RegisterRepository(c *gin.Context) {
 	}
 
 	h.logger.Info("Registering repository", "request_id", requestID, "url", req.URL)
-	newRepo, err := h.repoUseCase.Register(c.Request.Context(), req.URL)
+	newRepo, err := h.repoUseCase.Register(c.Request.Context(), req.URL, req.AccessToken)
 
 	if err != nil {
 		if errors.Is(err, repository.ErrRepositoryAlreadyExists) {
@@ -137,6 +143,57 @@ func (h *RepositoryHandler) RegisterRepository(c *gin.Context) {
 		UpdatedAt: newRepo.UpdatedAt(),
 	}
 	c.JSON(http.StatusCreated, response)
+}
+
+// UpdateAccessToken godoc
+// @Summary Update repository access token
+// @Description Updates the access token used for accessing a private repository
+// @Tags repositories
+// @Accept  json
+// @Produce  json
+// @Param   repoId path string true "Repository ID" example:"a1b2c3d4-e5f6-7890-1234-567890abcdef"
+// @Param   tokenInfo body UpdateAccessTokenRequest true "Access token information"
+// @Success 200 {object} map[string]string "Access token updated successfully"
+// @Failure 400 {object} ErrorResponse "Invalid request body or repository ID"
+// @Failure 404 {object} ErrorResponse "Repository not found"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /repositories/{repoId}/token [put]
+func (h *RepositoryHandler) UpdateAccessToken(c *gin.Context) {
+	repoId := c.Param("repoId")
+	requestID := c.GetString("request_id")
+	var req UpdateAccessTokenRequest
+
+	if repoId == "" {
+		h.logger.Warn("Missing repository ID", "request_id", requestID)
+		c.JSON(http.StatusBadRequest, ErrorResponse{Code: "INVALID_ID", Message: "Repository ID is required"})
+		return
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		h.logger.Error("Invalid request body", "request_id", requestID, "repo_id", repoId, "error", err.Error())
+		c.JSON(http.StatusBadRequest, ErrorResponse{Code: "INVALID_REQUEST", Message: "Invalid request body: " + err.Error()})
+		return
+	}
+
+	h.logger.Info("Updating repository access token", "request_id", requestID, "repo_id", repoId)
+	err := h.repoUseCase.UpdateAccessToken(c.Request.Context(), repoId, req.AccessToken)
+
+	if err != nil {
+		if errors.Is(err, repository.ErrRepositoryNotFound) {
+			h.logger.Warn("Repository not found", "request_id", requestID, "repo_id", repoId)
+			c.JSON(http.StatusNotFound, ErrorResponse{Code: "NOT_FOUND", Message: err.Error()})
+		} else {
+			h.logger.Error("Failed to update access token", "request_id", requestID, "repo_id", repoId, "error", err.Error())
+			c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_ERROR", Message: "Failed to update access token"})
+		}
+		return
+	}
+
+	h.logger.Info("Repository access token updated successfully", "request_id", requestID, "repo_id", repoId)
+	c.JSON(http.StatusOK, map[string]string{
+		"message": "Access token updated successfully",
+		"repoId":  repoId,
+	})
 }
 
 // ListRepositoryFiles godoc

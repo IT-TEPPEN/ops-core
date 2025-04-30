@@ -2,6 +2,7 @@ package persistence
 
 import (
 	"context"
+	"database/sql"
 	"errors" // Import errors package
 	"fmt"    // For error wrapping
 	"time"
@@ -27,14 +28,15 @@ func NewPostgresRepository(db *pgxpool.Pool) repository.Repository {
 // Save persists a repository in the PostgreSQL database.
 func (r *PostgresRepository) Save(ctx context.Context, repo *model.Repository) error {
 	query := `
-		INSERT INTO repositories (id, name, url, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5)
+		INSERT INTO repositories (id, name, url, access_token, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6)
 		ON CONFLICT (id) DO UPDATE SET
 			name = EXCLUDED.name,
 			url = EXCLUDED.url,
+			access_token = EXCLUDED.access_token,
 			updated_at = EXCLUDED.updated_at;
 	`
-	_, err := r.db.Exec(ctx, query, repo.ID(), repo.Name(), repo.URL(), repo.CreatedAt(), repo.UpdatedAt())
+	_, err := r.db.Exec(ctx, query, repo.ID(), repo.Name(), repo.URL(), repo.AccessToken(), repo.CreatedAt(), repo.UpdatedAt())
 	if err != nil {
 		// Check for unique constraint violation on URL if a separate constraint exists
 		// var pgErr *pgconn.PgError
@@ -50,17 +52,19 @@ func (r *PostgresRepository) Save(ctx context.Context, repo *model.Repository) e
 // FindByURL retrieves a repository by its URL from the PostgreSQL database.
 func (r *PostgresRepository) FindByURL(ctx context.Context, url string) (*model.Repository, error) {
 	query := `
-		SELECT id, name, url, created_at, updated_at
+		SELECT id, name, url, access_token, created_at, updated_at
 		FROM repositories
 		WHERE url = $1;
 	`
 	var id, name, repoURL string
+	var accessToken sql.NullString // トークンは NULL の可能性があるため sql.NullString を使用
 	var createdAt, updatedAt time.Time
 
 	err := r.db.QueryRow(ctx, query, url).Scan(
 		&id,
 		&name,
 		&repoURL,
+		&accessToken,
 		&createdAt,
 		&updatedAt,
 	)
@@ -71,23 +75,31 @@ func (r *PostgresRepository) FindByURL(ctx context.Context, url string) (*model.
 		return nil, fmt.Errorf("failed to find repository by URL: %w", err)
 	}
 
-	return model.ReconstructRepository(id, name, repoURL, createdAt, updatedAt), nil
+	// NullString から通常の string へ変換
+	tokenStr := ""
+	if accessToken.Valid {
+		tokenStr = accessToken.String
+	}
+
+	return model.ReconstructRepository(id, name, repoURL, tokenStr, createdAt, updatedAt), nil
 }
 
 // FindByID retrieves a repository by its ID from the PostgreSQL database.
 func (r *PostgresRepository) FindByID(ctx context.Context, id string) (*model.Repository, error) {
 	query := `
-		SELECT id, name, url, created_at, updated_at
+		SELECT id, name, url, access_token, created_at, updated_at
 		FROM repositories
 		WHERE id = $1;
 	`
 	var repoID, name, url string
+	var accessToken sql.NullString
 	var createdAt, updatedAt time.Time
 
 	err := r.db.QueryRow(ctx, query, id).Scan(
 		&repoID,
 		&name,
 		&url,
+		&accessToken,
 		&createdAt,
 		&updatedAt,
 	)
@@ -100,13 +112,19 @@ func (r *PostgresRepository) FindByID(ctx context.Context, id string) (*model.Re
 		return nil, fmt.Errorf("failed to find repository by ID: %w", err)
 	}
 
-	return model.ReconstructRepository(repoID, name, url, createdAt, updatedAt), nil
+	// NullString から通常の string へ変換
+	tokenStr := ""
+	if accessToken.Valid {
+		tokenStr = accessToken.String
+	}
+
+	return model.ReconstructRepository(repoID, name, url, tokenStr, createdAt, updatedAt), nil
 }
 
 // FindAll retrieves all repositories from the PostgreSQL database.
 func (r *PostgresRepository) FindAll(ctx context.Context) ([]*model.Repository, error) {
 	query := `
-		SELECT id, name, url, created_at, updated_at
+		SELECT id, name, url, access_token, created_at, updated_at
 		FROM repositories
 		ORDER BY created_at DESC;
 	`
@@ -120,13 +138,20 @@ func (r *PostgresRepository) FindAll(ctx context.Context) ([]*model.Repository, 
 	var repositories []*model.Repository
 	for rows.Next() {
 		var id, name, url string
+		var accessToken sql.NullString
 		var createdAt, updatedAt time.Time
 
-		if err := rows.Scan(&id, &name, &url, &createdAt, &updatedAt); err != nil {
+		if err := rows.Scan(&id, &name, &url, &accessToken, &createdAt, &updatedAt); err != nil {
 			return nil, fmt.Errorf("failed to scan repository row: %w", err)
 		}
 
-		repo := model.ReconstructRepository(id, name, url, createdAt, updatedAt)
+		// NullString から通常の string へ変換
+		tokenStr := ""
+		if accessToken.Valid {
+			tokenStr = accessToken.String
+		}
+
+		repo := model.ReconstructRepository(id, name, url, tokenStr, createdAt, updatedAt)
 		repositories = append(repositories, repo)
 	}
 
@@ -227,4 +252,25 @@ func (r *PostgresRepository) GetManagedFiles(ctx context.Context, repoID string)
 
 	// If no rows were found, filePaths will be an empty slice, which is correct.
 	return filePaths, nil
+}
+
+// UpdateAccessToken updates the access token for a repository.
+func (r *PostgresRepository) UpdateAccessToken(ctx context.Context, repoID string, accessToken string) error {
+	query := `
+		UPDATE repositories
+		SET access_token = $1, updated_at = $2
+		WHERE id = $3;
+	`
+	now := time.Now()
+	res, err := r.db.Exec(ctx, query, accessToken, now, repoID)
+	if err != nil {
+		return fmt.Errorf("failed to update repository access token: %w", err)
+	}
+
+	// Check if repository exists
+	if res.RowsAffected() == 0 {
+		return fmt.Errorf("repository with ID %s not found", repoID)
+	}
+
+	return nil
 }

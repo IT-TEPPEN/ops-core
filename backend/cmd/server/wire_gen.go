@@ -64,7 +64,8 @@ func (a *SlogLoggerAdapter) Warn(msg string, args ...any) {
 
 // provideGitManager is a Wire provider function for GitManager.
 func provideGitManager() (git.GitManager, error) {
-	return git.NewCliGitManager(baseClonePath)
+
+	return git.NewGithubApiManager(baseClonePath)
 }
 
 // provideAppLogger is a Wire provider function for *slog.Logger

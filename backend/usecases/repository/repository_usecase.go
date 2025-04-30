@@ -32,7 +32,7 @@ var (
 
 // RepositoryUseCase defines the interface for repository related use cases.
 type RepositoryUseCase interface {
-	Register(ctx context.Context, repoURL string) (*model.Repository, error) // Return created repository
+	Register(ctx context.Context, repoURL string, accessToken string) (*model.Repository, error) // Return created repository
 	// ListRepositories retrieves all registered repositories
 	ListRepositories(ctx context.Context) ([]*model.Repository, error)
 	// ListFiles retrieves the file structure for a given repository ID.
@@ -41,6 +41,8 @@ type RepositoryUseCase interface {
 	SelectFiles(ctx context.Context, repoID string, filePaths []string) error
 	// GetSelectedMarkdown retrieves the concatenated content of selected Markdown files.
 	GetSelectedMarkdown(ctx context.Context, repoID string) (string, error)
+	// UpdateAccessToken updates the access token for a repository.
+	UpdateAccessToken(ctx context.Context, repoID string, accessToken string) error
 }
 
 // repositoryUseCase implements the RepositoryUseCase interface.
@@ -79,7 +81,7 @@ func validateRepositoryURL(repoURL string) error {
 }
 
 // Register implements the logic for registering a new repository.
-func (uc *repositoryUseCase) Register(ctx context.Context, repoURL string) (*model.Repository, error) {
+func (uc *repositoryUseCase) Register(ctx context.Context, repoURL string, accessToken string) (*model.Repository, error) {
 	// 1. Validate URL with enhanced security
 	if err := validateRepositoryURL(repoURL); err != nil {
 		return nil, err
@@ -111,6 +113,7 @@ func (uc *repositoryUseCase) Register(ctx context.Context, repoURL string) (*mod
 		uuid.NewString(), // Generate new UUID
 		repoName,
 		repoURL,
+		accessToken,
 	)
 
 	// 5. Persist the new repository
@@ -153,7 +156,7 @@ func (uc *repositoryUseCase) ListFiles(ctx context.Context, repoID string) ([]*m
 	}
 
 	// 4. List files using GitManager
-	files, err := uc.gitManager.ListRepositoryFiles(ctx, localPath)
+	files, err := uc.gitManager.ListRepositoryFiles(ctx, localPath, repo)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list repository files: %w", err)
 	}
@@ -186,7 +189,7 @@ func (uc *repositoryUseCase) SelectFiles(ctx context.Context, repoID string, fil
 	}
 
 	// 4. Validate that each file path in filePaths exists in the repository
-	err = uc.gitManager.ValidateFilesExist(ctx, localPath, filePaths)
+	err = uc.gitManager.ValidateFilesExist(ctx, localPath, filePaths, repo)
 	if err != nil {
 		return err
 	}
@@ -235,7 +238,7 @@ func (uc *repositoryUseCase) GetSelectedMarkdown(ctx context.Context, repoID str
 		ext := strings.ToLower(filepath.Ext(p))
 		if ext == ".md" || ext == ".markdown" {
 			// b. Read the file content from the local repository path
-			contentBytes, readErr := uc.gitManager.ReadManagedFileContent(ctx, localPath, p)
+			contentBytes, readErr := uc.gitManager.ReadManagedFileContent(ctx, localPath, p, repo)
 			if readErr != nil {
 				return "", fmt.Errorf("failed to read content of file '%s': %w", p, readErr)
 			}
@@ -250,4 +253,24 @@ func (uc *repositoryUseCase) GetSelectedMarkdown(ctx context.Context, repoID str
 
 	// 8. Return the concatenated content
 	return concatenatedContent.String(), nil
+}
+
+// UpdateAccessToken updates the access token for a repository.
+func (uc *repositoryUseCase) UpdateAccessToken(ctx context.Context, repoID string, accessToken string) error {
+	// 1. Find the repository by ID to ensure it exists
+	repo, err := uc.repo.FindByID(ctx, repoID)
+	if err != nil {
+		return fmt.Errorf("failed to retrieve repository details: %w", err)
+	}
+	if repo == nil {
+		return ErrRepositoryNotFound
+	}
+
+	// 2. Update the access token in the repository
+	err = uc.repo.UpdateAccessToken(ctx, repoID, accessToken)
+	if err != nil {
+		return fmt.Errorf("failed to update repository access token: %w", err)
+	}
+
+	return nil
 }

@@ -84,6 +84,7 @@ func main() {
 		v1.GET("/repositories/:repoId/files", repoHandler.ListRepositoryFiles)
 		v1.POST("/repositories/:repoId/files/select", repoHandler.SelectRepositoryFiles)
 		v1.GET("/repositories/:repoId/markdown", repoHandler.GetSelectedMarkdown)
+		v1.PUT("/repositories/:repoId/token", repoHandler.UpdateAccessToken) // アクセストークン更新用エンドポイント
 	}
 
 	// Static file serving (Frontend)
