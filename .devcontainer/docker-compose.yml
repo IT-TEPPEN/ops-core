@@ -6,14 +6,32 @@ services:
       dockerfile: Dockerfile
     volumes:
       - ..:/workspaces:cached # Mount the project directory
-      # Persist bash history
       - ~/.bash_history:/home/vscode/.bash_history:cached # Update path for vscode user
-    # Overrides default command so things don't shut down after the process ends.
     command: sleep infinity
-    # Runs app on separate network
     networks:
       - devcontainer-network
+    depends_on: # Add dependency on the db service
+      - db
+    environment: # Add environment variables for the app service
+      - DATABASE_URL=postgres://opscore_user:opscore_password@db:5432/opscore_db?sslmode=disable
+
+  db: # Add the database service
+    image: postgres:16 # Use a specific version of postgres
+    restart: unless-stopped
+    volumes:
+      - postgres-data:/var/lib/postgresql/data # Persist data
+    networks:
+      - devcontainer-network
+    environment:
+      POSTGRES_DB: opscore_db
+      POSTGRES_USER: opscore_user
+      POSTGRES_PASSWORD: opscore_password
+    ports:
+      - "5432:5432" # Expose port 5432 if needed for external access (optional)
 
 networks:
   devcontainer-network:
     driver: bridge
+
+volumes: # Define the named volume
+  postgres-data:
