@@ -11,7 +11,7 @@ interface Repository {
 
 function RepositoriesPage() {
   const [repositories, setRepositories] = useState<Repository[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [newRepoUrl, setNewRepoUrl] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);

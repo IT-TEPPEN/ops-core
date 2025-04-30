@@ -23,11 +23,21 @@ function RepositoryDetailPage() {
   const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [fileError, setFileError] = useState<string | null>(null);
   const [submitMessage, setSubmitMessage] = useState<{
     type: "success" | "error";
     text: string;
   } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Access token state
+  const [accessToken, setAccessToken] = useState<string>("");
+  const [isUpdatingToken, setIsUpdatingToken] = useState(false);
+  const [tokenMessage, setTokenMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
+  const [needsToken, setNeedsToken] = useState(false);
 
   // API base URL
   const apiHost = import.meta.env.VITE_API_HOST;
@@ -61,17 +71,32 @@ function RepositoryDetailPage() {
 
   const fetchFiles = async () => {
     setIsLoading(true);
-    setError(null);
+    setFileError(null);
+    setNeedsToken(false);
 
     try {
       const response = await fetch(`${apiUrl}/repositories/${repoId}/files`);
+      
+      if (response.status === 400) {
+        // Check if this is an access token error
+        const errorData = await response.json();
+        if (errorData.code === "ACCESS_TOKEN_REQUIRED") {
+          setNeedsToken(true);
+          setFileError("Access token is required to list repository files");
+          setFiles([]);
+          setIsLoading(false);
+          return;
+        }
+      }
+      
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
+      
       const data = await response.json();
       setFiles(data.files);
     } catch (err) {
-      setError("Failed to load repository files. Please try again later.");
+      setFileError("Failed to load repository files. Please try again later.");
       console.error("Error fetching files:", err);
     } finally {
       setIsLoading(false);
@@ -137,6 +162,58 @@ function RepositoryDetailPage() {
       setIsSubmitting(false);
     }
   };
+  
+  // Handle access token update
+  const handleTokenSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!accessToken.trim()) {
+      setTokenMessage({
+        type: "error",
+        text: "Please enter an access token",
+      });
+      return;
+    }
+    
+    setIsUpdatingToken(true);
+    setTokenMessage(null);
+    
+    try {
+      const response = await fetch(
+        `${apiUrl}/repositories/${repoId}/token`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ accessToken }),
+        }
+      );
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to update access token");
+      }
+      
+      setTokenMessage({
+        type: "success",
+        text: "Access token updated successfully!",
+      });
+      
+      // Clear the form and refetch files
+      setAccessToken("");
+      setNeedsToken(false);
+      fetchFiles();
+      
+    } catch (err) {
+      const message = 
+        err instanceof Error ? err.message : "An unknown error occurred";
+      setTokenMessage({ type: "error", text: message });
+    } finally {
+      setIsUpdatingToken(false);
+    }
+  };
 
   // Filter files to only show markdown files
   const markdownFiles = files.filter(
@@ -155,7 +232,7 @@ function RepositoryDetailPage() {
         </Link>
       </div>
 
-      {isLoading && (
+      {isLoading && !repository && (
         <p className="text-gray-500">Loading repository information...</p>
       )}
 
@@ -177,7 +254,62 @@ function RepositoryDetailPage() {
           </p>
         </div>
       )}
+      
+      {/* Access Token Form */}
+      {repository && (needsToken || fileError) && (
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
+          <h2 className="text-xl font-semibold mb-4">Repository Access Token</h2>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+            This repository requires an access token to view files. Please enter a valid access token below.
+          </p>
+          
+          <form onSubmit={handleTokenSubmit} className="space-y-4">
+            <div>
+              <label htmlFor="accessToken" className="block text-sm font-medium mb-1">
+                Access Token
+              </label>
+              <input
+                id="accessToken"
+                type="password"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                placeholder="Enter GitHub personal access token"
+                value={accessToken}
+                onChange={(e) => setAccessToken(e.target.value)}
+                required
+              />
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                For GitHub repositories, create a personal access token with 'repo' scope.
+              </p>
+            </div>
+            
+            <div>
+              <button
+                type="submit"
+                disabled={isUpdatingToken}
+                className={`px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                  isUpdatingToken ? "opacity-50 cursor-not-allowed" : ""
+                }`}
+              >
+                {isUpdatingToken ? "Updating..." : "Update Access Token"}
+              </button>
+            </div>
+            
+            {tokenMessage && (
+              <div
+                className={`mt-4 p-3 rounded ${
+                  tokenMessage.type === "success"
+                    ? "bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100"
+                    : "bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100"
+                }`}
+              >
+                {tokenMessage.text}
+              </div>
+            )}
+          </form>
+        </div>
+      )}
 
+      {/* File Selection */}
       <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
         <h2 className="text-xl font-semibold mb-4">Select Markdown Files</h2>
         <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
@@ -185,74 +317,86 @@ function RepositoryDetailPage() {
           pages in OpsCore.
         </p>
 
-        {markdownFiles.length === 0 ? (
+        {fileError && !isLoading && (
+          <div className="p-3 mb-4 bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100 rounded">
+            {fileError}
+          </div>
+        )}
+
+        {isLoading && repository && (
+          <p className="text-gray-500">Loading repository files...</p>
+        )}
+
+        {!isLoading && !fileError && markdownFiles.length === 0 ? (
           <div className="text-gray-500 dark:text-gray-400 mb-4">
             No markdown files found in this repository.
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="overflow-y-auto max-h-96 border border-gray-200 dark:border-gray-700 rounded p-2">
-              <table className="min-w-full">
-                <thead>
-                  <tr>
-                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-500 dark:text-gray-400">
-                      Select
-                    </th>
-                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-500 dark:text-gray-400">
-                      File Path
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {markdownFiles.map((file) => (
-                    <tr
-                      key={file.path}
-                      className="hover:bg-gray-100 dark:hover:bg-gray-700"
-                    >
-                      <td className="px-4 py-2">
-                        <input
-                          type="checkbox"
-                          checked={selectedFiles.includes(file.path)}
-                          onChange={() => toggleFileSelection(file.path)}
-                          className="rounded text-blue-500 focus:ring-blue-500"
-                        />
-                      </td>
-                      <td className="px-4 py-2 text-sm">{file.path}</td>
+          !needsToken && !fileError && (
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="overflow-y-auto max-h-96 border border-gray-200 dark:border-gray-700 rounded p-2">
+                <table className="min-w-full">
+                  <thead>
+                    <tr>
+                      <th className="px-4 py-2 text-left text-sm font-medium text-gray-500 dark:text-gray-400">
+                        Select
+                      </th>
+                      <th className="px-4 py-2 text-left text-sm font-medium text-gray-500 dark:text-gray-400">
+                        File Path
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600 dark:text-gray-400">
-                {selectedFiles.length} file(s) selected
-              </span>
-              <button
-                type="submit"
-                disabled={isSubmitting || selectedFiles.length === 0}
-                className={`px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-                  isSubmitting || selectedFiles.length === 0
-                    ? "opacity-50 cursor-not-allowed"
-                    : ""
-                }`}
-              >
-                {isSubmitting ? "Processing..." : "Process Selected Files"}
-              </button>
-            </div>
-
-            {submitMessage && (
-              <div
-                className={`mt-4 p-3 rounded ${
-                  submitMessage.type === "success"
-                    ? "bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100"
-                    : "bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100"
-                }`}
-              >
-                {submitMessage.text}
+                  </thead>
+                  <tbody>
+                    {markdownFiles.map((file) => (
+                      <tr
+                        key={file.path}
+                        className="hover:bg-gray-100 dark:hover:bg-gray-700"
+                      >
+                        <td className="px-4 py-2">
+                          <input
+                            type="checkbox"
+                            checked={selectedFiles.includes(file.path)}
+                            onChange={() => toggleFileSelection(file.path)}
+                            className="rounded text-blue-500 focus:ring-blue-500"
+                          />
+                        </td>
+                        <td className="px-4 py-2 text-sm">{file.path}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-            )}
-          </form>
+
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600 dark:text-gray-400">
+                  {selectedFiles.length} file(s) selected
+                </span>
+                <button
+                  type="submit"
+                  disabled={isSubmitting || selectedFiles.length === 0}
+                  className={`px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                    isSubmitting || selectedFiles.length === 0
+                      ? "opacity-50 cursor-not-allowed"
+                      : ""
+                  }`}
+                >
+                  {isSubmitting ? "Processing..." : "Process Selected Files"}
+                </button>
+              </div>
+
+              {submitMessage && (
+                <div
+                  className={`mt-4 p-3 rounded ${
+                    submitMessage.type === "success"
+                      ? "bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100"
+                      : "bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100"
+                  }`}
+                >
+                  {submitMessage.text}
+                </div>
+              )}
+            </form>
+          )
         )}
       </div>
     </div>

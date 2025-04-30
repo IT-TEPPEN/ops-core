@@ -203,13 +203,13 @@ func (h *RepositoryHandler) UpdateAccessToken(c *gin.Context) {
 // @Produce  json
 // @Param   repoId path string true "Repository ID" example:"a1b2c3d4-e5f6-7890-1234-567890abcdef"
 // @Success 200 {object} ListFilesResponse "Successfully retrieved file list"
-// @Failure 400 {object} ErrorResponse "Invalid repository ID format"
+// @Failure 400 {object} ErrorResponse "Invalid repository ID format or access token missing"
 // @Failure 404 {object} ErrorResponse "Repository not found"
 // @Failure 500 {object} ErrorResponse "Internal server error"
 // @Router /repositories/{repoId}/files [get]
 func (h *RepositoryHandler) ListRepositoryFiles(c *gin.Context) {
 	repoId := c.Param("repoId")
-	requestID := c.GetString("request_id") // ミドルウェアから設定されたリクエストID
+	requestID := c.GetString("request_id")
 
 	if repoId == "" {
 		h.logger.Warn("Missing repository ID", "request_id", requestID)
@@ -225,6 +225,9 @@ func (h *RepositoryHandler) ListRepositoryFiles(c *gin.Context) {
 		if errors.Is(err, repository.ErrRepositoryNotFound) {
 			h.logger.Warn("Repository not found", "request_id", requestID, "repo_id", repoId)
 			c.JSON(http.StatusNotFound, ErrorResponse{Code: "NOT_FOUND", Message: err.Error()})
+		} else if errors.Is(err, repository.ErrAccessTokenRequired) {
+			h.logger.Warn("Access token required", "request_id", requestID, "repo_id", repoId)
+			c.JSON(http.StatusBadRequest, ErrorResponse{Code: "ACCESS_TOKEN_REQUIRED", Message: "Access token is required to list repository files"})
 		} else {
 			h.logger.Error("Failed to list repository files", "request_id", requestID, "repo_id", repoId, "error", err.Error())
 			c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_ERROR", Message: "Failed to list repository files"})
@@ -380,4 +383,50 @@ func (h *RepositoryHandler) ListRepositories(c *gin.Context) {
 	c.JSON(http.StatusOK, ListRepositoriesResponse{
 		Repositories: repoResponses,
 	})
+}
+
+// GetRepository godoc
+// @Summary Get repository details
+// @Description Retrieves detailed information about a specific repository by ID
+// @Tags repositories
+// @Produce json
+// @Param   repoId path string true "Repository ID" example:"a1b2c3d4-e5f6-7890-1234-567890abcdef"
+// @Success 200 {object} RepositoryResponse "Successfully retrieved repository details"
+// @Failure 400 {object} ErrorResponse "Invalid repository ID format"
+// @Failure 404 {object} ErrorResponse "Repository not found"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /repositories/{repoId} [get]
+func (h *RepositoryHandler) GetRepository(c *gin.Context) {
+	repoId := c.Param("repoId")
+	requestID := c.GetString("request_id")
+
+	if repoId == "" {
+		h.logger.Warn("Missing repository ID", "request_id", requestID)
+		c.JSON(http.StatusBadRequest, ErrorResponse{Code: "INVALID_ID", Message: "Repository ID is required"})
+		return
+	}
+
+	h.logger.Info("Getting repository details", "request_id", requestID, "repo_id", repoId)
+	repo, err := h.repoUseCase.GetRepository(c.Request.Context(), repoId)
+
+	if err != nil {
+		if errors.Is(err, repository.ErrRepositoryNotFound) {
+			h.logger.Warn("Repository not found", "request_id", requestID, "repo_id", repoId)
+			c.JSON(http.StatusNotFound, ErrorResponse{Code: "NOT_FOUND", Message: "Repository not found"})
+		} else {
+			h.logger.Error("Failed to get repository details", "request_id", requestID, "repo_id", repoId, "error", err.Error())
+			c.JSON(http.StatusInternalServerError, ErrorResponse{Code: "INTERNAL_ERROR", Message: "Failed to retrieve repository details"})
+		}
+		return
+	}
+
+	h.logger.Info("Successfully retrieved repository details", "request_id", requestID, "repo_id", repoId)
+	response := RepositoryResponse{
+		ID:        repo.ID(),
+		Name:      repo.Name(),
+		URL:       repo.URL(),
+		CreatedAt: repo.CreatedAt(),
+		UpdatedAt: repo.UpdatedAt(),
+	}
+	c.JSON(http.StatusOK, response)
 }

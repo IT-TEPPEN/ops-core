@@ -23,6 +23,7 @@ var (
 	ErrRepositoryNotFound      = errors.New("repository not found")
 	ErrInvalidRepositoryURL    = errors.New("invalid repository URL format")
 	ErrUnsupportedURLScheme    = errors.New("unsupported repository URL scheme: only https is supported")
+	ErrAccessTokenRequired     = errors.New("access token is required for this operation")
 )
 
 // 有効なGitリポジトリURLのパターン
@@ -33,6 +34,8 @@ var (
 // RepositoryUseCase defines the interface for repository related use cases.
 type RepositoryUseCase interface {
 	Register(ctx context.Context, repoURL string, accessToken string) (*model.Repository, error) // Return created repository
+	// GetRepository retrieves a single repository by its ID
+	GetRepository(ctx context.Context, repoID string) (*model.Repository, error)
 	// ListRepositories retrieves all registered repositories
 	ListRepositories(ctx context.Context) ([]*model.Repository, error)
 	// ListFiles retrieves the file structure for a given repository ID.
@@ -127,6 +130,21 @@ func (uc *repositoryUseCase) Register(ctx context.Context, repoURL string, acces
 	return newRepo, nil
 }
 
+// GetRepository retrieves a single repository by its ID.
+func (uc *repositoryUseCase) GetRepository(ctx context.Context, repoID string) (*model.Repository, error) {
+	// Find the repository by ID
+	repo, err := uc.repo.FindByID(ctx, repoID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve repository: %w", err)
+	}
+
+	if repo == nil {
+		return nil, ErrRepositoryNotFound
+	}
+
+	return repo, nil
+}
+
 // ListRepositories implements the logic for retrieving all registered repositories.
 func (uc *repositoryUseCase) ListRepositories(ctx context.Context) ([]*model.Repository, error) {
 	// Get all repositories from the repository layer
@@ -147,6 +165,11 @@ func (uc *repositoryUseCase) ListFiles(ctx context.Context, repoID string) ([]*m
 	}
 	if repo == nil {
 		return nil, ErrRepositoryNotFound
+	}
+
+	// Check if access token is set
+	if repo.AccessToken() == "" {
+		return nil, ErrAccessTokenRequired
 	}
 
 	// 3. Ensure repository is cloned/updated locally and get its path

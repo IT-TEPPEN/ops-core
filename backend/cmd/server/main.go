@@ -80,7 +80,8 @@ func main() {
 	{
 		// Repository routes - use methods from the initialized handler
 		v1.POST("/repositories", repoHandler.RegisterRepository)
-		v1.GET("/repositories", repoHandler.ListRepositories) // Adding this route to list all repositories
+		v1.GET("/repositories", repoHandler.ListRepositories)      // Adding this route to list all repositories
+		v1.GET("/repositories/:repoId", repoHandler.GetRepository) // New route to get repository details by ID
 		v1.GET("/repositories/:repoId/files", repoHandler.ListRepositoryFiles)
 		v1.POST("/repositories/:repoId/files/select", repoHandler.SelectRepositoryFiles)
 		v1.GET("/repositories/:repoId/markdown", repoHandler.GetSelectedMarkdown)
