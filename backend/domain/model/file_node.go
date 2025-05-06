@@ -12,7 +12,7 @@ type FileNode interface {
 }
 
 // NewFileNode creates a new FileNode with the given path and type.
-func NewFileNode(path, type_ string) *fileNode {
+func NewFileNode(path, type_ string) FileNode {
 	return &fileNode{
 		path:  path,
 		type_: type_,
