@@ -33,13 +33,13 @@ var (
 
 // RepositoryUseCase defines the interface for repository related use cases.
 type RepositoryUseCase interface {
-	Register(ctx context.Context, repoURL string, accessToken string) (*model.Repository, error) // Return created repository
+	Register(ctx context.Context, repoURL string, accessToken string) (model.Repository, error) // Return created repository
 	// GetRepository retrieves a single repository by its ID
-	GetRepository(ctx context.Context, repoID string) (*model.Repository, error)
+	GetRepository(ctx context.Context, repoID string) (model.Repository, error)
 	// ListRepositories retrieves all registered repositories
-	ListRepositories(ctx context.Context) ([]*model.Repository, error)
+	ListRepositories(ctx context.Context) ([]model.Repository, error)
 	// ListFiles retrieves the file structure for a given repository ID.
-	ListFiles(ctx context.Context, repoID string) ([]*model.FileNode, error) // Use model.FileNode
+	ListFiles(ctx context.Context, repoID string) ([]model.FileNode, error) // Use model.FileNode
 	// SelectFiles marks specific files within a repository as manageable.
 	SelectFiles(ctx context.Context, repoID string, filePaths []string) error
 	// GetSelectedMarkdown retrieves the concatenated content of selected Markdown files.
@@ -84,7 +84,7 @@ func validateRepositoryURL(repoURL string) error {
 }
 
 // Register implements the logic for registering a new repository.
-func (uc *repositoryUseCase) Register(ctx context.Context, repoURL string, accessToken string) (*model.Repository, error) {
+func (uc *repositoryUseCase) Register(ctx context.Context, repoURL string, accessToken string) (model.Repository, error) {
 	// 1. Validate URL with enhanced security
 	if err := validateRepositoryURL(repoURL); err != nil {
 		return nil, err
@@ -131,7 +131,7 @@ func (uc *repositoryUseCase) Register(ctx context.Context, repoURL string, acces
 }
 
 // GetRepository retrieves a single repository by its ID.
-func (uc *repositoryUseCase) GetRepository(ctx context.Context, repoID string) (*model.Repository, error) {
+func (uc *repositoryUseCase) GetRepository(ctx context.Context, repoID string) (model.Repository, error) {
 	// Find the repository by ID
 	repo, err := uc.repo.FindByID(ctx, repoID)
 	if err != nil {
@@ -146,7 +146,7 @@ func (uc *repositoryUseCase) GetRepository(ctx context.Context, repoID string) (
 }
 
 // ListRepositories implements the logic for retrieving all registered repositories.
-func (uc *repositoryUseCase) ListRepositories(ctx context.Context) ([]*model.Repository, error) {
+func (uc *repositoryUseCase) ListRepositories(ctx context.Context) ([]model.Repository, error) {
 	// Get all repositories from the repository layer
 	repos, err := uc.repo.FindAll(ctx)
 	if err != nil {
@@ -157,7 +157,7 @@ func (uc *repositoryUseCase) ListRepositories(ctx context.Context) ([]*model.Rep
 }
 
 // ListFiles implements the logic for listing files in a repository.
-func (uc *repositoryUseCase) ListFiles(ctx context.Context, repoID string) ([]*model.FileNode, error) {
+func (uc *repositoryUseCase) ListFiles(ctx context.Context, repoID string) ([]model.FileNode, error) {
 	// 1. Find the repository by ID
 	repo, err := uc.repo.FindByID(ctx, repoID)
 	if err != nil {
@@ -185,7 +185,7 @@ func (uc *repositoryUseCase) ListFiles(ctx context.Context, repoID string) ([]*m
 	}
 
 	// 5. Map the output to []model.FileNode (Basic mapping)
-	fileNodes := make([]*model.FileNode, 0, len(files))
+	fileNodes := make([]model.FileNode, 0, len(files))
 	for _, f := range files {
 		fileType := "file"
 		fileNodes = append(fileNodes, model.NewFileNode(f, fileType))

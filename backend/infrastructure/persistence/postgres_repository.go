@@ -26,7 +26,7 @@ func NewPostgresRepository(db *pgxpool.Pool) repository.Repository {
 }
 
 // Save persists a repository in the PostgreSQL database.
-func (r *PostgresRepository) Save(ctx context.Context, repo *model.Repository) error {
+func (r *PostgresRepository) Save(ctx context.Context, repo model.Repository) error {
 	query := `
 		INSERT INTO repositories (id, name, url, access_token, created_at, updated_at)
 		VALUES ($1, $2, $3, $4, $5, $6)
@@ -50,7 +50,7 @@ func (r *PostgresRepository) Save(ctx context.Context, repo *model.Repository) e
 }
 
 // FindByURL retrieves a repository by its URL from the PostgreSQL database.
-func (r *PostgresRepository) FindByURL(ctx context.Context, url string) (*model.Repository, error) {
+func (r *PostgresRepository) FindByURL(ctx context.Context, url string) (model.Repository, error) {
 	query := `
 		SELECT id, name, url, access_token, created_at, updated_at
 		FROM repositories
@@ -85,7 +85,7 @@ func (r *PostgresRepository) FindByURL(ctx context.Context, url string) (*model.
 }
 
 // FindByID retrieves a repository by its ID from the PostgreSQL database.
-func (r *PostgresRepository) FindByID(ctx context.Context, id string) (*model.Repository, error) {
+func (r *PostgresRepository) FindByID(ctx context.Context, id string) (model.Repository, error) {
 	query := `
 		SELECT id, name, url, access_token, created_at, updated_at
 		FROM repositories
@@ -122,7 +122,7 @@ func (r *PostgresRepository) FindByID(ctx context.Context, id string) (*model.Re
 }
 
 // FindAll retrieves all repositories from the PostgreSQL database.
-func (r *PostgresRepository) FindAll(ctx context.Context) ([]*model.Repository, error) {
+func (r *PostgresRepository) FindAll(ctx context.Context) ([]model.Repository, error) {
 	query := `
 		SELECT id, name, url, access_token, created_at, updated_at
 		FROM repositories
@@ -135,7 +135,7 @@ func (r *PostgresRepository) FindAll(ctx context.Context) ([]*model.Repository, 
 	}
 	defer rows.Close()
 
-	var repositories []*model.Repository
+	var repositories []model.Repository
 	for rows.Next() {
 		var id, name, url string
 		var accessToken sql.NullString
