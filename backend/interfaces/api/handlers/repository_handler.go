@@ -218,7 +218,7 @@ func (h *RepositoryHandler) ListRepositoryFiles(c *gin.Context) {
 	}
 
 	h.logger.Info("Listing repository files", "request_id", requestID, "repo_id", repoId)
-	// Call the use case which now returns []*model.FileNode
+	// Call the use case which now returns []model.FileNode
 	domainFiles, err := h.repoUseCase.ListFiles(c.Request.Context(), repoId)
 
 	if err != nil {

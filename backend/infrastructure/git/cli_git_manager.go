@@ -29,14 +29,14 @@ func NewCliGitManager(baseClonePath string) (GitManager, error) {
 }
 
 // getLocalPath determines the local directory path for a given repository.
-func (g *cliGitManager) getLocalPath(repo *model.Repository) string {
+func (g *cliGitManager) getLocalPath(repo model.Repository) string {
 	// Use a sanitized version of the repo ID or name as the directory name
 	// Using ID is generally safer to avoid collisions and special characters.
 	return filepath.Join(g.baseClonePath, repo.ID())
 }
 
 // runGitCommand executes a git command in the specified directory.
-func (g *cliGitManager) runGitCommand(ctx context.Context, dir string, repo *model.Repository, args ...string) ([]byte, error) {
+func (g *cliGitManager) runGitCommand(ctx context.Context, dir string, repo model.Repository, args ...string) ([]byte, error) {
 	if len(args) == 0 {
 		return nil, fmt.Errorf("no git command specified")
 	}
@@ -118,7 +118,7 @@ echo "%s"
 }
 
 // EnsureCloned clones or updates the repository.
-func (g *cliGitManager) EnsureCloned(ctx context.Context, repo *model.Repository) (string, error) {
+func (g *cliGitManager) EnsureCloned(ctx context.Context, repo model.Repository) (string, error) {
 	localPath := g.getLocalPath(repo)
 
 	// Check if the directory exists
@@ -155,7 +155,7 @@ func (g *cliGitManager) EnsureCloned(ctx context.Context, repo *model.Repository
 }
 
 // ListRepositoryFiles lists all files tracked by git.
-func (g *cliGitManager) ListRepositoryFiles(ctx context.Context, localPath string, repo *model.Repository) ([]string, error) {
+func (g *cliGitManager) ListRepositoryFiles(ctx context.Context, localPath string, repo model.Repository) ([]string, error) {
 	output, err := g.runGitCommand(ctx, localPath, repo, "ls-tree", "-r", "--name-only", "HEAD")
 	if err != nil {
 		return nil, fmt.Errorf("failed to list files in %s: %w", localPath, err)
@@ -173,7 +173,7 @@ func (g *cliGitManager) ListRepositoryFiles(ctx context.Context, localPath strin
 }
 
 // ValidateFilesExist checks if files exist in the git repository index.
-func (g *cliGitManager) ValidateFilesExist(ctx context.Context, localPath string, filePaths []string, repo *model.Repository) error {
+func (g *cliGitManager) ValidateFilesExist(ctx context.Context, localPath string, filePaths []string, repo model.Repository) error {
 	if len(filePaths) == 0 {
 		return nil // Nothing to validate
 	}
@@ -187,7 +187,7 @@ func (g *cliGitManager) ValidateFilesExist(ctx context.Context, localPath string
 }
 
 // ReadManagedFileContent reads the content of a specific file.
-func (g *cliGitManager) ReadManagedFileContent(ctx context.Context, localPath string, filePath string, repo *model.Repository) ([]byte, error) {
+func (g *cliGitManager) ReadManagedFileContent(ctx context.Context, localPath string, filePath string, repo model.Repository) ([]byte, error) {
 	// セキュリティ強化: filePath内の危険な文字列をチェック
 	if strings.Contains(filePath, "..") || strings.Contains(filePath, "~") {
 		return nil, fmt.Errorf("invalid file path containing potentially dangerous sequences: %s", filePath)

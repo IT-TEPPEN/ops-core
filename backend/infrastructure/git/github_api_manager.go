@@ -34,7 +34,7 @@ func NewGithubApiManager(baseClonePath string) (GitManager, error) {
 }
 
 // getLocalPath determines the local directory path for a given repository.
-func (g *githubApiManager) getLocalPath(repo *model.Repository) string {
+func (g *githubApiManager) getLocalPath(repo model.Repository) string {
 	// Use a sanitized version of the repo ID as the directory name
 	return filepath.Join(g.baseClonePath, repo.ID())
 }
@@ -81,7 +81,7 @@ func parseGitHubURL(repoURL string) (string, string, error) {
 }
 
 // EnsureCloned ensures the repository is available locally, either by cloning it or updating an existing clone.
-func (g *githubApiManager) EnsureCloned(ctx context.Context, repo *model.Repository) (string, error) {
+func (g *githubApiManager) EnsureCloned(ctx context.Context, repo model.Repository) (string, error) {
 	localPath := g.getLocalPath(repo)
 
 	// Extract owner and repo name from URL
@@ -190,7 +190,7 @@ func (g *githubApiManager) downloadRepository(ctx context.Context, client *githu
 }
 
 // ListRepositoryFiles lists all files in the repository.
-func (g *githubApiManager) ListRepositoryFiles(ctx context.Context, localPath string, repo *model.Repository) ([]string, error) {
+func (g *githubApiManager) ListRepositoryFiles(ctx context.Context, localPath string, repo model.Repository) ([]string, error) {
 	// Get the file list from the local clone
 	var files []string
 	err := filepath.Walk(localPath, func(path string, info os.FileInfo, err error) error {
@@ -262,7 +262,7 @@ func (g *githubApiManager) listFilesFromAPI(ctx context.Context, client *github.
 }
 
 // ValidateFilesExist checks if files exist in the repository.
-func (g *githubApiManager) ValidateFilesExist(ctx context.Context, localPath string, filePaths []string, repo *model.Repository) error {
+func (g *githubApiManager) ValidateFilesExist(ctx context.Context, localPath string, filePaths []string, repo model.Repository) error {
 	if len(filePaths) == 0 {
 		return nil // Nothing to validate
 	}
@@ -281,7 +281,7 @@ func (g *githubApiManager) ValidateFilesExist(ctx context.Context, localPath str
 }
 
 // ReadManagedFileContent reads the content of a repository file.
-func (g *githubApiManager) ReadManagedFileContent(ctx context.Context, localPath string, filePath string, repo *model.Repository) ([]byte, error) {
+func (g *githubApiManager) ReadManagedFileContent(ctx context.Context, localPath string, filePath string, repo model.Repository) ([]byte, error) {
 	// Security check: ensure the filePath doesn't contain path traversal sequences
 	if strings.Contains(filePath, "..") {
 		return nil, fmt.Errorf("invalid file path containing path traversal sequences: %s", filePath)
