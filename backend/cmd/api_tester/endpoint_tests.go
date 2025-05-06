@@ -79,7 +79,7 @@ func RunEndpointTest(endpoint string) {
 		var markdownFiles []string
 		for _, file := range files {
 			if file.Type == "file" && len(markdownFiles) < 3 {
-				if len(file.Path) > 3 && file.Path[len(file.Path)-3:] == ".md" {
+				if strings.HasSuffix(file.Path, ".md") {
 					markdownFiles = append(markdownFiles, file.Path)
 				}
 			}
