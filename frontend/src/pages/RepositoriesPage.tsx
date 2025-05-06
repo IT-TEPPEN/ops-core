@@ -1,5 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
+import { fetchRepositories as fetchRepositoriesAPI, registerRepository } from "../api/repositories";
+import RepositoryTable from "../ui/RepositoryTable";
+import ErrorMessage from "../ui/ErrorMessage";
 
 interface Repository {
   id: string;
@@ -48,53 +51,18 @@ function RepositoriesPage() {
     setIsLoading(true);
     setError(null);
 
-    // Abort previous request if it exists
-    if (fetchControllerRef.current) {
-      fetchControllerRef.current.abort();
-    }
-
-    // Create new controller for this request
-    fetchControllerRef.current = new AbortController();
-
     try {
-      console.time("repositoriesFetch"); // Add timing measurement
-
-      const response = await fetch(`${apiUrl}/repositories`, {
-        signal: fetchControllerRef.current.signal,
-        headers: {
-          "Cache-Control": "max-age=60", // Cache for 60 seconds
-        },
-      });
-
-      console.timeEnd("repositoriesFetch"); // Log fetch time
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      // Only update state if component is still mounted
-      if (isMounted.current) {
-        setRepositories(data.repositories);
-      }
+      const data = await fetchRepositoriesAPI(fetchControllerRef.current?.signal);
+      setRepositories(data.repositories);
     } catch (err) {
-      // Check if this is just an abort error (not a real error)
       if (err instanceof DOMException && err.name === "AbortError") {
         console.log("Fetch aborted");
         return;
       }
-
-      // Only update state if component is still mounted
-      if (isMounted.current) {
-        setError("Failed to load repositories. Please try again later.");
-        console.error("Error fetching repositories:", err);
-      }
+      setError("Failed to load repositories. Please try again later.");
+      console.error("Error fetching repositories:", err);
     } finally {
-      // Only update state if component is still mounted
-      if (isMounted.current) {
-        setIsLoading(false);
-      }
+      setIsLoading(false);
     }
   };
 
@@ -104,20 +72,7 @@ function RepositoriesPage() {
     setSubmitMessage(null);
 
     try {
-      const response = await fetch(`${apiUrl}/repositories`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ url: newRepoUrl }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Failed to register repository");
-      }
-
+      await registerRepository(newRepoUrl);
       setSubmitMessage({
         type: "success",
         text: "Repository registered successfully!",
@@ -185,58 +140,14 @@ function RepositoriesPage() {
 
         {isLoading && <p className="text-gray-500">Loading repositories...</p>}
 
-        {error && (
-          <div className="p-3 bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100 rounded">
-            {error}
-          </div>
-        )}
+        {error && <ErrorMessage message={error} />}
 
         {!isLoading && !error && repositories.length === 0 && (
           <p className="text-gray-500">No repositories registered yet.</p>
         )}
 
         {repositories.length > 0 && (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead className="bg-gray-50 dark:bg-gray-900">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Name
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    URL
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Created
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                {repositories.map((repo) => (
-                  <tr key={repo.id}>
-                    <td className="px-6 py-4 whitespace-nowrap">{repo.name}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      {repo.url}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      {new Date(repo.createdAt).toLocaleString()}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      <Link
-                        to={`/repositories/${repo.id}`}
-                        className="text-blue-500 hover:text-blue-700 font-medium"
-                      >
-                        Manage Files
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <RepositoryTable repositories={repositories} />
         )}
       </div>
     </div>

@@ -1,5 +1,12 @@
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
+import {
+  fetchRepositoryDetails,
+  fetchRepositoryFiles,
+  updateAccessToken,
+  selectFiles,
+} from "../api/repositories";
+import ErrorMessage from "../ui/ErrorMessage";
 
 interface Repository {
   id: string;
@@ -55,11 +62,7 @@ function RepositoryDetailPage() {
     setError(null);
 
     try {
-      const response = await fetch(`${apiUrl}/repositories/${repoId}`);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
+      const data = await fetchRepositoryDetails(repoId);
       setRepository(data);
     } catch (err) {
       setError("Failed to load repository details. Please try again later.");
@@ -75,25 +78,7 @@ function RepositoryDetailPage() {
     setNeedsToken(false);
 
     try {
-      const response = await fetch(`${apiUrl}/repositories/${repoId}/files`);
-
-      if (response.status === 400) {
-        // Check if this is an access token error
-        const errorData = await response.json();
-        if (errorData.code === "ACCESS_TOKEN_REQUIRED") {
-          setNeedsToken(true);
-          setFileError("Access token is required to list repository files");
-          setFiles([]);
-          setIsLoading(false);
-          return;
-        }
-      }
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
+      const data = await fetchRepositoryFiles(repoId);
       setFiles(data.files);
     } catch (err) {
       setFileError("Failed to load repository files. Please try again later.");
@@ -128,29 +113,11 @@ function RepositoryDetailPage() {
     setSubmitMessage(null);
 
     try {
-      const response = await fetch(
-        `${apiUrl}/repositories/${repoId}/files/select`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ filePaths: selectedFiles }),
-        }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Failed to select files");
-      }
-
+      await selectFiles(repoId, selectedFiles);
       setSubmitMessage({
         type: "success",
         text: "Files selected successfully! Redirecting to view markdown content...",
       });
-
-      // Redirect to the blog page with the repository ID as a parameter
       setTimeout(() => {
         navigate(`/blog?repoId=${repoId}`);
       }, 1500);
@@ -179,26 +146,11 @@ function RepositoryDetailPage() {
     setTokenMessage(null);
 
     try {
-      const response = await fetch(`${apiUrl}/repositories/${repoId}/token`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ accessToken }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Failed to update access token");
-      }
-
+      await updateAccessToken(repoId, accessToken);
       setTokenMessage({
         type: "success",
         text: "Access token updated successfully!",
       });
-
-      // Clear the form and refetch files
       setAccessToken("");
       setNeedsToken(false);
       fetchFiles();
@@ -232,11 +184,7 @@ function RepositoryDetailPage() {
         <p className="text-gray-500">Loading repository information...</p>
       )}
 
-      {error && (
-        <div className="p-3 bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100 rounded">
-          {error}
-        </div>
-      )}
+      {error && <ErrorMessage message={error} />}
 
       {repository && (
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
@@ -320,11 +268,7 @@ function RepositoryDetailPage() {
           pages in OpsCore.
         </p>
 
-        {fileError && !isLoading && (
-          <div className="p-3 mb-4 bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100 rounded">
-            {fileError}
-          </div>
-        )}
+        {fileError && !isLoading && <ErrorMessage message={fileError} />}
 
         {isLoading && repository && (
           <p className="text-gray-500">Loading repository files...</p>

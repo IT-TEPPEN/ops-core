@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
+import { fetchRepositoryFiles } from "../api/repositories";
+import ErrorMessage from "../ui/ErrorMessage";
 
 interface Metadata {
   [key: string]: any;
@@ -65,10 +67,6 @@ function BlogPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // API base URL
-  const apiHost = import.meta.env.VITE_API_HOST;
-  const apiUrl = apiHost ? `http://${apiHost}/api/v1` : "/api";
-
   useEffect(() => {
     if (repoId) {
       fetchMarkdownContent();
@@ -83,11 +81,7 @@ function BlogPage() {
     setError(null);
 
     try {
-      const response = await fetch(`${apiUrl}/repositories/${repoId}/markdown`);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
+      const data = await fetchRepositoryFiles(repoId);
 
       // Use custom function to parse the markdown and extract frontmatter
       const { content, data: frontmatter } = parseFrontmatter(data.content);
@@ -123,11 +117,7 @@ function BlogPage() {
         </div>
       )}
 
-      {error && (
-        <div className="p-3 bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100 rounded">
-          {error}
-        </div>
-      )}
+      {error && <ErrorMessage message={error} />}
 
       {!isLoading && !error && markdownContent && (
         <div className="flex flex-col md:flex-row gap-6">
