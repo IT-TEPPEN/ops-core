@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
+import { within, expect } from "@storybook/test";
 
 import ErrorMessage from "./ErrorMessage";
 
@@ -23,4 +24,11 @@ export const Default: Story = {
     message: "This is an error message",
   },
   render: (args) => <ErrorMessage {...args} />,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    // 👇 Test the error messag
+    const errorMessage = await canvas.findByText("This is an error message");
+    expect(errorMessage).toBeInTheDocument();
+  },
 };
