@@ -1,8 +1,12 @@
 // API functions for managing repositories
 
 // Updated to handle `window` object safely for testing environments
-const apiHost = import.meta.env.VITE_API_HOST || (typeof window !== 'undefined' ? window.location.host : 'localhost');
-const apiUrl = `${typeof window !== 'undefined' ? window.location.protocol : 'http:'}//${apiHost}/api/v1`;
+const apiHost =
+  import.meta.env.VITE_API_HOST ||
+  (typeof window !== "undefined" ? window.location.host : "localhost");
+const apiUrl = `${
+  typeof window !== "undefined" ? window.location.protocol : "http:"
+}//${apiHost}/api/v1`;
 
 export async function fetchRepositories(signal?: AbortSignal) {
   const response = await fetch(`${apiUrl}/repositories`, {
@@ -64,16 +68,28 @@ export async function updateAccessToken(repoId: string, accessToken: string) {
 }
 
 export async function selectFiles(repoId: string, filePaths: string[]) {
-  const response = await fetch(`${apiUrl}/repositories/${repoId}/files/select`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ filePaths }),
-  });
+  const response = await fetch(
+    `${apiUrl}/repositories/${repoId}/files/select`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ filePaths }),
+    }
+  );
   if (!response.ok) {
     const data = await response.json();
     throw new Error(data.message || "Failed to select files");
+  }
+  return response.json();
+}
+
+export async function getMarkdownContent(repoId: string) {
+  const response = await fetch(`${apiUrl}/repositories/${repoId}/markdown`);
+  if (!response.ok) {
+    const data = await response.json();
+    throw new Error(data.message || "Failed to get markdown content");
   }
   return response.json();
 }

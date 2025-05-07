@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
-import { fetchRepositoryFiles } from "../api/repositories";
+import { getMarkdownContent } from "../api/repositories";
 import ErrorMessage from "../ui/ErrorMessage";
 import { parseFrontmatter, TSchemaMetadata } from "../utils/markdown";
 
@@ -34,7 +34,7 @@ function BlogPage() {
     setError(null);
 
     try {
-      const data = await fetchRepositoryFiles(repoId);
+      const data = await getMarkdownContent(repoId);
 
       // Use custom function to parse the markdown and extract frontmatter
       const { content, meta: frontmatter } = parseFrontmatter(data.content);

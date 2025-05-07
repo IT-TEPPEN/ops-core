@@ -133,7 +133,7 @@ function RepositoryDetailPage() {
         text: "Files selected successfully! Redirecting to view markdown content...",
       });
       setTimeout(() => {
-        navigate(`/blog?repoId=${repoId}`);
+        navigate(`/blog?repoId=${repoId}&file=${selectedFiles[0]}`);
       }, 1500);
     } catch (err) {
       const message =
