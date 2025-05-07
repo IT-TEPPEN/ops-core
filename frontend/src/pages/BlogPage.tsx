@@ -3,67 +3,14 @@ import { useSearchParams, Link } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import { fetchRepositoryFiles } from "../api/repositories";
 import ErrorMessage from "../ui/ErrorMessage";
-
-interface Metadata {
-  [key: string]: any;
-}
-
-/**
- * Custom function to parse frontmatter from markdown content
- * This avoids using gray-matter which depends on Node.js Buffer
- */
-function parseFrontmatter(markdown: string): {
-  content: string;
-  data: Metadata;
-} {
-  const result: { content: string; data: Metadata } = {
-    content: markdown,
-    data: {},
-  };
-
-  // Check if the content starts with frontmatter delimiters (---)
-  if (!markdown.startsWith("---")) {
-    return result;
-  }
-
-  // Find the end of the frontmatter block
-  const endOfFrontmatter = markdown.indexOf("---", 3);
-  if (endOfFrontmatter === -1) {
-    return result;
-  }
-
-  // Extract frontmatter text
-  const frontmatterText = markdown.substring(3, endOfFrontmatter).trim();
-
-  // Parse frontmatter lines into key-value pairs
-  const frontmatterLines = frontmatterText.split("\n");
-  frontmatterLines.forEach((line) => {
-    const colonIndex = line.indexOf(":");
-    if (colonIndex !== -1) {
-      const key = line.substring(0, colonIndex).trim();
-      const value = line.substring(colonIndex + 1).trim();
-
-      // Try to parse as JSON if possible
-      try {
-        result.data[key] = JSON.parse(value);
-      } catch (e) {
-        // If not valid JSON, use the string value
-        result.data[key] = value;
-      }
-    }
-  });
-
-  // Return content without frontmatter
-  result.content = markdown.substring(endOfFrontmatter + 3).trim();
-  return result;
-}
+import { parseFrontmatter, TSchemaMetadata } from "../utils/markdown";
 
 function BlogPage() {
   const [searchParams] = useSearchParams();
   const repoId = searchParams.get("repoId");
 
   const [markdownContent, setMarkdownContent] = useState<string>("");
-  const [metadata, setMetadata] = useState<Metadata>({});
+  const [metadata, setMetadata] = useState<TSchemaMetadata>({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -74,9 +21,15 @@ function BlogPage() {
       setIsLoading(false);
       setError("No repository ID provided. Please select a repository first.");
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [repoId]);
 
   const fetchMarkdownContent = async () => {
+    if (!repoId) {
+      setError("No repository ID provided.");
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
 
@@ -84,7 +37,7 @@ function BlogPage() {
       const data = await fetchRepositoryFiles(repoId);
 
       // Use custom function to parse the markdown and extract frontmatter
-      const { content, data: frontmatter } = parseFrontmatter(data.content);
+      const { content, meta: frontmatter } = parseFrontmatter(data.content);
 
       // Set the main content without frontmatter
       setMarkdownContent(content);

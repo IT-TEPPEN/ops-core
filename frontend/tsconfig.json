@@ -1,6 +1,5 @@
 {
   "files": [],
-  "types": ["@vitest/browser/providers/playwright"],
   "references": [
     { "path": "./tsconfig.app.json" },
     { "path": "./tsconfig.node.json" }

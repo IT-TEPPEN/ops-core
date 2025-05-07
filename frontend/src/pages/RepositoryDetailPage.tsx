@@ -46,18 +46,20 @@ function RepositoryDetailPage() {
   } | null>(null);
   const [needsToken, setNeedsToken] = useState(false);
 
-  // API base URL
-  const apiHost = import.meta.env.VITE_API_HOST;
-  const apiUrl = apiHost ? `http://${apiHost}/api/v1` : "/api";
-
   // Fetch repository details and files on component mount
   useEffect(() => {
     if (repoId) {
       Promise.all([fetchRepository(), fetchFiles()]);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [repoId]);
 
   const fetchRepository = async () => {
+    if (!repoId) {
+      setError("No repository ID provided.");
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
 
@@ -73,6 +75,10 @@ function RepositoryDetailPage() {
   };
 
   const fetchFiles = async () => {
+    if (!repoId) {
+      setFileError("No repository ID provided.");
+      return;
+    }
     setIsLoading(true);
     setFileError(null);
     setNeedsToken(false);
@@ -99,6 +105,14 @@ function RepositoryDetailPage() {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
+    if (!repoId) {
+      setSubmitMessage({
+        type: "error",
+        text: "No repository ID provided.",
+      });
+      return;
+    }
+
     e.preventDefault();
 
     if (selectedFiles.length === 0) {
@@ -132,6 +146,13 @@ function RepositoryDetailPage() {
 
   // Handle access token update
   const handleTokenSubmit = async (e: React.FormEvent) => {
+    if (!repoId) {
+      setTokenMessage({
+        type: "error",
+        text: "No repository ID provided.",
+      });
+      return;
+    }
     e.preventDefault();
 
     if (!accessToken.trim()) {

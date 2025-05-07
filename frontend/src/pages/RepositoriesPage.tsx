@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from "react";
-import { Link } from "react-router-dom";
-import { fetchRepositories as fetchRepositoriesAPI, registerRepository } from "../api/repositories";
+import {
+  fetchRepositories as fetchRepositoriesAPI,
+  registerRepository,
+} from "../api/repositories";
 import RepositoryTable from "../ui/RepositoryTable";
 import ErrorMessage from "../ui/ErrorMessage";
 
@@ -27,10 +29,6 @@ function RepositoriesPage() {
   const fetchControllerRef = useRef<AbortController | null>(null);
   const isMounted = useRef(true);
 
-  // API base URL - directly use the base URL to avoid recalculation
-  const apiHost = import.meta.env.VITE_API_HOST || window.location.host;
-  const apiUrl = `${window.location.protocol}//${apiHost}/api/v1`;
-
   // Fetch repositories on component mount with better cleanup
   useEffect(() => {
     isMounted.current = true;
@@ -39,9 +37,11 @@ function RepositoriesPage() {
     return () => {
       isMounted.current = false;
       if (fetchControllerRef.current) {
+        // eslint-disable-next-line react-hooks/exhaustive-deps
         fetchControllerRef.current.abort();
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchRepositories = async () => {
@@ -52,7 +52,9 @@ function RepositoriesPage() {
     setError(null);
 
     try {
-      const data = await fetchRepositoriesAPI(fetchControllerRef.current?.signal);
+      const data = await fetchRepositoriesAPI(
+        fetchControllerRef.current?.signal
+      );
       setRepositories(data.repositories);
     } catch (err) {
       if (err instanceof DOMException && err.name === "AbortError") {
