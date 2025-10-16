@@ -152,25 +152,26 @@ func (g *githubApiManager) downloadRepository(ctx context.Context, client *githu
 
 		switch *content.Type {
 		case "file":
-			// Download file
-			fileContent, _, _, err := client.Repositories.GetContents(ctx, owner, repo, *content.Path, &github.RepositoryContentGetOptions{})
-			if err != nil {
-				return fmt.Errorf("failed to get file content for %s: %w", *content.Path, err)
-			}
-
 			// Ensure directory exists
 			dir := filepath.Dir(localFilePath)
 			if err := os.MkdirAll(dir, 0755); err != nil {
 				return fmt.Errorf("failed to create directory %s: %w", dir, err)
 			}
 
-			// Decode and save file content
-			content, err := fileContent.GetContent()
+			fileContentStr, err := content.GetContent()
 			if err != nil {
-				return fmt.Errorf("failed to decode content for %s: %w", *fileContent.Path, err)
+				fileContent, _, _, fetchErr := client.Repositories.GetContents(ctx, owner, repo, *content.Path, &github.RepositoryContentGetOptions{})
+				if fetchErr != nil {
+					return fmt.Errorf("failed to get file content for %s: %w", *content.Path, fetchErr)
+				}
+
+				fileContentStr, err = fileContent.GetContent()
+				if err != nil {
+					return fmt.Errorf("failed to decode content for %s: %w", *content.Path, err)
+				}
 			}
 
-			if err := os.WriteFile(localFilePath, []byte(content), 0644); err != nil {
+			if err := os.WriteFile(localFilePath, []byte(fileContentStr), 0644); err != nil {
 				return fmt.Errorf("failed to write file %s: %w", localFilePath, err)
 			}
 
