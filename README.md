@@ -129,7 +129,7 @@ Phase 3では、生成AIを活用した高度な運用支援機能を提供し�
 
 ```bash
 # 開発環境の起動（Docker Compose）
-docker-compose up -d
+docker compose up -d
 
 # バックエンドの起動
 cd backend
