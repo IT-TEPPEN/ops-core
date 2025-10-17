@@ -7,8 +7,12 @@
 package main
 
 import (
+	"crypto/rand"
+	"encoding/hex"
+	"fmt"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"log/slog"
+	"opscore/backend/infrastructure/crypto"
 	"opscore/backend/infrastructure/git"
 	"opscore/backend/infrastructure/persistence"
 	"opscore/backend/interfaces/api/handlers"
@@ -25,7 +29,11 @@ import (
 
 // InitializeAPI initializes all dependencies for the API handlers, using Postgres.
 func InitializeAPI(db *pgxpool.Pool) (*handlers.RepositoryHandler, error) {
-	repositoryRepository := persistence.NewPostgresRepository(db)
+	encryptor, err := provideEncryptor()
+	if err != nil {
+		return nil, err
+	}
+	repositoryRepository := persistence.NewPostgresRepository(db, encryptor)
 	gitManager, err := provideGitManager()
 	if err != nil {
 		return nil, err
@@ -102,4 +110,32 @@ func provideAppLogger() *slog.Logger {
 // provideHandlerLogger adapts slog.Logger to the handlers.Logger interface
 func provideHandlerLogger() handlers.Logger {
 	return &SlogLoggerAdapter{logger: provideAppLogger()}
+}
+
+// provideEncryptor is a Wire provider function for Encryptor.
+func provideEncryptor() (crypto.Encryptor, error) {
+	keyHex := os.Getenv("ENCRYPTION_KEY")
+	var keyBytes []byte
+	var err error
+
+	if keyHex == "" {
+		slog.Warn("ENCRYPTION_KEY not set, generating random key (tokens will be lost on restart)")
+		keyBytes = make([]byte, 32)
+		if _, err := rand.Read(keyBytes); err != nil {
+			return nil, fmt.Errorf("failed to generate random encryption key: %w", err)
+		}
+		slog.Info("Generated random encryption key", "key", hex.EncodeToString(keyBytes))
+	} else {
+		keyBytes, err = hex.DecodeString(keyHex)
+		if err != nil {
+			return nil, fmt.Errorf("failed to decode ENCRYPTION_KEY: must be 64 hex characters (32 bytes): %w", err)
+		}
+	}
+
+	encryptor, err := crypto.NewAESEncryptor(keyBytes)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create encryptor: %w", err)
+	}
+
+	return encryptor, nil
 }

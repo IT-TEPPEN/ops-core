@@ -4,10 +4,14 @@
 package main
 
 import (
+	"crypto/rand"
+	"encoding/hex"
+	"fmt"
 	"log/slog"
 	"os"
 	"time"
 
+	"opscore/backend/infrastructure/crypto"
 	"opscore/backend/infrastructure/git"
 	"opscore/backend/infrastructure/persistence"
 	"opscore/backend/interfaces/api/handlers"
@@ -83,11 +87,40 @@ func provideHandlerLogger() handlers.Logger {
 	return &SlogLoggerAdapter{logger: provideAppLogger()}
 }
 
+// provideEncryptor is a Wire provider function for Encryptor.
+func provideEncryptor() (crypto.Encryptor, error) {
+	keyHex := os.Getenv("ENCRYPTION_KEY")
+	var keyBytes []byte
+	var err error
+
+	if keyHex == "" {
+		slog.Warn("ENCRYPTION_KEY not set, generating random key (tokens will be lost on restart)")
+		keyBytes = make([]byte, 32)
+		if _, err := rand.Read(keyBytes); err != nil {
+			return nil, fmt.Errorf("failed to generate random encryption key: %w", err)
+		}
+		slog.Info("Generated random encryption key", "key", hex.EncodeToString(keyBytes))
+	} else {
+		keyBytes, err = hex.DecodeString(keyHex)
+		if err != nil {
+			return nil, fmt.Errorf("failed to decode ENCRYPTION_KEY: must be 64 hex characters (32 bytes): %w", err)
+		}
+	}
+
+	encryptor, err := crypto.NewAESEncryptor(keyBytes)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create encryptor: %w", err)
+	}
+
+	return encryptor, nil
+}
+
 // InitializeAPI initializes all dependencies for the API handlers, using Postgres.
 func InitializeAPI(db *pgxpool.Pool) (*handlers.RepositoryHandler, error) {
 	wire.Build(
 		provideGitManager,
 		provideHandlerLogger,
+		provideEncryptor,
 		persistence.NewPostgresRepository,
 		repoUseCase.NewRepositoryUseCase,
 		handlers.NewRepositoryHandler,
