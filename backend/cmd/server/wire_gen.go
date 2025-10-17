@@ -124,7 +124,7 @@ func provideEncryptor() (crypto.Encryptor, error) {
 		if _, err := rand.Read(keyBytes); err != nil {
 			return nil, fmt.Errorf("failed to generate random encryption key: %w", err)
 		}
-		slog.Info("Generated random encryption key", "key", hex.EncodeToString(keyBytes))
+		slog.Info("Generated random encryption key")
 	} else {
 		keyBytes, err = hex.DecodeString(keyHex)
 		if err != nil {
