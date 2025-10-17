@@ -2,7 +2,9 @@ package persistence
 
 import (
 	"context"
+	"crypto/rand"
 	"opscore/backend/domain/model"
+	"opscore/backend/infrastructure/crypto"
 	"os"
 	"testing"
 	"time"
@@ -35,7 +37,6 @@ func TestPostgresRepository(t *testing.T) {
 
 // SetupSuite はテストスイート全体の前処理を行います。
 func (s *PostgresRepositoryTestSuite) SetupSuite() {
-	// テスト用のデータベース接続を設定
 	dbURL := os.Getenv("TEST_DATABASE_URL")
 	var err error
 	s.ctx = context.Background()
@@ -44,8 +45,19 @@ func (s *PostgresRepositoryTestSuite) SetupSuite() {
 		s.T().Fatalf("テスト用のデータベース接続に失敗しました: %v", err)
 	}
 
-	// PostgresRepositoryのインスタンスを作成
-	s.repository = &PostgresRepository{db: s.db}
+	key := make([]byte, 32)
+	if _, err := rand.Read(key); err != nil {
+		s.T().Fatalf("暗号化キーの生成に失敗しました: %v", err)
+	}
+	encryptor, err := crypto.NewAESEncryptor(key)
+	if err != nil {
+		s.T().Fatalf("暗号化ツールの作成に失敗しました: %v", err)
+	}
+
+	s.repository = &PostgresRepository{
+		db:        s.db,
+		encryptor: encryptor,
+	}
 }
 
 // TearDownSuite はテストスイート全体の後処理を行います。
