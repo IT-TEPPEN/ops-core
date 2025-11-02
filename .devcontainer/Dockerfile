@@ -1,5 +1,5 @@
 # Use an official Go runtime as a parent image
-FROM mcr.microsoft.com/devcontainers/go:1.23
+FROM mcr.microsoft.com/devcontainers/go:1.25
 
 # Install Node.js, npm, and Vite for frontend development
 USER root
@@ -12,7 +12,7 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
 RUN npm install -g npm@latest vite concurrently
 
 # Install Go tools
-RUN go install github.com/air-verse/air@latest # For live reloading Go apps
+RUN go install github.com/air-verse/air@v1.63.0 # For live reloading Go apps
 RUN chown -R vscode /go
 RUN chmod -R u+w /go
 
