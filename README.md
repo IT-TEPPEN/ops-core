@@ -19,6 +19,7 @@ Phase 1では、外部リポジトリからMarkdownファイルを取得・表�
 1. **リポジトリ管理**
    - GitHubリポジトリの登録・一覧表示・削除
    - アクセストークンの設定・更新
+   - アクセストークンのAES-256-GCM暗号化
    - リポジトリ情報の永続化（PostgreSQL）
 
 2. **ファイル管理**
@@ -45,7 +46,6 @@ Phase 1では、外部リポジトリからMarkdownファイルを取得・表�
 
 #### Phase 1の残タスク
 
-- アクセストークンの暗号化実装
 - テストカバレッジの向上
 - エラーハンドリングとユーザーフィードバックの改善
 - ADRと実装の整合性確保
@@ -131,8 +131,13 @@ Phase 3では、生成AIを活用した高度な運用支援機能を提供し�
 # 開発環境の起動（Docker Compose）
 docker compose up -d
 
-# バックエンドの起動
+# バックエンドの環境変数設定
 cd backend
+cp .env.example .env
+# .envファイルを編集し、ENCRYPTION_KEYを設定
+# 暗号化キーの生成: openssl rand -hex 32
+
+# バックエンドの起動
 go run cmd/server/main.go
 
 # フロントエンドの起動
@@ -140,6 +145,19 @@ cd frontend
 npm install
 npm run dev
 ```
+
+### 環境変数
+
+バックエンドの動作に必要な環境変数は以下の通りです：
+
+- `DATABASE_URL`: PostgreSQLデータベースの接続URL（必須）
+- `ENCRYPTION_KEY`: アクセストークン暗号化用の32バイト（64文字の16進数）キー（必須）
+  - 生成方法: `openssl rand -hex 32`
+  - **重要**: このキーは厳重に管理してください。キーを変更すると既存の暗号化されたトークンが復号できなくなります
+- `LOG_LEVEL`: ログレベル（DEBUG/INFO/WARN/ERROR、デフォルト: INFO）
+- `PORT`: サーバーのポート番号（デフォルト: 8080）
+
+詳細は`backend/.env.example`を参照してください。
 
 ## ライセンス
 
