@@ -8,10 +8,10 @@ import (
 	"os"
 	"time"
 
-	"opscore/backend/infrastructure/git"
-	"opscore/backend/infrastructure/persistence"
-	"opscore/backend/interfaces/api/handlers"
-	repoUseCase "opscore/backend/usecases/repository"
+	"opscore/backend/internal/git_repository/infrastructure/git"
+	"opscore/backend/internal/git_repository/infrastructure/persistence"
+	"opscore/backend/internal/git_repository/interfaces/api/handlers"
+	repoUseCase "opscore/backend/internal/git_repository/application/usecase"
 
 	"github.com/google/wire"
 	"github.com/jackc/pgx/v5/pgxpool"

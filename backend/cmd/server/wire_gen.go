@@ -9,10 +9,10 @@ package main
 import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"log/slog"
-	"opscore/backend/infrastructure/git"
-	"opscore/backend/infrastructure/persistence"
-	"opscore/backend/interfaces/api/handlers"
-	"opscore/backend/usecases/repository"
+	"opscore/backend/internal/git_repository/application/usecase"
+	"opscore/backend/internal/git_repository/infrastructure/git"
+	"opscore/backend/internal/git_repository/infrastructure/persistence"
+	"opscore/backend/internal/git_repository/interfaces/api/handlers"
 	"os"
 	"time"
 )
