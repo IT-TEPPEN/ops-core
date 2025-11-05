@@ -28,7 +28,7 @@
         "yzhang.markdown-all-in-one", // Markdown support
         "DavidAnson.vscode-markdownlint", // Markdown linting
         "hediet.vscode-drawio", // Draw.io integration
-        "jebbs.plantuml",
+        "bierner.github-markdown-preview",
 
         // GitHub Copilot
         "github.copilot",
@@ -168,7 +168,8 @@
 
   // Optional: Ensure the user running in the container has permissions for the Docker socket
   // This might be needed depending on your setup
-  "postCreateCommand": "sudo chown $(whoami) /var/run/docker.sock",
+  "initializeCommand": "/bin/bash .devcontainer/script/initialize.sh",
+  "postCreateCommand": "/bin/bash .devcontainer/script/post-command.sh",
 
   // Comment out connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
   // Running as vscode user provided by the Go dev container image
