@@ -115,7 +115,7 @@
   - name: string
   - value: string
 - **AccessScope**: アクセス範囲
-  - type: "public" | "private" | "shared"
+  - type: "private" | "shared"
   - sharedWith: [UserID | GroupID]
 - **StorageType**: ストレージタイプ（"local" | "s3" | "minio"）
 - **IPAddress**: IPアドレス
