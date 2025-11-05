@@ -13,58 +13,58 @@
 
 ## チェック項目一覧
 
-| # | カテゴリ | チェック項目 | 対象ファイル | 内容 | 修正要否 | 関連Issue | 備考 |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| 1 | ADR | ADR設計方針との整合性 | adr/0007-backend-architecture-onion.md | Onionアーキテクチャ・依存関係の確認 | 要確認 | #14 | internal/配下への移動が必要 |
-| 2 | ADR | DBスキーマとの整合性 | adr/0005-database-schema.md<br>adr/0004-database-specification.md | 新規エンティティのスキーマ定義追加 | **必要** | #13, #36 | Document、DocumentVersion、ExecutionRecord等の追加が必要 |
-| 3 | ADR | 外部仕様との整合性 | adr/0001-external-repository-markdown-structure.md<br>adr/0002-repository-access-method.md | variablesフィールドの追加済み確認 | **完了** | - | ADR 0001は更新済み |
-| 4 | ADR | managed_filesテーブルのADR作成 | （新規ADR作成） | managed_filesの設計判断を文書化 | **必要** | #19, #37 | 既存実装の後追いドキュメント化 |
-| 5 | ADR | API仕様の整合性 | adr/0003-backend-api-markdown-fetch.md<br>adr/0010-api-definition-generation-specification.md | 新規API仕様の追加・更新 | **必要** | #16, 新規 | 変数入力、作業証跡、検索等のAPI追加 |
-| 6 | ドメインモデル | 既存Entity修正 | backend/domain/model/repository.go<br>backend/domain/model/file_node.go | 既存エンティティの影響確認 | 要確認 | - | FileNodeはDocumentに統合の可能性 |
-| 7 | ドメインモデル | Document Entity新規作成 | backend/domain/model/document.go（新規） | Document集約ルートの実装 | **必要** | #31 | variables, versions等を含む |
-| 8 | ドメインモデル | DocumentVersion Entity新規作成 | backend/domain/model/document_version.go（新規） | DocumentVersionエンティティの実装 | **必要** | #31 | バージョン管理用 |
-| 9 | ドメインモデル | ExecutionRecord集約新規作成 | backend/domain/model/execution_record.go（新規） | ExecutionRecord集約ルートの実装 | **必要** | #32 | 作業証跡機能の中核 |
-| 10 | ドメインモデル | ExecutionStep Entity新規作成 | backend/domain/model/execution_step.go（新規） | ExecutionStepエンティティの実装 | **必要** | #32 | 作業ステップ記録 |
-| 11 | ドメインモデル | Attachment Entity新規作成 | backend/domain/model/attachment.go（新規） | Attachmentエンティティの実装 | **必要** | #32 | 画面キャプチャ等の添付ファイル |
-| 12 | ドメインモデル | User集約新規作成 | backend/domain/model/user.go（新規） | User集約ルートの実装 | **必要** | #24, #33 | 認証機能と連携 |
-| 13 | ドメインモデル | Group集約新規作成 | backend/domain/model/group.go（新規） | Group集約ルートの実装 | **必要** | #33 | グループ管理機能 |
-| 14 | ドメインモデル | ViewHistory Entity新規作成 | backend/domain/model/view_history.go（新規） | ViewHistoryエンティティの実装 | **必要** | #30 | 閲覧履歴記録 |
-| 15 | ドメインモデル | ViewStatistics集約新規作成 | backend/domain/model/view_statistics.go（新規） | ViewStatistics集約ルートの実装 | **必要** | #30 | 閲覧統計管理 |
-| 16 | 値オブジェクト | 新規値オブジェクト作成 | backend/domain/model/value_objects.go（新規または分割） | VariableDefinition, VariableValue, StorageType等 | **必要** | #31, #32 | 複数ファイルに分割も検討 |
-| 17 | Domain Service | Domain Serviceの設計・実装 | backend/domain/service/（新規追加検討） | 複数エンティティにまたがるロジック | 要検討 | - | 必要に応じて追加 |
-| 18 | テスト | 新規Entityのテスト作成 | backend/domain/model/*_test.go（新規） | 全新規エンティティのユニットテスト | **必要** | #17 | テストカバレッジ80%以上目標 |
-| 19 | Repository | DocumentRepositoryインターフェース | backend/domain/repository/document_repository.go（新規） | Document集約の永続化インターフェース | **必要** | #31 | CRUD + バージョン管理 |
-| 20 | Repository | ExecutionRecordRepositoryインターフェース | backend/domain/repository/execution_record_repository.go（新規） | ExecutionRecord集約の永続化インターフェース | **必要** | #32 | CRUD + 検索機能 |
-| 21 | Repository | UserRepositoryインターフェース | backend/domain/repository/user_repository.go（新規） | User集約の永続化インターフェース | **必要** | #24, #33 | 認証機能と連携 |
-| 22 | Repository | GroupRepositoryインターフェース | backend/domain/repository/group_repository.go（新規） | Group集約の永続化インターフェース | **必要** | #33 | メンバー管理含む |
-| 23 | Repository | ViewHistoryRepositoryインターフェース | backend/domain/repository/view_history_repository.go（新規） | ViewHistory永続化インターフェース | **必要** | #30 | 閲覧履歴記録 |
-| 24 | Repository | ViewStatisticsRepositoryインターフェース | backend/domain/repository/view_statistics_repository.go（新規） | ViewStatistics永続化インターフェース | **必要** | #30 | 統計情報管理 |
-| 25 | Repository | AttachmentRepositoryインターフェース | backend/domain/repository/attachment_repository.go（新規） | Attachment永続化インターフェース（ストレージ抽象化） | **必要** | #32, #34 | local/S3/MinIO対応 |
-| 26 | Infrastructure | ストレージ抽象化層の実装 | backend/infrastructure/storage/（新規） | ローカル/S3/MinIO対応のストレージ層 | **必要** | #34 | AttachmentRepository実装で使用 |
-| 27 | Infrastructure | Repository実装（永続化層） | backend/infrastructure/persistence/*_repository_impl.go（新規） | 各Repositoryインターフェースの実装 | **必要** | 新規 | PostgreSQL実装 |
-| 28 | Infrastructure | アクセストークン暗号化 | backend/infrastructure/persistence/repository_repository_impl.go | アクセストークンの暗号化・復号化 | **必要** | #12 | セキュリティ対応 |
-| 29 | マイグレーション | 新規テーブルのマイグレーション | backend/infrastructure/persistence/migrations/（新規） | documents, document_versions, execution_records等 | **必要** | #35 | 10個以上の新規テーブル |
-| 30 | Application | 変数入力Usecase | backend/application/usecase/（新規） | 変数定義取得、バリデーション | **必要** | #38 | ADR 0013に基づく |
-| 31 | Application | 作業証跡Usecase | backend/application/usecase/execution_record_usecase.go（新規） | 作業証跡CRUD、検索、共有 | **必要** | 新規 | ADR 0014に基づく |
-| 32 | Application | ドキュメント管理Usecase | backend/application/usecase/document_usecase.go（新規） | 公開、非公開、バージョン管理、ロールバック | **必要** | 新規 | 既存リポジトリUsecaseとの統合検討 |
-| 33 | Application | ユーザー・グループ管理Usecase | backend/application/usecase/user_usecase.go等（新規） | ユーザー・グループCRUD | **必要** | #24 | 認証機能と連携 |
-| 34 | Application | 閲覧履歴・統計Usecase | backend/application/usecase/view_usecase.go（新規） | 閲覧記録、統計更新、履歴取得 | **必要** | 新規 | - |
-| 35 | Application | DTOの追加・整理 | backend/application/dto/（新規または追加） | 新規API用のDTO定義 | **必要** | #15 | application/dto/レイヤー作成 |
-| 36 | Interfaces | 変数入力API Handler | backend/interfaces/api/handlers/variable_handler.go（新規） | 変数定義取得API | **必要** | #38 | - |
-| 37 | Interfaces | 作業証跡API Handler | backend/interfaces/api/handlers/execution_handler.go（新規） | 作業証跡CRUD、検索、共有API | **必要** | 新規 | - |
-| 38 | Interfaces | ドキュメント管理API Handler | backend/interfaces/api/handlers/document_handler.go（新規または更新） | 公開、非公開、バージョン管理API | **必要** | 新規 | 既存repository_handlerとの統合検討 |
-| 39 | Interfaces | 添付ファイルアップロードAPI Handler | backend/interfaces/api/handlers/attachment_handler.go（新規） | 画像アップロード、取得、削除API | **必要** | 新規 | multipart/form-data対応 |
-| 40 | Interfaces | ユーザー・グループAPI Handler | backend/interfaces/api/handlers/user_handler.go等（新規） | ユーザー・グループCRUD API | **必要** | #24 | 認証ミドルウェアと連携 |
-| 41 | Frontend | 変数入力フォームコンポーネント | frontend/src/components/VariableForm.tsx（新規） | 変数入力UI | **必要** | #38 | 型別の入力フィールド |
-| 42 | Frontend | 作業証跡記録コンポーネント | frontend/src/components/ExecutionRecordPanel.tsx（新規） | 右ペインの作業証跡UI | **必要** | 新規 | ステップ追加、画像アップロード |
-| 43 | Frontend | 作業証跡一覧・検索ページ | frontend/src/pages/ExecutionRecordsPage.tsx（新規） | 作業証跡の検索・フィルタリング | **必要** | 新規 | - |
-| 44 | Frontend | 作業証跡詳細ページ | frontend/src/pages/ExecutionRecordDetailPage.tsx（新規） | 過去の作業証跡閲覧 | **必要** | 新規 | - |
-| 45 | Frontend | ドキュメント公開管理ページ | frontend/src/pages/DocumentManagementPage.tsx（新規） | 公開設定、バージョン管理UI | **必要** | 新規 | - |
-| 46 | Frontend | フロントエンドテスト | frontend/src/**/*.test.tsx（新規） | 新規コンポーネントのテスト | **必要** | #18 | Vitest + React Testing Library |
-| 47 | ファイル構造 | internal/配下への移動 | backend/内の全ファイル | ADR 0007に準拠したフォルダ構造 | **必要** | #14 | domain → internal/domain等 |
-| 48 | セキュリティ | 認証・認可機能の実装 | backend/interfaces/api/middleware/auth.go等（新規） | JWT/Session認証、RBAC | **必要** | #24 | Phase 2の先行実装 |
-| 49 | ドキュメント | API仕様書の更新 | docs/api/（新規または更新） | Swagger/OpenAPI仕様の更新 | **必要** | 新規 | 新規APIの仕様書化 |
-| 50 | ドキュメント | README更新 | README.md | Phase 2機能の追加、実装状況の更新 | **必要** | 新規 | - |
+| #    | カテゴリ         | チェック項目                              | 対象ファイル                                                                                  | 内容                                                 | 修正要否 | 関連Issue | 備考                                                     |
+| :--- | :--------------- | :---------------------------------------- | :-------------------------------------------------------------------------------------------- | :--------------------------------------------------- | :------- | :-------- | :------------------------------------------------------- |
+| 1    | ADR              | ADR設計方針との整合性                     | adr/0007-backend-architecture-onion.md                                                        | Onionアーキテクチャ・依存関係の確認                  | 要確認   | #14       | internal/配下への移動が必要                              |
+| 2    | ADR              | DBスキーマとの整合性                      | adr/0005-database-schema.md<br>adr/0004-database-specification.md                             | 新規エンティティのスキーマ定義追加                   | **必要** | #13, #36  | Document、DocumentVersion、ExecutionRecord等の追加が必要 |
+| 3    | ADR              | 外部仕様との整合性                        | adr/0001-external-repository-markdown-structure.md<br>adr/0002-repository-access-method.md    | variablesフィールドの追加済み確認                    | **完了** | -         | ADR 0001は更新済み                                       |
+| 4    | ADR              | managed_filesテーブルのADR作成            | （新規ADR作成）                                                                               | managed_filesの設計判断を文書化                      | **必要** | #19, #37  | 既存実装の後追いドキュメント化                           |
+| 5    | ADR              | API仕様の整合性                           | adr/0003-backend-api-markdown-fetch.md<br>adr/0010-api-definition-generation-specification.md | 新規API仕様の追加・更新                              | **必要** | #16, 新規 | 変数入力、作業証跡、検索等のAPI追加                      |
+| 6    | ドメインモデル   | 既存Entity修正                            | backend/domain/model/repository.go<br>backend/domain/model/file_node.go                       | 既存エンティティの影響確認                           | 要確認   | -         | FileNodeはDocumentに統合の可能性                         |
+| 7    | ドメインモデル   | Document Entity新規作成                   | backend/domain/model/document.go（新規）                                                      | Document集約ルートの実装                             | **必要** | #31       | variables, versions等を含む                              |
+| 8    | ドメインモデル   | DocumentVersion Entity新規作成            | backend/domain/model/document_version.go（新規）                                              | DocumentVersionエンティティの実装                    | **必要** | #31       | バージョン管理用                                         |
+| 9    | ドメインモデル   | ExecutionRecord集約新規作成               | backend/domain/model/execution_record.go（新規）                                              | ExecutionRecord集約ルートの実装                      | **必要** | #32       | 作業証跡機能の中核                                       |
+| 10   | ドメインモデル   | ExecutionStep Entity新規作成              | backend/domain/model/execution_step.go（新規）                                                | ExecutionStepエンティティの実装                      | **必要** | #32       | 作業ステップ記録                                         |
+| 11   | ドメインモデル   | Attachment Entity新規作成                 | backend/domain/model/attachment.go（新規）                                                    | Attachmentエンティティの実装                         | **必要** | #32       | 画面キャプチャ等の添付ファイル                           |
+| 12   | ドメインモデル   | User集約新規作成                          | backend/domain/model/user.go（新規）                                                          | User集約ルートの実装                                 | **必要** | #24, #33  | 認証機能と連携                                           |
+| 13   | ドメインモデル   | Group集約新規作成                         | backend/domain/model/group.go（新規）                                                         | Group集約ルートの実装                                | **必要** | #33       | グループ管理機能                                         |
+| 14   | ドメインモデル   | ViewHistory Entity新規作成                | backend/domain/model/view_history.go（新規）                                                  | ViewHistoryエンティティの実装                        | **必要** | #30       | 閲覧履歴記録                                             |
+| 15   | ドメインモデル   | ViewStatistics集約新規作成                | backend/domain/model/view_statistics.go（新規）                                               | ViewStatistics集約ルートの実装                       | **必要** | #30       | 閲覧統計管理                                             |
+| 16   | 値オブジェクト   | 新規値オブジェクト作成                    | backend/domain/model/value_objects.go（新規または分割）                                       | VariableDefinition, VariableValue, StorageType等     | **必要** | #31, #32  | 複数ファイルに分割も検討                                 |
+| 17   | Domain Service   | Domain Serviceの設計・実装                | backend/domain/service/（新規追加検討）                                                       | 複数エンティティにまたがるロジック                   | 要検討   | -         | 必要に応じて追加                                         |
+| 18   | テスト           | 新規Entityのテスト作成                    | backend/domain/model/*_test.go（新規）                                                        | 全新規エンティティのユニットテスト                   | **必要** | #17       | テストカバレッジ80%以上目標                              |
+| 19   | Repository       | DocumentRepositoryインターフェース        | backend/domain/repository/document_repository.go（新規）                                      | Document集約の永続化インターフェース                 | **必要** | #31       | CRUD + バージョン管理                                    |
+| 20   | Repository       | ExecutionRecordRepositoryインターフェース | backend/domain/repository/execution_record_repository.go（新規）                              | ExecutionRecord集約の永続化インターフェース          | **必要** | #32       | CRUD + 検索機能                                          |
+| 21   | Repository       | UserRepositoryインターフェース            | backend/domain/repository/user_repository.go（新規）                                          | User集約の永続化インターフェース                     | **必要** | #24, #33  | 認証機能と連携                                           |
+| 22   | Repository       | GroupRepositoryインターフェース           | backend/domain/repository/group_repository.go（新規）                                         | Group集約の永続化インターフェース                    | **必要** | #33       | メンバー管理含む                                         |
+| 23   | Repository       | ViewHistoryRepositoryインターフェース     | backend/domain/repository/view_history_repository.go（新規）                                  | ViewHistory永続化インターフェース                    | **必要** | #30       | 閲覧履歴記録                                             |
+| 24   | Repository       | ViewStatisticsRepositoryインターフェース  | backend/domain/repository/view_statistics_repository.go（新規）                               | ViewStatistics永続化インターフェース                 | **必要** | #30       | 統計情報管理                                             |
+| 25   | Repository       | AttachmentRepositoryインターフェース      | backend/domain/repository/attachment_repository.go（新規）                                    | Attachment永続化インターフェース（ストレージ抽象化） | **必要** | #32, #34  | local/S3/MinIO対応                                       |
+| 26   | Infrastructure   | ストレージ抽象化層の実装                  | backend/infrastructure/storage/（新規）                                                       | ローカル/S3/MinIO対応のストレージ層                  | **必要** | #34       | AttachmentRepository実装で使用                           |
+| 27   | Infrastructure   | Repository実装（永続化層）                | backend/infrastructure/persistence/*_repository_impl.go（新規）                               | 各Repositoryインターフェースの実装                   | **必要** | 新規      | PostgreSQL実装                                           |
+| 28   | Infrastructure   | アクセストークン暗号化                    | backend/infrastructure/persistence/repository_repository_impl.go                              | アクセストークンの暗号化・復号化                     | **必要** | #12       | セキュリティ対応                                         |
+| 29   | マイグレーション | 新規テーブルのマイグレーション            | backend/infrastructure/persistence/migrations/（新規）                                        | documents, document_versions, execution_records等    | **必要** | #35       | 10個以上の新規テーブル                                   |
+| 30   | Application      | 変数入力Usecase                           | backend/application/usecase/（新規）                                                          | 変数定義取得、バリデーション                         | **必要** | #38       | ADR 0013に基づく                                         |
+| 31   | Application      | 作業証跡Usecase                           | backend/application/usecase/execution_record_usecase.go（新規）                               | 作業証跡CRUD、検索、共有                             | **必要** | 新規      | ADR 0014に基づく                                         |
+| 32   | Application      | ドキュメント管理Usecase                   | backend/application/usecase/document_usecase.go（新規）                                       | 公開、非公開、バージョン管理、ロールバック           | **必要** | 新規      | 既存リポジトリUsecaseとの統合検討                        |
+| 33   | Application      | ユーザー・グループ管理Usecase             | backend/application/usecase/user_usecase.go等（新規）                                         | ユーザー・グループCRUD                               | **必要** | #24       | 認証機能と連携                                           |
+| 34   | Application      | 閲覧履歴・統計Usecase                     | backend/application/usecase/view_usecase.go（新規）                                           | 閲覧記録、統計更新、履歴取得                         | **必要** | 新規      | -                                                        |
+| 35   | Application      | DTOの追加・整理                           | backend/application/dto/（新規または追加）                                                    | 新規API用のDTO定義                                   | **必要** | #15       | application/dto/レイヤー作成                             |
+| 36   | Interfaces       | 変数入力API Handler                       | backend/interfaces/api/handlers/variable_handler.go（新規）                                   | 変数定義取得API                                      | **必要** | #38       | -                                                        |
+| 37   | Interfaces       | 作業証跡API Handler                       | backend/interfaces/api/handlers/execution_handler.go（新規）                                  | 作業証跡CRUD、検索、共有API                          | **必要** | 新規      | -                                                        |
+| 38   | Interfaces       | ドキュメント管理API Handler               | backend/interfaces/api/handlers/document_handler.go（新規または更新）                         | 公開、非公開、バージョン管理API                      | **必要** | 新規      | 既存repository_handlerとの統合検討                       |
+| 39   | Interfaces       | 添付ファイルアップロードAPI Handler       | backend/interfaces/api/handlers/attachment_handler.go（新規）                                 | 画像アップロード、取得、削除API                      | **必要** | 新規      | multipart/form-data対応                                  |
+| 40   | Interfaces       | ユーザー・グループAPI Handler             | backend/interfaces/api/handlers/user_handler.go等（新規）                                     | ユーザー・グループCRUD API                           | **必要** | #24       | 認証ミドルウェアと連携                                   |
+| 41   | Frontend         | 変数入力フォームコンポーネント            | frontend/src/components/VariableForm.tsx（新規）                                              | 変数入力UI                                           | **必要** | #38       | 型別の入力フィールド                                     |
+| 42   | Frontend         | 作業証跡記録コンポーネント                | frontend/src/components/ExecutionRecordPanel.tsx（新規）                                      | 右ペインの作業証跡UI                                 | **必要** | 新規      | ステップ追加、画像アップロード                           |
+| 43   | Frontend         | 作業証跡一覧・検索ページ                  | frontend/src/pages/ExecutionRecordsPage.tsx（新規）                                           | 作業証跡の検索・フィルタリング                       | **必要** | 新規      | -                                                        |
+| 44   | Frontend         | 作業証跡詳細ページ                        | frontend/src/pages/ExecutionRecordDetailPage.tsx（新規）                                      | 過去の作業証跡閲覧                                   | **必要** | 新規      | -                                                        |
+| 45   | Frontend         | ドキュメント公開管理ページ                | frontend/src/pages/DocumentManagementPage.tsx（新規）                                         | 公開設定、バージョン管理UI                           | **必要** | 新規      | -                                                        |
+| 46   | Frontend         | フロントエンドテスト                      | frontend/src/**/*.test.tsx（新規）                                                            | 新規コンポーネントのテスト                           | **必要** | #18       | Vitest + React Testing Library                           |
+| 47   | ファイル構造     | internal/配下への移動                     | backend/内の全ファイル                                                                        | ADR 0007に準拠したフォルダ構造                       | **必要** | #14       | domain → internal/domain等                               |
+| 48   | セキュリティ     | 認証・認可機能の実装                      | backend/interfaces/api/middleware/auth.go等（新規）                                           | JWT/Session認証、RBAC                                | **必要** | #24       | Phase 2の先行実装                                        |
+| 49   | ドキュメント     | API仕様書の更新                           | docs/api/（新規または更新）                                                                   | Swagger/OpenAPI仕様の更新                            | **必要** | 新規      | 新規APIの仕様書化                                        |
+| 50   | ドキュメント     | README更新                                | README.md                                                                                     | Phase 2機能の追加、実装状況の更新                    | **必要** | 新規      | -                                                        |
 
 ## 修正要否の凡例
 
