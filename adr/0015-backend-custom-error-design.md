@@ -802,6 +802,8 @@ To enable developers to quickly identify where errors occur, implement centraliz
 // internal/<context>/domain/error/codes.go
 package error
 
+import "strings"
+
 // ErrorCode represents a unique error identifier
 type ErrorCode string
 
