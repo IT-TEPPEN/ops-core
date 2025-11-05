@@ -17,36 +17,42 @@ We will adopt the **Onion Architecture** for the backend architecture. This is b
 1. **Domain Layer:**
     * **Responsibility:** Represents the core business logic and rules of the application. Includes entities (created *only* via factory or reconstructor functions to ensure invariants), value objects, domain events, and repository interfaces. Ensures data integrity and enforces business rules.
     * **Dependencies:** Does not depend on external layers.
-    * **Folder:** `internal/domain/`
-        * `model/`: Entities (with unexported fields), Value Objects (e.g., `user.go`, `user_id.go`)
+    * **Folder:** `internal/<context>/domain/`
+        * `entity/`: Entities (with unexported fields), e.g., `repository.go`, `file_node.go`
+        * `value_object/`: Value Objects (e.g., `repository_id.go`, `file_path.go`)
+        * `domain_service/`: Domain services (logic spanning multiple entities)
         * `repository/`: Repository interface definitions
-        * `service/`: Domain services (logic spanning multiple entities)
+        * `error/`: Domain-specific custom errors
 
 2. **Application Layer:**
     * **Responsibility:** Implements use cases. Orchestrates domain objects (retrieved via repositories and manipulated via their methods or domain services) and controls application-specific flows. Depends on infrastructure layer interfaces (e.g., repository interfaces).
     * **Dependencies:** Depends on the Domain Layer. Depends on Infrastructure Layer interfaces.
-    * **Folder:** `internal/application/`
+    * **Folder:** `internal/<context>/application/`
         * `usecase/`: Implementation of each use case
         * `dto/`: Data Transfer Objects (Request/Response)
+        * `error/`: Application-specific custom errors
 
 3. **Infrastructure Layer:**
     * **Responsibility:** Implements technical details such as database access, external API integration, message queues, logging, etc. Implements interfaces defined in the Application or Domain layers (e.g., repository interfaces).
     * **Dependencies:** May depend on the Domain or Application layers (through the interfaces it implements), but not on specific business logic.
-    * **Folder:** `internal/infrastructure/`
-        * `persistence/`: Database-related implementations (repository implementation, ORM settings, etc.)
-        * `external/`: External API clients
+    * **Folder:** `internal/<context>/infrastructure/`
+        * `persistence/`: Database-related implementations (repository implementation, ORM models, etc.)
+        * `external/`: External API clients (e.g., `git/` for Git operations)
         * `messaging/`: Message queue related
-        * `logging/`: Logging implementation
+        * `error/`: Infrastructure-specific custom errors
 
 4. **Interfaces Layer (Presentation Layer):**
     * **Responsibility:** Provides interfaces to the outside world (HTTP clients, CLI, etc.). Receives requests, calls the appropriate Application Layer use case, and returns the result as a response. Also handles DTO conversion.
     * **Dependencies:** Depends on the Application Layer.
-    * **Folder:** `internal/interfaces/` (or `internal/handler/`, `internal/delivery/`)
-        * `http/`: HTTP handlers, routing configuration
-        * `grpc/`: gRPC service definitions
-        * `cli/`: Command-line interface
+    * **Folder:** `internal/<context>/interfaces/`
+        * `api/handlers/`: HTTP handlers and routing configuration
+        * `grpc/`: gRPC service definitions (if applicable)
+        * `cli/`: Command-line interface (if applicable)
+        * `error/`: Interface-specific custom errors (e.g., HTTP error responses)
 
 **Proposed Folder Structure:**
+
+Given Go's package management characteristics (all files in the same directory must belong to the same package), we introduce **Bounded Context** layering between `internal/` and architectural layers (domain, application, etc.). This prevents the proliferation of files directly under layer directories and provides clear boundaries aligned with DDD principles.
 
 ```text
 backend/
@@ -54,43 +60,121 @@ backend/
 │   └── server/
 │       └── main.go       # Entry point, DI container initialization, server startup
 ├── internal/
-│   ├── domain/
-│   │   ├── model/
-│   │   │   └── user.go   # Example: User entity
-│   │   └── repository/
-│   │       └── user_repository.go # Example: UserRepository interface
-│   ├── application/
-│   │   ├── usecase/
-│   │   │   └── user_usecase.go # Example: Create user use case
-│   │   └── dto/
-│   │       └── user_dto.go     # Example: Create User request DTO
-│   ├── infrastructure/
-│   │   ├── persistence/
-│   │   │   └── user_repository_impl.go # Example: GORM implementation of UserRepository
-│   │   └── logging/
-│   │       └── logger.go
-│   └── interfaces/
-│       └── http/
-│           ├── handler/
-│           │   └── user_handler.go # Example: User related HTTP handler
-│           └── router.go       # Example: HTTP router configuration (e.g., Gin)
+│   ├── <context-name>/   # Bounded Context (e.g., git_repository, blog, user)
+│   │   ├── domain/
+│   │   │   ├── entity/
+│   │   │   │   └── <entity>.go   # Example: repository.go, file_node.go
+│   │   │   ├── value_object/     # Value Objects
+│   │   │   ├── domain_service/   # Domain services
+│   │   │   ├── repository/
+│   │   │   │   └── <repository_interface>.go # Example: repository.go
+│   │   │   └── error/            # Domain-specific custom errors
+│   │   ├── application/
+│   │   │   ├── usecase/
+│   │   │   │   └── <usecase>.go # Example: repository_usecase.go
+│   │   │   ├── dto/              # Data Transfer Objects (optional)
+│   │   │   └── error/            # Application-specific custom errors
+│   │   ├── infrastructure/
+│   │   │   ├── persistence/
+│   │   │   │   └── <repository_impl>.go # Example: postgres_repository.go
+│   │   │   ├── <external_system>/ # Example: git/
+│   │   │   └── error/            # Infrastructure-specific custom errors
+│   │   └── interfaces/
+│   │       ├── api/
+│   │       │   └── handlers/
+│   │       │       └── <handler>.go # Example: repository_handler.go
+│   │       └── error/            # Interface-specific custom errors
+│   │
+│   └── shared/           # Shared context for common utilities
+│       ├── domain/
+│       │   └── value_object/     # Common value objects
+│       └── infrastructure/
+│           └── middleware/       # Shared middleware
+│
 ├── pkg/                  # Code potentially used outside the project (not expected to be used much this time)
 ├── go.mod
 └── go.sum
 ```
+
+**Example with concrete context:**
+
+```text
+backend/
+├── cmd/
+│   └── server/
+│       └── main.go
+├── internal/
+│   ├── git_repository/                # Git repository management context
+│   │   ├── domain/
+│   │   │   ├── entity/                # Entities (formerly model/)
+│   │   │   │   ├── repository.go      # package entity
+│   │   │   │   ├── repository_test.go
+│   │   │   │   ├── file_node.go
+│   │   │   │   └── file_node_test.go
+│   │   │   ├── value_object/          # Value Objects
+│   │   │   ├── domain_service/        # Domain Services
+│   │   │   ├── repository/
+│   │   │   │   ├── repository.go      # package repository (interface)
+│   │   │   │   └── mock_repository.go
+│   │   │   └── error/                 # Domain-specific errors
+│   │   ├── application/
+│   │   │   ├── usecase/
+│   │   │   │   ├── repository_usecase.go
+│   │   │   │   └── repository_usecase_test.go
+│   │   │   └── error/                 # Application-specific errors
+│   │   ├── infrastructure/
+│   │   │   ├── persistence/
+│   │   │   │   ├── postgres_repository.go
+│   │   │   │   └── postgres_repository_test.go
+│   │   │   ├── git/
+│   │   │   │   ├── git_manager.go
+│   │   │   │   ├── cli_git_manager.go
+│   │   │   │   └── github_api_manager.go
+│   │   │   └── error/                 # Infrastructure-specific errors
+│   │   └── interfaces/
+│   │       ├── api/
+│   │       │   └── handlers/
+│   │       │       ├── repository_handler.go
+│   │       │       └── repository_handler_test.go
+│   │       └── error/                 # Interface-specific errors
+│   │
+│   └── shared/
+│       └── infrastructure/
+│           └── middleware/
+│               └── logger_middleware.go
+│
+├── pkg/
+├── go.mod
+└── go.sum
+```
+
+**Bounded Context Guidelines:**
+
+* **Context Identification:** Each context represents a cohesive business capability or subdomain (e.g., repository management, blog, user management).
+* **Context Independence:** Each context should be as independent as possible, with its own domain models, use cases, and infrastructure implementations.
+* **Inter-Context Communication:**
+  * Avoid direct circular dependencies between contexts.
+  * Shared concepts should be placed in the `shared/` context.
+  * Consider using domain events or anti-corruption layers for complex inter-context communication.
+* **Package Naming:** Import paths will include the context name, e.g., `github.com/IT-TEPPEN/ops-core/backend/internal/git_repository/domain/entity`.
+* **Naming Conventions:**
+  * Use `entity/` instead of `model/` to clearly distinguish from ORM models in infrastructure layer.
+  * Use descriptive context names that avoid conflicts with layer names (e.g., `git_repository` instead of `repository`).
+  * Each layer should have its own `error/` package for custom error types specific to that layer.
 
 **Dependency Rules:**
 
 * Dependencies always point inwards, from outer layers to inner layers (Interfaces -> Application -> Domain).
 * The Infrastructure layer implements interfaces defined in the Application or Domain layers, achieving Dependency Inversion.
 * The Domain layer does not depend on any other layer.
+* **Context-level dependencies:** Contexts should minimize dependencies on other contexts. When needed, depend on `shared/` context or use well-defined interfaces.
 
 **Sample Code (Conceptual):**
 
-* **`internal/domain/model/user.go`**:
+* **`internal/user/domain/entity/user.go`**:
 
     ```go
-    package model
+    package entity
 
     import "errors"
 
@@ -157,28 +241,32 @@ backend/
     // e.g., func (u *User) ChangeName(newName string) error { ... }
     ```
 
-* **`internal/domain/repository/user_repository.go`**:
+* **`internal/user/domain/repository/user_repository.go`**:
 
     ```go
     package repository
 
-    import "YOUR_PROJECT/internal/domain/model"
+    import (
+        "context"
+        "YOUR_PROJECT/internal/user/domain/entity"
+    )
 
     type UserRepository interface {
-        FindByID(id model.UserID) (*model.User, error) // Use Value Object
-        Save(user *model.User) error
+        FindByID(ctx context.Context, id entity.UserID) (*entity.User, error) // Use Value Object
+        Save(ctx context.Context, user *entity.User) error
     }
     ```
 
-* **`internal/application/usecase/user_usecase.go`**:
+* **`internal/user/application/usecase/user_usecase.go`**:
 
     ```go
     package usecase
 
     import (
-        "YOUR_PROJECT/internal/domain/model"
-        "YOUR_PROJECT/internal/domain/repository"
-        "YOUR_PROJECT/internal/application/dto"
+        "context"
+        "YOUR_PROJECT/internal/user/domain/entity"
+        "YOUR_PROJECT/internal/user/domain/repository"
+        "YOUR_PROJECT/internal/user/application/dto"
         "errors" // Example for error handling
     )
 
@@ -190,22 +278,22 @@ backend/
         return &UserUsecase{userRepo: ur}
     }
 
-    func (uc *UserUsecase) CreateUser(req *dto.CreateUserRequest) (*dto.UserResponse, error) {
+    func (uc *UserUsecase) CreateUser(ctx context.Context, req *dto.CreateUserRequest) (*dto.UserResponse, error) {
         // Generate Value Objects first if applicable
         // In a real scenario, ID might be generated by the DB or a UUID generator
-        userID, err := model.NewUserID("some-generated-id") // Example ID generation
+        userID, err := entity.NewUserID("some-generated-id") // Example ID generation
         if err != nil {
              return nil, errors.New("invalid user id format") // Or a more specific error type
         }
 
         // Use the factory function to create the entity
-        user, err := model.NewUser(userID, req.Name /* ... other fields from req ... */)
+        user, err := entity.NewUser(userID, req.Name /* ... other fields from req ... */)
         if err != nil {
             // Handle domain validation errors (e.g., invalid name)
             return nil, err // Propagate domain error
         }
 
-        if err := uc.userRepo.Save(user); err != nil {
+        if err := uc.userRepo.Save(ctx, user); err != nil {
             // Handle infrastructure errors (e.g., database connection issue)
             return nil, errors.New("failed to save user") // Or a more specific error type
         }
@@ -219,12 +307,12 @@ backend/
         return res, nil
     }
 
-    func (uc *UserUsecase) GetUser(userIDStr string) (*dto.UserResponse, error) {
-        userID, err := model.NewUserID(userIDStr)
+    func (uc *UserUsecase) GetUser(ctx context.Context, userIDStr string) (*dto.UserResponse, error) {
+        userID, err := entity.NewUserID(userIDStr)
         if err != nil {
              return nil, errors.New("invalid user id format")
         }
-        user, err := uc.userRepo.FindByID(userID)
+        user, err := uc.userRepo.FindByID(ctx, userID)
         if err != nil {
             // Handle not found or other repo errors
             return nil, err
@@ -243,19 +331,20 @@ backend/
     }
     ```
 
-* **`internal/infrastructure/persistence/user_repository_impl.go`**:
+* **`internal/user/infrastructure/persistence/user_repository_impl.go`**:
 
     ```go
     package persistence
 
     import (
+        "context"
         "errors"
         "gorm.io/gorm"
-        "YOUR_PROJECT/internal/domain/model"
-        "YOUR_PROJECT/internal/domain/repository"
+        "YOUR_PROJECT/internal/user/domain/entity"
+        "YOUR_PROJECT/internal/user/domain/repository"
     )
 
-    // GormUserModel represents the data structure in the database
+    // GormUserModel represents the data structure in the database (ORM model)
     type GormUserModel struct {
      // gorm.Model // Uncomment if using standard GORM fields like ID, CreatedAt etc.
      UserID string `gorm:"primaryKey"` // Store UserID as string
@@ -277,24 +366,24 @@ backend/
         return &UserRepositoryImpl{db: db}
     }
 
-    // toDomain converts Gorm model to domain model using the reconstructor
-    func toDomain(gormUser *GormUserModel) (*model.User, error) {
+    // toDomain converts Gorm ORM model to domain entity using the reconstructor
+    func toDomain(gormUser *GormUserModel) (*entity.User, error) {
         if gormUser == nil {
-            return nil, errors.New("cannot convert nil gorm user model to domain model")
+            return nil, errors.New("cannot convert nil gorm user model to domain entity")
         }
-        userID, err := model.NewUserID(gormUser.UserID)
+        userID, err := entity.NewUserID(gormUser.UserID)
         if err != nil {
             // This indicates data integrity issue in the DB or mapping
             return nil, errors.New("invalid user ID format in database: " + err.Error())
         }
 
         // Use the Reconstructor function
-        user := model.ReconstructUser(userID, gormUser.Name /* ... other fields */)
+        user := entity.ReconstructUser(userID, gormUser.Name /* ... other fields */)
         return user, nil
     }
 
-    // fromDomain converts domain model to Gorm model for persistence
-    func fromDomain(user *model.User) (*GormUserModel, error) {
+    // fromDomain converts domain entity to Gorm ORM model for persistence
+    func fromDomain(user *entity.User) (*GormUserModel, error) {
          if user == nil {
              return nil, errors.New("cannot convert nil domain user to gorm model")
          }
@@ -305,10 +394,10 @@ backend/
          }, nil
     }
 
-    func (r *UserRepositoryImpl) FindByID(id model.UserID) (*model.User, error) {
+    func (r *UserRepositoryImpl) FindByID(ctx context.Context, id entity.UserID) (*entity.User, error) {
         var userModel GormUserModel
-        // Search logic using GORM, converting UserID to string for query
-        err := r.db.First(&userModel, "user_id = ?", id.String()).Error
+        // Search logic using GORM with context, converting UserID to string for query
+        err := r.db.WithContext(ctx).First(&userModel, "user_id = ?", id.String()).Error
         if err != nil {
             if errors.Is(err, gorm.ErrRecordNotFound) {
                 return nil, nil // Return nil, nil for not found (idiomatic in Go)
@@ -318,29 +407,29 @@ backend/
         return toDomain(&userModel)
     }
 
-    func (r *UserRepositoryImpl) Save(user *model.User) error {
-        // Convert domain model to persistence model
+    func (r *UserRepositoryImpl) Save(ctx context.Context, user *entity.User) error {
+        // Convert domain entity to persistence ORM model
         userModel, err := fromDomain(user)
         if err != nil {
             return err // Handle conversion error
         }
 
-        // Save logic using GORM (Create or Update)
+        // Save logic using GORM with context (Create or Update)
         // GORM's Save handles upsert based on primary key presence
         // Ensure the GormUserModel has the correct primary key tag (`gorm:"primaryKey"`)
-        return r.db.Save(userModel).Error
+        return r.db.WithContext(ctx).Save(userModel).Error
     }
     ```
 
-* **`internal/interfaces/http/handler/user_handler.go`**:
+* **`internal/user/interfaces/api/handlers/user_handler.go`**:
 
     ```go
-    package handler
+    package handlers
 
     import (
         "github.com/gin-gonic/gin"
-        "YOUR_PROJECT/internal/application/usecase"
-        "YOUR_PROJECT/internal/application/dto"
+        "YOUR_PROJECT/internal/user/application/usecase"
+        "YOUR_PROJECT/internal/user/application/dto"
         "net/http"
         "errors" // For example error checking
     )
@@ -360,7 +449,8 @@ backend/
             return
         }
 
-        res, err := h.userUsecase.CreateUser(&req)
+        // Pass request context to use case
+        res, err := h.userUsecase.CreateUser(c.Request.Context(), &req)
         if err != nil {
             // Basic error handling - map domain/app errors to HTTP status codes
             // This could be more sophisticated (e.g., checking error types)
@@ -377,7 +467,8 @@ backend/
     func (h *UserHandler) GetUser(c *gin.Context) {
         userID := c.Param("id") // Assuming ID is a path parameter like /users/:id
 
-        res, err := h.userUsecase.GetUser(userID)
+        // Pass request context to use case
+        res, err := h.userUsecase.GetUser(c.Request.Context(), userID)
          if err != nil {
             // Handle errors like invalid ID format or user not found
              if errors.Is(err, /* specific not found error type */ nil) {
@@ -402,10 +493,10 @@ backend/
         "github.com/gin-gonic/gin"
         "gorm.io/driver/postgres" // Example
         "gorm.io/gorm"
-        "YOUR_PROJECT/internal/domain/repository"
-        "YOUR_PROJECT/internal/application/usecase"
-        infra "YOUR_PROJECT/internal/infrastructure/persistence"
-        interfaces "YOUR_PROJECT/internal/interfaces/http/handler"
+        "YOUR_PROJECT/internal/user/domain/repository"
+        "YOUR_PROJECT/internal/user/application/usecase"
+        "YOUR_PROJECT/internal/user/infrastructure/persistence"
+        "YOUR_PROJECT/internal/user/interfaces/api/handlers"
         // ... router configuration, etc.
     )
 
@@ -418,9 +509,9 @@ backend/
         }
 
         // Dependency Injection (DI)
-        userRepo := infra.NewUserRepositoryImpl(db)
+        userRepo := persistence.NewUserRepositoryImpl(db)
         userUsecase := usecase.NewUserUsecase(userRepo)
-        userHandler := interfaces.NewUserHandler(userUsecase)
+        userHandler := handlers.NewUserHandler(userUsecase)
 
         // Router configuration (Gin example)
         r := gin.Default()
