@@ -6,10 +6,10 @@
 このチェックシートは、Issue #29（ドメインモデル図の設計見直し）に基づくドメインモデル再設計の実装前確認用です。
 再設計内容については以下を参照してください：
 
-- [ドメインモデル再設計サマリー](/workspaces/domain-model-redesign-summary.md)
-- [ドキュメント管理コンテキスト README](/workspaces/docs/document-management/README.md)
-- [ADR 0013: Document Variable Definition](/workspaces/adr/0013-document-variable-definition.md)
-- [ADR 0014: Execution Record and Evidence Management](/workspaces/adr/0014-execution-record-and-evidence-management.md)
+- [ドメインモデル再設計サマリー](domain-model-redesign-summary.md)
+- [ドキュメント管理コンテキスト README](docs/document-management/README.md)
+- [ADR 0013: Document Variable Definition](adr/0013-document-variable-definition.md)
+- [ADR 0014: Execution Record and Evidence Management](adr/0014-execution-record-and-evidence-management.md)
 
 ## チェック項目一覧
 
