@@ -29,6 +29,19 @@ We decided to adopt the following rules for storing operational procedure Markdo
     tags:
       - tag1
       - tag2
+    variables: # Optional: only for procedure documents
+      - name: server_name
+        label: "サーバー名"
+        description: "バックアップ対象のサーバー名を入力してください"
+        type: string
+        required: true
+        defaultValue: "prod-db-01"
+      - name: backup_path
+        label: "バックアップ保存パス"
+        description: "バックアップファイルの保存先パス"
+        type: string
+        required: true
+        defaultValue: "/backup/db"
     ---
     ```
 
@@ -37,6 +50,13 @@ We decided to adopt the following rules for storing operational procedure Markdo
     * `version`: Version identifier (Semantic Versioning or date recommended).
     * `type`: Indicates the kind of document. **Currently supported values are `procedure` and `knowledge`.**
     * `tags`: A list of relevant tags for filtering/searching.
+    * `variables` (optional): Array of variable definitions for parameterized procedures. See ADR 0013 for detailed specification.
+      * `name`: Variable identifier (alphanumeric with underscores)
+      * `label`: Human-readable label
+      * `description`: Detailed explanation
+      * `type`: Data type (`string`, `number`, `boolean`, `date`)
+      * `required`: Whether the variable is required
+      * `defaultValue`: Default value for the variable
 
 5. **Content Structure:** While flexible, it is highly recommended to use consistent headings for clarity:
     * `## Prerequisites`: Any requirements before starting the procedure.
