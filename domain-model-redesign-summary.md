@@ -154,7 +154,7 @@
 
 ## 関連ドキュメント
 
-- [ドキュメント管理コンテキスト README](/workspaces/docs/document-management/README.md)
-- [ADR 0001: External Repository Markdown Structure](/workspaces/adr/0001-external-repository-markdown-structure.md)
-- [ADR 0013: Document Variable Definition and Substitution](/workspaces/adr/0013-document-variable-definition.md)
-- [ADR 0014: Execution Record and Evidence Management](/workspaces/adr/0014-execution-record-and-evidence-management.md)
+- [ドキュメント管理コンテキスト README](docs/document-management/README.md)
+- [ADR 0001: External Repository Markdown Structure](adr/0001-external-repository-markdown-structure.md)
+- [ADR 0013: Document Variable Definition and Substitution](adr/0013-document-variable-definition.md)
+- [ADR 0014: Execution Record and Evidence Management](adr/0014-execution-record-and-evidence-management.md)
