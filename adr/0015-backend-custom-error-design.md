@@ -989,6 +989,12 @@ func (uc *UserUsecase) CreateUser(ctx context.Context, req *dto.CreateUserReques
 **HTTP Response with Error Codes:**
 
 ```go
+package error
+
+import (
+    "time"
+)
+
 type HTTPError struct {
     StatusCode int                    `json:"-"`
     Code       string                 `json:"code"`          // e.g., "APP_RES_001"
