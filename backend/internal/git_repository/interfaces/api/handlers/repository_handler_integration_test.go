@@ -7,9 +7,10 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptest"
+	"opscore/backend/internal/git_repository/application/dto"
+	"opscore/backend/internal/git_repository/application/usecase"
 	"opscore/backend/internal/git_repository/domain/entity"
 	"opscore/backend/internal/git_repository/infrastructure/git"
-	"opscore/backend/internal/git_repository/application/usecase"
 	"testing"
 
 	"github.com/gin-gonic/gin"
@@ -86,7 +87,7 @@ func TestRegisterRepositoryIntegration(t *testing.T) {
 	// テストデータ
 	repoURL := "https://github.com/example/test-repo"
 	accessToken := "test-token"
-	requestBody := RegisterRepositoryRequest{
+	requestBody := dto.RegisterRepositoryRequest{
 		URL:         repoURL,
 		AccessToken: accessToken,
 	}
@@ -100,7 +101,7 @@ func TestRegisterRepositoryIntegration(t *testing.T) {
 	// 検証
 	assert.Equal(t, http.StatusCreated, rec.Code)
 
-	var response RepositoryResponse
+	var response dto.RepositoryResponse
 	err := json.Unmarshal(rec.Body.Bytes(), &response)
 	require.NoError(t, err)
 
@@ -124,7 +125,7 @@ func TestRegisterRepositoryIntegration(t *testing.T) {
 		// 検証
 		assert.Equal(t, http.StatusOK, getRec.Code)
 
-		var getResponse RepositoryResponse
+		var getResponse dto.RepositoryResponse
 		err := json.Unmarshal(getRec.Body.Bytes(), &getResponse)
 		require.NoError(t, err)
 
@@ -150,7 +151,7 @@ func TestRepositoryEndToEndFlow(t *testing.T) {
 	// リポジトリ登録
 	repoURL := "https://github.com/example/test-repo-flow"
 	accessToken := "test-token-flow"
-	requestBody := RegisterRepositoryRequest{
+	requestBody := dto.RegisterRepositoryRequest{
 		URL:         repoURL,
 		AccessToken: accessToken,
 	}
@@ -163,7 +164,7 @@ func TestRepositoryEndToEndFlow(t *testing.T) {
 
 	assert.Equal(t, http.StatusCreated, rec.Code)
 
-	var repoResponse RepositoryResponse
+	var repoResponse dto.RepositoryResponse
 	err := json.Unmarshal(rec.Body.Bytes(), &repoResponse)
 	require.NoError(t, err)
 	repoID := repoResponse.ID
@@ -175,7 +176,7 @@ func TestRepositoryEndToEndFlow(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, rec.Code)
 
-	var getResponse RepositoryResponse
+	var getResponse dto.RepositoryResponse
 	err = json.Unmarshal(rec.Body.Bytes(), &getResponse)
 	require.NoError(t, err)
 	assert.Equal(t, repoID, getResponse.ID)
@@ -187,7 +188,7 @@ func TestRepositoryEndToEndFlow(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, rec.Code)
 
-	var listResponse ListRepositoriesResponse
+	var listResponse dto.ListRepositoriesResponse
 	err = json.Unmarshal(rec.Body.Bytes(), &listResponse)
 	require.NoError(t, err)
 	assert.GreaterOrEqual(t, len(listResponse.Repositories), 1)
@@ -203,7 +204,7 @@ func TestRepositoryEndToEndFlow(t *testing.T) {
 
 	// Step 4: アクセストークンの更新
 	newToken := "updated-token"
-	tokenRequest := UpdateAccessTokenRequest{
+	tokenRequest := dto.UpdateAccessTokenRequest{
 		AccessToken: newToken,
 	}
 	tokenJSON, _ := json.Marshal(tokenRequest)
