@@ -39,7 +39,7 @@ func NewRepositoryHandler(uc repository.RepositoryUseCase, logger Logger) *Repos
 // @Tags repositories
 // @Accept  json
 // @Produce  json
-// @Param   repository body RegisterRepositoryRequest true "Repository information"
+// @Param   repository body dto.RegisterRepositoryRequest true "Repository information"
 // @Success 201 {object} dto.RepositoryResponse "Repository registered successfully"
 // @Failure 400 {object} dto.ErrorResponse "Invalid request body or URL format"
 // @Failure 409 {object} dto.ErrorResponse "Repository with this URL already exists"
@@ -84,7 +84,7 @@ func (h *RepositoryHandler) RegisterRepository(c *gin.Context) {
 // @Accept  json
 // @Produce  json
 // @Param   repoId path string true "Repository ID" example:"a1b2c3d4-e5f6-7890-1234-567890abcdef"
-// @Param   tokenInfo body UpdateAccessTokenRequest true "Access token information"
+// @Param   tokenInfo body dto.UpdateAccessTokenRequest true "Access token information"
 // @Success 200 {object} map[string]string "Access token updated successfully"
 // @Failure 400 {object} dto.ErrorResponse "Invalid request body or repository ID"
 // @Failure 404 {object} dto.ErrorResponse "Repository not found"
@@ -181,7 +181,7 @@ func (h *RepositoryHandler) ListRepositoryFiles(c *gin.Context) {
 // @Accept  json
 // @Produce  json
 // @Param   repoId path string true "Repository ID" example:"a1b2c3d4-e5f6-7890-1234-567890abcdef"
-// @Param   files body SelectFilesRequest true "List of file paths to select"
+// @Param   files body dto.SelectFilesRequest true "List of file paths to select"
 // @Success 200 {object} dto.SelectFilesResponse "Files selected successfully"
 // @Failure 400 {object} dto.ErrorResponse "Invalid request body or repository ID"
 // @Failure 404 {object} dto.ErrorResponse "Repository not found"
