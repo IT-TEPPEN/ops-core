@@ -25,11 +25,11 @@ We will adopt the **Onion Architecture** for the backend architecture. This is b
         * `error/`: Domain-specific custom errors
 
 2. **Application Layer:**
-    * **Responsibility:** Implements use cases. Orchestrates domain objects (retrieved via repositories and manipulated via their methods or domain services) and controls application-specific flows. Depends on infrastructure layer interfaces (e.g., repository interfaces).
+    * **Responsibility:** Implements use cases. Orchestrates domain objects (retrieved via repositories and manipulated via their methods or domain services) and controls application-specific flows. Defines DTOs that represent the data needed for use cases, independent of API formats. Depends on infrastructure layer interfaces (e.g., repository interfaces).
     * **Dependencies:** Depends on the Domain Layer. Depends on Infrastructure Layer interfaces.
     * **Folder:** `internal/<context>/application/`
         * `usecase/`: Implementation of each use case
-        * `dto/`: Data Transfer Objects (Request/Response)
+        * `dto/`: Data Transfer Objects for use case requests/responses (without API-specific details)
         * `error/`: Application-specific custom errors
 
 3. **Infrastructure Layer:**
@@ -42,10 +42,11 @@ We will adopt the **Onion Architecture** for the backend architecture. This is b
         * `error/`: Infrastructure-specific custom errors
 
 4. **Interfaces Layer (Presentation Layer):**
-    * **Responsibility:** Provides interfaces to the outside world (HTTP clients, CLI, etc.). Receives requests, calls the appropriate Application Layer use case, and returns the result as a response. Also handles DTO conversion.
+    * **Responsibility:** Provides interfaces to the outside world (HTTP clients, CLI, etc.). Receives requests, calls the appropriate Application Layer use case, and returns the result as a response. Handles conversion between API schemas and application DTOs.
     * **Dependencies:** Depends on the Application Layer.
     * **Folder:** `internal/<context>/interfaces/`
         * `api/handlers/`: HTTP handlers and routing configuration
+        * `api/schema/`: API request/response schemas (with API-specific details like json/binding tags)
         * `grpc/`: gRPC service definitions (if applicable)
         * `cli/`: Command-line interface (if applicable)
         * `error/`: Interface-specific custom errors (e.g., HTTP error responses)
@@ -72,7 +73,7 @@ backend/
 │   │   ├── application/
 │   │   │   ├── usecase/
 │   │   │   │   └── <usecase>.go # Example: repository_usecase.go
-│   │   │   ├── dto/              # Data Transfer Objects (optional)
+│   │   │   ├── dto/              # Data Transfer Objects (use case data, no API details)
 │   │   │   └── error/            # Application-specific custom errors
 │   │   ├── infrastructure/
 │   │   │   ├── persistence/
@@ -81,8 +82,10 @@ backend/
 │   │   │   └── error/            # Infrastructure-specific custom errors
 │   │   └── interfaces/
 │   │       ├── api/
-│   │       │   └── handlers/
-│   │       │       └── <handler>.go # Example: repository_handler.go
+│   │       │   ├── handlers/
+│   │       │   │   └── <handler>.go # Example: repository_handler.go
+│   │       │   └── schema/       # API request/response schemas
+│   │       │       └── <schema>.go # Example: repository_schema.go
 │   │       └── error/            # Interface-specific custom errors
 │   │
 │   └── shared/           # Shared context for common utilities
@@ -121,6 +124,7 @@ backend/
 │   │   │   ├── usecase/
 │   │   │   │   ├── repository_usecase.go
 │   │   │   │   └── repository_usecase_test.go
+│   │   │   ├── dto/                # Use case DTOs (no API-specific details)
 │   │   │   └── error/                 # Application-specific errors
 │   │   ├── infrastructure/
 │   │   │   ├── persistence/
@@ -133,9 +137,13 @@ backend/
 │   │   │   └── error/                 # Infrastructure-specific errors
 │   │   └── interfaces/
 │   │       ├── api/
-│   │       │   └── handlers/
-│   │       │       ├── repository_handler.go
-│   │       │       └── repository_handler_test.go
+│   │       │   ├── handlers/
+│   │       │   │   ├── repository_handler.go
+│   │       │   │   └── repository_handler_test.go
+│   │       │   └── schema/           # API schemas with json/binding tags
+│   │       │       ├── repository_schema.go
+│   │       │       ├── file_schema.go
+│   │       │       └── converter.go  # Schema ↔ DTO conversion
 │   │       └── error/                 # Interface-specific errors
 │   │
 │   └── shared/
@@ -168,6 +176,34 @@ backend/
 * The Infrastructure layer implements interfaces defined in the Application or Domain layers, achieving Dependency Inversion.
 * The Domain layer does not depend on any other layer.
 * **Context-level dependencies:** Contexts should minimize dependencies on other contexts. When needed, depend on `shared/` context or use well-defined interfaces.
+
+**Schema and DTO Separation:**
+
+To maintain proper separation of concerns and unidirectional dependency flow, the architecture distinguishes between API schemas and application DTOs:
+
+* **Application DTOs** (`application/dto/`):
+  * Represent data structures needed for use case logic
+  * Do not contain API-specific details (no json tags, binding validations, or swagger annotations)
+  * Focus solely on what the application layer needs to function
+  * Independent of API format changes
+  
+* **API Schemas** (`interfaces/api/schema/`):
+  * Define the exact structure of API requests and responses
+  * Include API-specific details (json tags, binding validations, swagger examples)
+  * Handle API versioning and format requirements
+  * Convert to/from application DTOs within the interfaces layer
+
+* **Conversion Flow:**
+  ```
+  API Request → Schema (interfaces) → DTO (application) → Use Case
+  Use Case → DTO (application) → Schema (interfaces) → API Response
+  ```
+
+This separation ensures:
+* Application layer remains independent of API specifications
+* API format changes don't require modifying use case logic
+* DTOs can evolve based on business needs without breaking API contracts
+* Clear unidirectional dependency: interfaces depends on application, not vice versa
 
 **Sample Code (Conceptual):**
 
@@ -421,6 +457,44 @@ backend/
     }
     ```
 
+* **`internal/user/interfaces/api/schema/user_schema.go`**:
+
+    ```go
+    package schema
+
+    import "YOUR_PROJECT/internal/user/application/dto"
+
+    // CreateUserRequest represents the API request for creating a user
+    type CreateUserRequest struct {
+        Name string `json:"name" binding:"required" example:"John Doe"`
+        // ... other fields with API-specific tags
+    }
+
+    // UserResponse represents the API response for a user
+    type UserResponse struct {
+        ID   string `json:"id" example:"user-123"`
+        Name string `json:"name" example:"John Doe"`
+        // ... other fields with API-specific tags
+    }
+
+    // ToCreateUserDTO converts API schema to application DTO
+    func ToCreateUserDTO(req CreateUserRequest) dto.CreateUserRequest {
+        return dto.CreateUserRequest{
+            Name: req.Name,
+            // ... map other fields
+        }
+    }
+
+    // FromUserDTO converts application DTO to API schema
+    func FromUserDTO(dtoResp dto.UserResponse) UserResponse {
+        return UserResponse{
+            ID:   dtoResp.ID,
+            Name: dtoResp.Name,
+            // ... map other fields
+        }
+    }
+    ```
+
 * **`internal/user/interfaces/api/handlers/user_handler.go`**:
 
     ```go
@@ -429,7 +503,7 @@ backend/
     import (
         "github.com/gin-gonic/gin"
         "YOUR_PROJECT/internal/user/application/usecase"
-        "YOUR_PROJECT/internal/user/application/dto"
+        "YOUR_PROJECT/internal/user/interfaces/api/schema"
         "net/http"
         "errors" // For example error checking
     )
@@ -443,14 +517,17 @@ backend/
     }
 
     func (h *UserHandler) CreateUser(c *gin.Context) {
-        var req dto.CreateUserRequest
+        var req schema.CreateUserRequest
         if err := c.ShouldBindJSON(&req); err != nil {
             c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body: " + err.Error()})
             return
         }
 
+        // Convert schema to DTO
+        dtoReq := schema.ToCreateUserDTO(req)
+
         // Pass request context to use case
-        res, err := h.userUsecase.CreateUser(c.Request.Context(), &req)
+        dtoResp, err := h.userUsecase.CreateUser(c.Request.Context(), &dtoReq)
         if err != nil {
             // Basic error handling - map domain/app errors to HTTP status codes
             // This could be more sophisticated (e.g., checking error types)
@@ -461,14 +538,17 @@ backend/
             }
             return
         }
-        c.JSON(http.StatusCreated, res)
+
+        // Convert DTO to schema
+        response := schema.FromUserDTO(*dtoResp)
+        c.JSON(http.StatusCreated, response)
     }
 
     func (h *UserHandler) GetUser(c *gin.Context) {
         userID := c.Param("id") // Assuming ID is a path parameter like /users/:id
 
         // Pass request context to use case
-        res, err := h.userUsecase.GetUser(c.Request.Context(), userID)
+        dtoResp, err := h.userUsecase.GetUser(c.Request.Context(), userID)
          if err != nil {
             // Handle errors like invalid ID format or user not found
              if errors.Is(err, /* specific not found error type */ nil) {
@@ -480,7 +560,10 @@ backend/
              }
             return
         }
-        c.JSON(http.StatusOK, res)
+
+        // Convert DTO to schema
+        response := schema.FromUserDTO(*dtoResp)
+        c.JSON(http.StatusOK, response)
     }
     ```
 
