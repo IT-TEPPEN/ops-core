@@ -2,27 +2,22 @@ package dto
 
 import "time"
 
-// RegisterRepositoryRequest represents the request body for registering a repository
+// RegisterRepositoryRequest represents the use case request for registering a repository
 type RegisterRepositoryRequest struct {
-	URL         string `json:"url" binding:"required" example:"https://github.com/user/repo.git"`
-	AccessToken string `json:"accessToken" example:"ghp_1234567890abcdefghijklmnopqrstuvwxyz"` // Optional access token for private repositories
+	URL         string
+	AccessToken string // Optional access token for private repositories
 }
 
-// UpdateAccessTokenRequest represents the request body for updating a repository's access token
+// UpdateAccessTokenRequest represents the use case request for updating a repository's access token
 type UpdateAccessTokenRequest struct {
-	AccessToken string `json:"accessToken" binding:"required" example:"ghp_1234567890abcdefghijklmnopqrstuvwxyz"`
+	AccessToken string
 }
 
-// RepositoryResponse represents the standard response format for a repository
+// RepositoryResponse represents the use case response for a repository
 type RepositoryResponse struct {
-	ID        string    `json:"id" example:"a1b2c3d4-e5f6-7890-1234-567890abcdef"`
-	Name      string    `json:"name" example:"repo"`
-	URL       string    `json:"url" example:"https://github.com/user/repo.git"`
-	CreatedAt time.Time `json:"created_at" example:"2025-04-22T10:00:00Z"`
-	UpdatedAt time.Time `json:"updated_at" example:"2025-04-22T10:00:00Z"`
-}
-
-// ListRepositoriesResponse represents the response for listing all repositories
-type ListRepositoriesResponse struct {
-	Repositories []RepositoryResponse `json:"repositories"`
+	ID        string
+	Name      string
+	URL       string
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }

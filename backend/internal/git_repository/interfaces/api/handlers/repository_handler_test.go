@@ -6,9 +6,9 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
-	"opscore/backend/internal/git_repository/application/dto"
 	"opscore/backend/internal/git_repository/application/usecase"
 	"opscore/backend/internal/git_repository/domain/entity"
+	"opscore/backend/internal/git_repository/interfaces/api/schema"
 	"testing"
 	"time"
 
@@ -58,7 +58,7 @@ func TestRegisterRepository(t *testing.T) {
 		// テストデータ
 		repoURL := "https://github.com/example/test-repo"
 		accessToken := "test-token"
-		requestBody := dto.RegisterRepositoryRequest{
+		requestBody := schema.RegisterRepositoryRequest{
 			URL:         repoURL,
 			AccessToken: accessToken,
 		}
@@ -91,7 +91,7 @@ func TestRegisterRepository(t *testing.T) {
 		// 検証
 		assert.Equal(t, http.StatusCreated, rec.Code)
 
-		var response dto.RepositoryResponse
+		var response schema.RepositoryResponse
 		err := json.Unmarshal(rec.Body.Bytes(), &response)
 		require.NoError(t, err)
 		assert.Equal(t, createdRepo.ID(), response.ID)
@@ -120,7 +120,7 @@ func TestRegisterRepository(t *testing.T) {
 		// 検証
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
 
-		var response dto.ErrorResponse
+		var response schema.ErrorResponse
 		err := json.Unmarshal(rec.Body.Bytes(), &response)
 		require.NoError(t, err)
 		assert.Equal(t, "INVALID_REQUEST", response.Code)
@@ -132,7 +132,7 @@ func TestRegisterRepository(t *testing.T) {
 		_, _, handler, router, rec := setupTest()
 
 		// URLが欠けている
-		requestBody := dto.RegisterRepositoryRequest{
+		requestBody := schema.RegisterRepositoryRequest{
 			AccessToken: "test-token",
 		}
 		jsonBody, _ := json.Marshal(requestBody)
@@ -148,7 +148,7 @@ func TestRegisterRepository(t *testing.T) {
 		// 検証
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
 
-		var response dto.ErrorResponse
+		var response schema.ErrorResponse
 		err := json.Unmarshal(rec.Body.Bytes(), &response)
 		require.NoError(t, err)
 		assert.Equal(t, "INVALID_REQUEST", response.Code)
@@ -162,7 +162,7 @@ func TestRegisterRepository(t *testing.T) {
 		// テストデータ
 		repoURL := "https://github.com/example/existing-repo"
 		accessToken := "test-token"
-		requestBody := dto.RegisterRepositoryRequest{
+		requestBody := schema.RegisterRepositoryRequest{
 			URL:         repoURL,
 			AccessToken: accessToken,
 		}
@@ -182,7 +182,7 @@ func TestRegisterRepository(t *testing.T) {
 		// 検証
 		assert.Equal(t, http.StatusConflict, rec.Code)
 
-		var response dto.ErrorResponse
+		var response schema.ErrorResponse
 		err := json.Unmarshal(rec.Body.Bytes(), &response)
 		require.NoError(t, err)
 		assert.Equal(t, "CONFLICT", response.Code)
@@ -198,7 +198,7 @@ func TestRegisterRepository(t *testing.T) {
 		// テストデータ
 		repoURL := "invalid-url"
 		accessToken := "test-token"
-		requestBody := dto.RegisterRepositoryRequest{
+		requestBody := schema.RegisterRepositoryRequest{
 			URL:         repoURL,
 			AccessToken: accessToken,
 		}
@@ -218,7 +218,7 @@ func TestRegisterRepository(t *testing.T) {
 		// 検証
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
 
-		var response dto.ErrorResponse
+		var response schema.ErrorResponse
 		err := json.Unmarshal(rec.Body.Bytes(), &response)
 		require.NoError(t, err)
 		assert.Equal(t, "INVALID_URL", response.Code)
@@ -234,7 +234,7 @@ func TestRegisterRepository(t *testing.T) {
 		// テストデータ
 		repoURL := "https://github.com/example/test-repo"
 		accessToken := "test-token"
-		requestBody := dto.RegisterRepositoryRequest{
+		requestBody := schema.RegisterRepositoryRequest{
 			URL:         repoURL,
 			AccessToken: accessToken,
 		}
@@ -254,7 +254,7 @@ func TestRegisterRepository(t *testing.T) {
 		// 検証
 		assert.Equal(t, http.StatusInternalServerError, rec.Code)
 
-		var response dto.ErrorResponse
+		var response schema.ErrorResponse
 		err := json.Unmarshal(rec.Body.Bytes(), &response)
 		require.NoError(t, err)
 		assert.Equal(t, "INTERNAL_ERROR", response.Code)
@@ -291,7 +291,7 @@ func TestGetRepository(t *testing.T) {
 		// 検証
 		assert.Equal(t, http.StatusOK, rec.Code)
 
-		var response dto.RepositoryResponse
+		var response schema.RepositoryResponse
 		err := json.Unmarshal(rec.Body.Bytes(), &response)
 		require.NoError(t, err)
 		assert.Equal(t, repo.ID(), response.ID)
@@ -337,7 +337,7 @@ func TestGetRepository(t *testing.T) {
 		// 検証
 		assert.Equal(t, http.StatusNotFound, rec.Code)
 
-		var response dto.ErrorResponse
+		var response schema.ErrorResponse
 		err := json.Unmarshal(rec.Body.Bytes(), &response)
 		require.NoError(t, err)
 		assert.Equal(t, "NOT_FOUND", response.Code)
@@ -366,7 +366,7 @@ func TestGetRepository(t *testing.T) {
 		// 検証
 		assert.Equal(t, http.StatusInternalServerError, rec.Code)
 
-		var response dto.ErrorResponse
+		var response schema.ErrorResponse
 		err := json.Unmarshal(rec.Body.Bytes(), &response)
 		require.NoError(t, err)
 		assert.Equal(t, "INTERNAL_ERROR", response.Code)
@@ -409,7 +409,7 @@ func TestListRepositories(t *testing.T) {
 		// 検証
 		assert.Equal(t, http.StatusOK, rec.Code)
 
-		var response dto.ListRepositoriesResponse
+		var response schema.ListRepositoriesResponse
 		err := json.Unmarshal(rec.Body.Bytes(), &response)
 		require.NoError(t, err)
 		assert.Len(t, response.Repositories, len(repos))
@@ -440,7 +440,7 @@ func TestListRepositories(t *testing.T) {
 		// 検証
 		assert.Equal(t, http.StatusOK, rec.Code)
 
-		var response dto.ListRepositoriesResponse
+		var response schema.ListRepositoriesResponse
 		err := json.Unmarshal(rec.Body.Bytes(), &response)
 		require.NoError(t, err)
 		assert.Empty(t, response.Repositories)
@@ -466,7 +466,7 @@ func TestListRepositories(t *testing.T) {
 		// 検証
 		assert.Equal(t, http.StatusInternalServerError, rec.Code)
 
-		var response dto.ErrorResponse
+		var response schema.ErrorResponse
 		err := json.Unmarshal(rec.Body.Bytes(), &response)
 		require.NoError(t, err)
 		assert.Equal(t, "INTERNAL_ERROR", response.Code)
@@ -502,7 +502,7 @@ func TestListRepositoryFiles(t *testing.T) {
 		// 検証
 		assert.Equal(t, http.StatusOK, rec.Code)
 
-		var response dto.ListFilesResponse
+		var response schema.ListFilesResponse
 		err := json.Unmarshal(rec.Body.Bytes(), &response)
 		require.NoError(t, err)
 		assert.Len(t, response.Files, len(fileNodes))
@@ -527,7 +527,7 @@ func TestListRepositoryFiles(t *testing.T) {
 		// 検証
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
 
-		var response dto.ErrorResponse
+		var response schema.ErrorResponse
 		err := json.Unmarshal(rec.Body.Bytes(), &response)
 		require.NoError(t, err)
 		assert.Equal(t, "INVALID_ID", response.Code)
@@ -553,7 +553,7 @@ func TestListRepositoryFiles(t *testing.T) {
 		// 検証
 		assert.Equal(t, http.StatusNotFound, rec.Code)
 
-		var response dto.ErrorResponse
+		var response schema.ErrorResponse
 		err := json.Unmarshal(rec.Body.Bytes(), &response)
 		require.NoError(t, err)
 		assert.Equal(t, "NOT_FOUND", response.Code)
@@ -582,7 +582,7 @@ func TestListRepositoryFiles(t *testing.T) {
 		// 検証
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
 
-		var response dto.ErrorResponse
+		var response schema.ErrorResponse
 		err := json.Unmarshal(rec.Body.Bytes(), &response)
 		require.NoError(t, err)
 		assert.Equal(t, "ACCESS_TOKEN_REQUIRED", response.Code)
@@ -611,7 +611,7 @@ func TestListRepositoryFiles(t *testing.T) {
 		// 検証
 		assert.Equal(t, http.StatusInternalServerError, rec.Code)
 
-		var response dto.ErrorResponse
+		var response schema.ErrorResponse
 		err := json.Unmarshal(rec.Body.Bytes(), &response)
 		require.NoError(t, err)
 		assert.Equal(t, "INTERNAL_ERROR", response.Code)
@@ -629,7 +629,7 @@ func TestSelectRepositoryFiles(t *testing.T) {
 		// テストデータ
 		repoID := uuid.NewString()
 		filePaths := []string{"README.md", "docs/index.md"}
-		requestBody := dto.SelectFilesRequest{
+		requestBody := schema.SelectFilesRequest{
 			FilePaths: filePaths,
 		}
 		jsonBody, _ := json.Marshal(requestBody)
@@ -648,7 +648,7 @@ func TestSelectRepositoryFiles(t *testing.T) {
 		// 検証
 		assert.Equal(t, http.StatusOK, rec.Code)
 
-		var response dto.SelectFilesResponse
+		var response schema.SelectFilesResponse
 		err := json.Unmarshal(rec.Body.Bytes(), &response)
 		require.NoError(t, err)
 		assert.Equal(t, repoID, response.RepoID)
@@ -664,7 +664,7 @@ func TestSelectRepositoryFiles(t *testing.T) {
 
 		// テストデータ
 		filePaths := []string{"README.md", "docs/index.md"}
-		requestBody := dto.SelectFilesRequest{
+		requestBody := schema.SelectFilesRequest{
 			FilePaths: filePaths,
 		}
 		jsonBody, _ := json.Marshal(requestBody)
@@ -680,7 +680,7 @@ func TestSelectRepositoryFiles(t *testing.T) {
 		// 検証
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
 
-		var response dto.ErrorResponse
+		var response schema.ErrorResponse
 		err := json.Unmarshal(rec.Body.Bytes(), &response)
 		require.NoError(t, err)
 		assert.Equal(t, "INVALID_ID", response.Code)
@@ -707,7 +707,7 @@ func TestSelectRepositoryFiles(t *testing.T) {
 		// 検証
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
 
-		var response dto.ErrorResponse
+		var response schema.ErrorResponse
 		err := json.Unmarshal(rec.Body.Bytes(), &response)
 		require.NoError(t, err)
 		assert.Equal(t, "INVALID_REQUEST", response.Code)
@@ -719,7 +719,7 @@ func TestSelectRepositoryFiles(t *testing.T) {
 
 		// テストデータ
 		repoID := uuid.NewString()
-		requestBody := dto.SelectFilesRequest{
+		requestBody := schema.SelectFilesRequest{
 			FilePaths: []string{},
 		}
 		jsonBody, _ := json.Marshal(requestBody)
@@ -735,7 +735,7 @@ func TestSelectRepositoryFiles(t *testing.T) {
 		// 検証
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
 
-		var response dto.ErrorResponse
+		var response schema.ErrorResponse
 		err := json.Unmarshal(rec.Body.Bytes(), &response)
 		require.NoError(t, err)
 		assert.Equal(t, "INVALID_REQUEST", response.Code)
@@ -749,7 +749,7 @@ func TestSelectRepositoryFiles(t *testing.T) {
 		// テストデータ
 		repoID := uuid.NewString()
 		filePaths := []string{"README.md"}
-		requestBody := dto.SelectFilesRequest{
+		requestBody := schema.SelectFilesRequest{
 			FilePaths: filePaths,
 		}
 		jsonBody, _ := json.Marshal(requestBody)
@@ -768,7 +768,7 @@ func TestSelectRepositoryFiles(t *testing.T) {
 		// 検証
 		assert.Equal(t, http.StatusNotFound, rec.Code)
 
-		var response dto.ErrorResponse
+		var response schema.ErrorResponse
 		err := json.Unmarshal(rec.Body.Bytes(), &response)
 		require.NoError(t, err)
 		assert.Equal(t, "NOT_FOUND", response.Code)
@@ -784,7 +784,7 @@ func TestSelectRepositoryFiles(t *testing.T) {
 		// テストデータ
 		repoID := uuid.NewString()
 		filePaths := []string{"README.md"}
-		requestBody := dto.SelectFilesRequest{
+		requestBody := schema.SelectFilesRequest{
 			FilePaths: filePaths,
 		}
 		jsonBody, _ := json.Marshal(requestBody)
@@ -803,7 +803,7 @@ func TestSelectRepositoryFiles(t *testing.T) {
 		// 検証
 		assert.Equal(t, http.StatusInternalServerError, rec.Code)
 
-		var response dto.ErrorResponse
+		var response schema.ErrorResponse
 		err := json.Unmarshal(rec.Body.Bytes(), &response)
 		require.NoError(t, err)
 		assert.Equal(t, "INTERNAL_ERROR", response.Code)
@@ -835,7 +835,7 @@ func TestGetSelectedMarkdown(t *testing.T) {
 		// 検証
 		assert.Equal(t, http.StatusOK, rec.Code)
 
-		var response dto.GetMarkdownResponse
+		var response schema.GetMarkdownResponse
 		err := json.Unmarshal(rec.Body.Bytes(), &response)
 		require.NoError(t, err)
 		assert.Equal(t, repoID, response.RepoID)
@@ -859,7 +859,7 @@ func TestGetSelectedMarkdown(t *testing.T) {
 		// 検証
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
 
-		var response dto.ErrorResponse
+		var response schema.ErrorResponse
 		err := json.Unmarshal(rec.Body.Bytes(), &response)
 		require.NoError(t, err)
 		assert.Equal(t, "INVALID_ID", response.Code)
@@ -885,7 +885,7 @@ func TestGetSelectedMarkdown(t *testing.T) {
 		// 検証
 		assert.Equal(t, http.StatusNotFound, rec.Code)
 
-		var response dto.ErrorResponse
+		var response schema.ErrorResponse
 		err := json.Unmarshal(rec.Body.Bytes(), &response)
 		require.NoError(t, err)
 		assert.Equal(t, "NOT_FOUND", response.Code)
@@ -914,7 +914,7 @@ func TestGetSelectedMarkdown(t *testing.T) {
 		// 検証
 		assert.Equal(t, http.StatusInternalServerError, rec.Code)
 
-		var response dto.ErrorResponse
+		var response schema.ErrorResponse
 		err := json.Unmarshal(rec.Body.Bytes(), &response)
 		require.NoError(t, err)
 		assert.Equal(t, "INTERNAL_ERROR", response.Code)
@@ -932,7 +932,7 @@ func TestUpdateAccessToken(t *testing.T) {
 		// テストデータ
 		repoID := uuid.NewString()
 		accessToken := "new-token"
-		requestBody := dto.UpdateAccessTokenRequest{
+		requestBody := schema.UpdateAccessTokenRequest{
 			AccessToken: accessToken,
 		}
 		jsonBody, _ := json.Marshal(requestBody)
@@ -967,7 +967,7 @@ func TestUpdateAccessToken(t *testing.T) {
 
 		// テストデータ
 		accessToken := "new-token"
-		requestBody := dto.UpdateAccessTokenRequest{
+		requestBody := schema.UpdateAccessTokenRequest{
 			AccessToken: accessToken,
 		}
 		jsonBody, _ := json.Marshal(requestBody)
@@ -983,7 +983,7 @@ func TestUpdateAccessToken(t *testing.T) {
 		// 検証
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
 
-		var response dto.ErrorResponse
+		var response schema.ErrorResponse
 		err := json.Unmarshal(rec.Body.Bytes(), &response)
 		require.NoError(t, err)
 		assert.Equal(t, "INVALID_ID", response.Code)
@@ -1010,7 +1010,7 @@ func TestUpdateAccessToken(t *testing.T) {
 		// 検証
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
 
-		var response dto.ErrorResponse
+		var response schema.ErrorResponse
 		err := json.Unmarshal(rec.Body.Bytes(), &response)
 		require.NoError(t, err)
 		assert.Equal(t, "INVALID_REQUEST", response.Code)
@@ -1036,7 +1036,7 @@ func TestUpdateAccessToken(t *testing.T) {
 		// 検証
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
 
-		var response dto.ErrorResponse
+		var response schema.ErrorResponse
 		err := json.Unmarshal(rec.Body.Bytes(), &response)
 		require.NoError(t, err)
 		assert.Equal(t, "INVALID_REQUEST", response.Code)
@@ -1049,7 +1049,7 @@ func TestUpdateAccessToken(t *testing.T) {
 		// テストデータ
 		repoID := uuid.NewString()
 		accessToken := "new-token"
-		requestBody := dto.UpdateAccessTokenRequest{
+		requestBody := schema.UpdateAccessTokenRequest{
 			AccessToken: accessToken,
 		}
 		jsonBody, _ := json.Marshal(requestBody)
@@ -1068,7 +1068,7 @@ func TestUpdateAccessToken(t *testing.T) {
 		// 検証
 		assert.Equal(t, http.StatusNotFound, rec.Code)
 
-		var response dto.ErrorResponse
+		var response schema.ErrorResponse
 		err := json.Unmarshal(rec.Body.Bytes(), &response)
 		require.NoError(t, err)
 		assert.Equal(t, "NOT_FOUND", response.Code)
@@ -1084,7 +1084,7 @@ func TestUpdateAccessToken(t *testing.T) {
 		// テストデータ
 		repoID := uuid.NewString()
 		accessToken := "new-token"
-		requestBody := dto.UpdateAccessTokenRequest{
+		requestBody := schema.UpdateAccessTokenRequest{
 			AccessToken: accessToken,
 		}
 		jsonBody, _ := json.Marshal(requestBody)
@@ -1103,7 +1103,7 @@ func TestUpdateAccessToken(t *testing.T) {
 		// 検証
 		assert.Equal(t, http.StatusInternalServerError, rec.Code)
 
-		var response dto.ErrorResponse
+		var response schema.ErrorResponse
 		err := json.Unmarshal(rec.Body.Bytes(), &response)
 		require.NoError(t, err)
 		assert.Equal(t, "INTERNAL_ERROR", response.Code)

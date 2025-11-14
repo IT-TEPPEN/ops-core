@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"opscore/backend/internal/git_repository/application/dto"
 	"opscore/backend/internal/git_repository/application/usecase"
+	"opscore/backend/internal/git_repository/interfaces/api/schema"
 
 	"github.com/gin-gonic/gin"
 )
@@ -39,41 +40,46 @@ func NewRepositoryHandler(uc repository.RepositoryUseCase, logger Logger) *Repos
 // @Tags repositories
 // @Accept  json
 // @Produce  json
-// @Param   repository body dto.RegisterRepositoryRequest true "Repository information"
-// @Success 201 {object} dto.RepositoryResponse "Repository registered successfully"
-// @Failure 400 {object} dto.ErrorResponse "Invalid request body or URL format"
-// @Failure 409 {object} dto.ErrorResponse "Repository with this URL already exists"
-// @Failure 500 {object} dto.ErrorResponse "Internal server error"
+// @Param   repository body schema.RegisterRepositoryRequest true "Repository information"
+// @Success 201 {object} schema.RepositoryResponse "Repository registered successfully"
+// @Failure 400 {object} schema.ErrorResponse "Invalid request body or URL format"
+// @Failure 409 {object} schema.ErrorResponse "Repository with this URL already exists"
+// @Failure 500 {object} schema.ErrorResponse "Internal server error"
 // @Router /repositories [post]
 func (h *RepositoryHandler) RegisterRepository(c *gin.Context) {
-	var req dto.RegisterRepositoryRequest
+	var req schema.RegisterRepositoryRequest
 	requestID := c.GetString("request_id") // ミドルウェアから設定されたリクエストID
 
 	if err := c.ShouldBindJSON(&req); err != nil {
 		h.logger.Error("Invalid request body", "request_id", requestID, "error", err.Error())
-		c.JSON(http.StatusBadRequest, dto.ErrorResponse{Code: "INVALID_REQUEST", Message: "Invalid request body: " + err.Error()})
+		c.JSON(http.StatusBadRequest, schema.ErrorResponse{Code: "INVALID_REQUEST", Message: "Invalid request body: " + err.Error()})
 		return
 	}
 
-	h.logger.Info("Registering repository", "request_id", requestID, "url", req.URL)
-	newRepo, err := h.repoUseCase.Register(c.Request.Context(), req.URL, req.AccessToken)
+	// Convert schema to DTO
+	dtoReq := schema.ToRegisterRepositoryDTO(req)
+
+	h.logger.Info("Registering repository", "request_id", requestID, "url", dtoReq.URL)
+	newRepo, err := h.repoUseCase.Register(c.Request.Context(), dtoReq.URL, dtoReq.AccessToken)
 
 	if err != nil {
 		if errors.Is(err, repository.ErrRepositoryAlreadyExists) {
-			h.logger.Warn("Repository already exists", "request_id", requestID, "url", req.URL)
-			c.JSON(http.StatusConflict, dto.ErrorResponse{Code: "CONFLICT", Message: err.Error()})
+			h.logger.Warn("Repository already exists", "request_id", requestID, "url", dtoReq.URL)
+			c.JSON(http.StatusConflict, schema.ErrorResponse{Code: "CONFLICT", Message: err.Error()})
 		} else if errors.Is(err, repository.ErrInvalidRepositoryURL) {
-			h.logger.Warn("Invalid repository URL", "request_id", requestID, "url", req.URL)
-			c.JSON(http.StatusBadRequest, dto.ErrorResponse{Code: "INVALID_URL", Message: err.Error()})
+			h.logger.Warn("Invalid repository URL", "request_id", requestID, "url", dtoReq.URL)
+			c.JSON(http.StatusBadRequest, schema.ErrorResponse{Code: "INVALID_URL", Message: err.Error()})
 		} else {
 			h.logger.Error("Failed to register repository", "request_id", requestID, "error", err.Error())
-			c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Code: "INTERNAL_ERROR", Message: "Failed to register repository"})
+			c.JSON(http.StatusInternalServerError, schema.ErrorResponse{Code: "INTERNAL_ERROR", Message: "Failed to register repository"})
 		}
 		return
 	}
 
 	h.logger.Info("Repository registered successfully", "request_id", requestID, "repo_id", newRepo.ID())
-	response := dto.ToRepositoryResponse(newRepo)
+	// Convert domain entity to DTO, then DTO to schema
+	dtoResp := dto.ToRepositoryResponse(newRepo)
+	response := schema.FromRepositoryDTO(dtoResp)
 	c.JSON(http.StatusCreated, response)
 }
 
@@ -84,39 +90,42 @@ func (h *RepositoryHandler) RegisterRepository(c *gin.Context) {
 // @Accept  json
 // @Produce  json
 // @Param   repoId path string true "Repository ID" example:"a1b2c3d4-e5f6-7890-1234-567890abcdef"
-// @Param   tokenInfo body dto.UpdateAccessTokenRequest true "Access token information"
+// @Param   tokenInfo body schema.UpdateAccessTokenRequest true "Access token information"
 // @Success 200 {object} map[string]string "Access token updated successfully"
-// @Failure 400 {object} dto.ErrorResponse "Invalid request body or repository ID"
-// @Failure 404 {object} dto.ErrorResponse "Repository not found"
-// @Failure 500 {object} dto.ErrorResponse "Internal server error"
+// @Failure 400 {object} schema.ErrorResponse "Invalid request body or repository ID"
+// @Failure 404 {object} schema.ErrorResponse "Repository not found"
+// @Failure 500 {object} schema.ErrorResponse "Internal server error"
 // @Router /repositories/{repoId}/token [put]
 func (h *RepositoryHandler) UpdateAccessToken(c *gin.Context) {
 	repoId := c.Param("repoId")
 	requestID := c.GetString("request_id")
-	var req dto.UpdateAccessTokenRequest
+	var req schema.UpdateAccessTokenRequest
 
 	if repoId == "" {
 		h.logger.Warn("Missing repository ID", "request_id", requestID)
-		c.JSON(http.StatusBadRequest, dto.ErrorResponse{Code: "INVALID_ID", Message: "Repository ID is required"})
+		c.JSON(http.StatusBadRequest, schema.ErrorResponse{Code: "INVALID_ID", Message: "Repository ID is required"})
 		return
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
 		h.logger.Error("Invalid request body", "request_id", requestID, "repo_id", repoId, "error", err.Error())
-		c.JSON(http.StatusBadRequest, dto.ErrorResponse{Code: "INVALID_REQUEST", Message: "Invalid request body: " + err.Error()})
+		c.JSON(http.StatusBadRequest, schema.ErrorResponse{Code: "INVALID_REQUEST", Message: "Invalid request body: " + err.Error()})
 		return
 	}
 
+	// Convert schema to DTO
+	dtoReq := schema.ToUpdateAccessTokenDTO(req)
+
 	h.logger.Info("Updating repository access token", "request_id", requestID, "repo_id", repoId)
-	err := h.repoUseCase.UpdateAccessToken(c.Request.Context(), repoId, req.AccessToken)
+	err := h.repoUseCase.UpdateAccessToken(c.Request.Context(), repoId, dtoReq.AccessToken)
 
 	if err != nil {
 		if errors.Is(err, repository.ErrRepositoryNotFound) {
 			h.logger.Warn("Repository not found", "request_id", requestID, "repo_id", repoId)
-			c.JSON(http.StatusNotFound, dto.ErrorResponse{Code: "NOT_FOUND", Message: err.Error()})
+			c.JSON(http.StatusNotFound, schema.ErrorResponse{Code: "NOT_FOUND", Message: err.Error()})
 		} else {
 			h.logger.Error("Failed to update access token", "request_id", requestID, "repo_id", repoId, "error", err.Error())
-			c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Code: "INTERNAL_ERROR", Message: "Failed to update access token"})
+			c.JSON(http.StatusInternalServerError, schema.ErrorResponse{Code: "INTERNAL_ERROR", Message: "Failed to update access token"})
 		}
 		return
 	}
@@ -134,10 +143,10 @@ func (h *RepositoryHandler) UpdateAccessToken(c *gin.Context) {
 // @Tags repositories
 // @Produce  json
 // @Param   repoId path string true "Repository ID" example:"a1b2c3d4-e5f6-7890-1234-567890abcdef"
-// @Success 200 {object} dto.ListFilesResponse "Successfully retrieved file list"
-// @Failure 400 {object} dto.ErrorResponse "Invalid repository ID format or access token missing"
-// @Failure 404 {object} dto.ErrorResponse "Repository not found"
-// @Failure 500 {object} dto.ErrorResponse "Internal server error"
+// @Success 200 {object} schema.ListFilesResponse "Successfully retrieved file list"
+// @Failure 400 {object} schema.ErrorResponse "Invalid repository ID format or access token missing"
+// @Failure 404 {object} schema.ErrorResponse "Repository not found"
+// @Failure 500 {object} schema.ErrorResponse "Internal server error"
 // @Router /repositories/{repoId}/files [get]
 func (h *RepositoryHandler) ListRepositoryFiles(c *gin.Context) {
 	repoId := c.Param("repoId")
@@ -145,7 +154,7 @@ func (h *RepositoryHandler) ListRepositoryFiles(c *gin.Context) {
 
 	if repoId == "" {
 		h.logger.Warn("Missing repository ID", "request_id", requestID)
-		c.JSON(http.StatusBadRequest, dto.ErrorResponse{Code: "INVALID_ID", Message: "Repository ID is required"})
+		c.JSON(http.StatusBadRequest, schema.ErrorResponse{Code: "INVALID_ID", Message: "Repository ID is required"})
 		return
 	}
 
@@ -156,22 +165,23 @@ func (h *RepositoryHandler) ListRepositoryFiles(c *gin.Context) {
 	if err != nil {
 		if errors.Is(err, repository.ErrRepositoryNotFound) {
 			h.logger.Warn("Repository not found", "request_id", requestID, "repo_id", repoId)
-			c.JSON(http.StatusNotFound, dto.ErrorResponse{Code: "NOT_FOUND", Message: err.Error()})
+			c.JSON(http.StatusNotFound, schema.ErrorResponse{Code: "NOT_FOUND", Message: err.Error()})
 		} else if errors.Is(err, repository.ErrAccessTokenRequired) {
 			h.logger.Warn("Access token required", "request_id", requestID, "repo_id", repoId)
-			c.JSON(http.StatusBadRequest, dto.ErrorResponse{Code: "ACCESS_TOKEN_REQUIRED", Message: "Access token is required to list repository files"})
+			c.JSON(http.StatusBadRequest, schema.ErrorResponse{Code: "ACCESS_TOKEN_REQUIRED", Message: "Access token is required to list repository files"})
 		} else {
 			h.logger.Error("Failed to list repository files", "request_id", requestID, "repo_id", repoId, "error", err.Error())
-			c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Code: "INTERNAL_ERROR", Message: "Failed to list repository files"})
+			c.JSON(http.StatusInternalServerError, schema.ErrorResponse{Code: "INTERNAL_ERROR", Message: "Failed to list repository files"})
 		}
 		return
 	}
 
-	// Map domain entity.FileNode to DTO FileNode for the response
-	responseFiles := dto.ToFileNodeList(domainFiles)
+	// Map domain entity.FileNode to DTO FileNode, then to schema
+	dtoFiles := dto.ToFileNodeList(domainFiles)
+	responseFiles := schema.FromFileNodeListDTO(dtoFiles)
 
 	h.logger.Info("Successfully listed repository files", "request_id", requestID, "repo_id", repoId, "file_count", len(responseFiles))
-	c.JSON(http.StatusOK, dto.ListFilesResponse{Files: responseFiles})
+	c.JSON(http.StatusOK, schema.ListFilesResponse{Files: responseFiles})
 }
 
 // SelectRepositoryFiles godoc
@@ -181,53 +191,56 @@ func (h *RepositoryHandler) ListRepositoryFiles(c *gin.Context) {
 // @Accept  json
 // @Produce  json
 // @Param   repoId path string true "Repository ID" example:"a1b2c3d4-e5f6-7890-1234-567890abcdef"
-// @Param   files body dto.SelectFilesRequest true "List of file paths to select"
-// @Success 200 {object} dto.SelectFilesResponse "Files selected successfully"
-// @Failure 400 {object} dto.ErrorResponse "Invalid request body or repository ID"
-// @Failure 404 {object} dto.ErrorResponse "Repository not found"
-// @Failure 500 {object} dto.ErrorResponse "Internal server error"
+// @Param   files body schema.SelectFilesRequest true "List of file paths to select"
+// @Success 200 {object} schema.SelectFilesResponse "Files selected successfully"
+// @Failure 400 {object} schema.ErrorResponse "Invalid request body or repository ID"
+// @Failure 404 {object} schema.ErrorResponse "Repository not found"
+// @Failure 500 {object} schema.ErrorResponse "Internal server error"
 // @Router /repositories/{repoId}/files/select [post]
 func (h *RepositoryHandler) SelectRepositoryFiles(c *gin.Context) {
 	repoId := c.Param("repoId")
 	requestID := c.GetString("request_id") // ミドルウェアから設定されたリクエストID
-	var req dto.SelectFilesRequest
+	var req schema.SelectFilesRequest
 
 	if repoId == "" {
 		h.logger.Warn("Missing repository ID", "request_id", requestID)
-		c.JSON(http.StatusBadRequest, dto.ErrorResponse{Code: "INVALID_ID", Message: "Repository ID is required"})
+		c.JSON(http.StatusBadRequest, schema.ErrorResponse{Code: "INVALID_ID", Message: "Repository ID is required"})
 		return
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
 		h.logger.Error("Invalid request body", "request_id", requestID, "repo_id", repoId, "error", err.Error())
-		c.JSON(http.StatusBadRequest, dto.ErrorResponse{Code: "INVALID_REQUEST", Message: "Invalid request body: " + err.Error()})
+		c.JSON(http.StatusBadRequest, schema.ErrorResponse{Code: "INVALID_REQUEST", Message: "Invalid request body: " + err.Error()})
 		return
 	}
 	if len(req.FilePaths) == 0 {
 		h.logger.Warn("Empty file paths", "request_id", requestID, "repo_id", repoId)
-		c.JSON(http.StatusBadRequest, dto.ErrorResponse{Code: "INVALID_REQUEST", Message: "filePaths cannot be empty"})
+		c.JSON(http.StatusBadRequest, schema.ErrorResponse{Code: "INVALID_REQUEST", Message: "filePaths cannot be empty"})
 		return
 	}
 
-	h.logger.Info("Selecting repository files", "request_id", requestID, "repo_id", repoId, "file_count", len(req.FilePaths))
-	err := h.repoUseCase.SelectFiles(c.Request.Context(), repoId, req.FilePaths)
+	// Convert schema to DTO
+	dtoReq := schema.ToSelectFilesDTO(req)
+
+	h.logger.Info("Selecting repository files", "request_id", requestID, "repo_id", repoId, "file_count", len(dtoReq.FilePaths))
+	err := h.repoUseCase.SelectFiles(c.Request.Context(), repoId, dtoReq.FilePaths)
 
 	if err != nil {
 		if errors.Is(err, repository.ErrRepositoryNotFound) {
 			h.logger.Warn("Repository not found", "request_id", requestID, "repo_id", repoId)
-			c.JSON(http.StatusNotFound, dto.ErrorResponse{Code: "NOT_FOUND", Message: err.Error()})
+			c.JSON(http.StatusNotFound, schema.ErrorResponse{Code: "NOT_FOUND", Message: err.Error()})
 		} else {
 			h.logger.Error("Failed to select files", "request_id", requestID, "repo_id", repoId, "error", err.Error())
-			c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Code: "INTERNAL_ERROR", Message: "Failed to select files"})
+			c.JSON(http.StatusInternalServerError, schema.ErrorResponse{Code: "INTERNAL_ERROR", Message: "Failed to select files"})
 		}
 		return
 	}
 
-	h.logger.Info("Files selected successfully", "request_id", requestID, "repo_id", repoId, "file_count", len(req.FilePaths))
-	c.JSON(http.StatusOK, dto.SelectFilesResponse{
+	h.logger.Info("Files selected successfully", "request_id", requestID, "repo_id", repoId, "file_count", len(dtoReq.FilePaths))
+	c.JSON(http.StatusOK, schema.SelectFilesResponse{
 		Message:       "Files selected successfully",
 		RepoID:        repoId,
-		SelectedFiles: len(req.FilePaths),
+		SelectedFiles: len(dtoReq.FilePaths),
 	})
 }
 
@@ -237,10 +250,10 @@ func (h *RepositoryHandler) SelectRepositoryFiles(c *gin.Context) {
 // @Tags repositories
 // @Produce  json
 // @Param   repoId path string true "Repository ID" example:"a1b2c3d4-e5f6-7890-1234-567890abcdef"
-// @Success 200 {object} dto.GetMarkdownResponse "Successfully retrieved Markdown content"
-// @Failure 400 {object} dto.ErrorResponse "Invalid repository ID format"
-// @Failure 404 {object} dto.ErrorResponse "Repository not found or no files selected"
-// @Failure 500 {object} dto.ErrorResponse "Internal server error"
+// @Success 200 {object} schema.GetMarkdownResponse "Successfully retrieved Markdown content"
+// @Failure 400 {object} schema.ErrorResponse "Invalid repository ID format"
+// @Failure 404 {object} schema.ErrorResponse "Repository not found or no files selected"
+// @Failure 500 {object} schema.ErrorResponse "Internal server error"
 // @Router /repositories/{repoId}/markdown [get]
 func (h *RepositoryHandler) GetSelectedMarkdown(c *gin.Context) {
 	repoId := c.Param("repoId")
@@ -248,7 +261,7 @@ func (h *RepositoryHandler) GetSelectedMarkdown(c *gin.Context) {
 
 	if repoId == "" {
 		h.logger.Warn("Missing repository ID", "request_id", requestID)
-		c.JSON(http.StatusBadRequest, dto.ErrorResponse{Code: "INVALID_ID", Message: "Repository ID is required"})
+		c.JSON(http.StatusBadRequest, schema.ErrorResponse{Code: "INVALID_ID", Message: "Repository ID is required"})
 		return
 	}
 
@@ -258,16 +271,16 @@ func (h *RepositoryHandler) GetSelectedMarkdown(c *gin.Context) {
 	if err != nil {
 		if errors.Is(err, repository.ErrRepositoryNotFound) {
 			h.logger.Warn("Repository not found", "request_id", requestID, "repo_id", repoId)
-			c.JSON(http.StatusNotFound, dto.ErrorResponse{Code: "NOT_FOUND", Message: err.Error()})
+			c.JSON(http.StatusNotFound, schema.ErrorResponse{Code: "NOT_FOUND", Message: err.Error()})
 		} else {
 			h.logger.Error("Failed to retrieve Markdown content", "request_id", requestID, "repo_id", repoId, "error", err.Error())
-			c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Code: "INTERNAL_ERROR", Message: "Failed to retrieve Markdown content"})
+			c.JSON(http.StatusInternalServerError, schema.ErrorResponse{Code: "INTERNAL_ERROR", Message: "Failed to retrieve Markdown content"})
 		}
 		return
 	}
 
 	h.logger.Info("Successfully retrieved Markdown content", "request_id", requestID, "repo_id", repoId, "content_length", len(markdownContent))
-	c.JSON(http.StatusOK, dto.GetMarkdownResponse{
+	c.JSON(http.StatusOK, schema.GetMarkdownResponse{
 		RepoID:  repoId,
 		Content: markdownContent,
 	})
@@ -278,8 +291,8 @@ func (h *RepositoryHandler) GetSelectedMarkdown(c *gin.Context) {
 // @Description Retrieves a list of all repositories registered in OpsCore
 // @Tags repositories
 // @Produce json
-// @Success 200 {object} dto.ListRepositoriesResponse "Successfully retrieved repositories"
-// @Failure 500 {object} dto.ErrorResponse "Internal server error"
+// @Success 200 {object} schema.ListRepositoriesResponse "Successfully retrieved repositories"
+// @Failure 500 {object} schema.ErrorResponse "Internal server error"
 // @Router /repositories [get]
 func (h *RepositoryHandler) ListRepositories(c *gin.Context) {
 	requestID := c.GetString("request_id") // ミドルウェアから設定されたリクエストID
@@ -289,16 +302,17 @@ func (h *RepositoryHandler) ListRepositories(c *gin.Context) {
 	repos, err := h.repoUseCase.ListRepositories(c.Request.Context())
 	if err != nil {
 		h.logger.Error("Failed to list repositories", "request_id", requestID, "error", err.Error())
-		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Code: "INTERNAL_ERROR", Message: "Failed to retrieve repositories"})
+		c.JSON(http.StatusInternalServerError, schema.ErrorResponse{Code: "INTERNAL_ERROR", Message: "Failed to retrieve repositories"})
 		return
 	}
 
-	// Map domain models to response DTOs
-	repoResponses := dto.ToRepositoryResponseList(repos)
+	// Map domain models to DTOs, then to schema
+	dtoResponses := dto.ToRepositoryResponseList(repos)
+	schemaResponses := schema.FromRepositoryListDTO(dtoResponses)
 
 	h.logger.Info("Successfully listed repositories", "request_id", requestID, "repo_count", len(repos))
-	c.JSON(http.StatusOK, dto.ListRepositoriesResponse{
-		Repositories: repoResponses,
+	c.JSON(http.StatusOK, schema.ListRepositoriesResponse{
+		Repositories: schemaResponses,
 	})
 }
 
@@ -308,10 +322,10 @@ func (h *RepositoryHandler) ListRepositories(c *gin.Context) {
 // @Tags repositories
 // @Produce json
 // @Param   repoId path string true "Repository ID" example:"a1b2c3d4-e5f6-7890-1234-567890abcdef"
-// @Success 200 {object} dto.RepositoryResponse "Successfully retrieved repository details"
-// @Failure 400 {object} dto.ErrorResponse "Invalid repository ID format"
-// @Failure 404 {object} dto.ErrorResponse "Repository not found"
-// @Failure 500 {object} dto.ErrorResponse "Internal server error"
+// @Success 200 {object} schema.RepositoryResponse "Successfully retrieved repository details"
+// @Failure 400 {object} schema.ErrorResponse "Invalid repository ID format"
+// @Failure 404 {object} schema.ErrorResponse "Repository not found"
+// @Failure 500 {object} schema.ErrorResponse "Internal server error"
 // @Router /repositories/{repoId} [get]
 func (h *RepositoryHandler) GetRepository(c *gin.Context) {
 	repoId := c.Param("repoId")
@@ -319,7 +333,7 @@ func (h *RepositoryHandler) GetRepository(c *gin.Context) {
 
 	if repoId == "" {
 		h.logger.Warn("Missing repository ID", "request_id", requestID)
-		c.JSON(http.StatusBadRequest, dto.ErrorResponse{Code: "INVALID_ID", Message: "Repository ID is required"})
+		c.JSON(http.StatusBadRequest, schema.ErrorResponse{Code: "INVALID_ID", Message: "Repository ID is required"})
 		return
 	}
 
@@ -329,15 +343,16 @@ func (h *RepositoryHandler) GetRepository(c *gin.Context) {
 	if err != nil {
 		if errors.Is(err, repository.ErrRepositoryNotFound) {
 			h.logger.Warn("Repository not found", "request_id", requestID, "repo_id", repoId)
-			c.JSON(http.StatusNotFound, dto.ErrorResponse{Code: "NOT_FOUND", Message: "Repository not found"})
+			c.JSON(http.StatusNotFound, schema.ErrorResponse{Code: "NOT_FOUND", Message: "Repository not found"})
 		} else {
 			h.logger.Error("Failed to get repository details", "request_id", requestID, "repo_id", repoId, "error", err.Error())
-			c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Code: "INTERNAL_ERROR", Message: "Failed to retrieve repository details"})
+			c.JSON(http.StatusInternalServerError, schema.ErrorResponse{Code: "INTERNAL_ERROR", Message: "Failed to retrieve repository details"})
 		}
 		return
 	}
 
 	h.logger.Info("Successfully retrieved repository details", "request_id", requestID, "repo_id", repoId)
-	response := dto.ToRepositoryResponse(repo)
+	dtoResp := dto.ToRepositoryResponse(repo)
+	response := schema.FromRepositoryDTO(dtoResp)
 	c.JSON(http.StatusOK, response)
 }
