@@ -6,6 +6,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	apperror "opscore/backend/internal/git_repository/application/error"
 	"opscore/backend/internal/git_repository/application/usecase"
 	"opscore/backend/internal/git_repository/domain/entity"
 	"opscore/backend/internal/git_repository/interfaces/api/schema"
@@ -169,7 +170,12 @@ func TestRegisterRepository(t *testing.T) {
 		jsonBody, _ := json.Marshal(requestBody)
 
 		// モックの振る舞いを定義
-		mockUseCase.On("Register", mock.Anything, repoURL, accessToken).Return(nil, repository.ErrRepositoryAlreadyExists)
+		mockUseCase.On("Register", mock.Anything, repoURL, accessToken).Return(nil, &apperror.ConflictError{
+			Code:         apperror.CodeResourceConflict,
+			ResourceType: "Repository",
+			Identifier:   repoURL,
+			Reason:       "repository with this URL already exists",
+		})
 
 		// ルーターの設定
 		router.POST("/repositories", handler.RegisterRepository)
@@ -205,7 +211,12 @@ func TestRegisterRepository(t *testing.T) {
 		jsonBody, _ := json.Marshal(requestBody)
 
 		// モックの振る舞いを定義
-		mockUseCase.On("Register", mock.Anything, repoURL, accessToken).Return(nil, repository.ErrInvalidRepositoryURL)
+		mockUseCase.On("Register", mock.Anything, repoURL, accessToken).Return(nil, &apperror.ValidationFailedError{
+			Code: apperror.CodeValidationFailed,
+			Errors: []apperror.FieldError{
+				{Field: "url", Message: "invalid repository URL format"},
+			},
+		})
 
 		// ルーターの設定
 		router.POST("/repositories", handler.RegisterRepository)
@@ -221,7 +232,7 @@ func TestRegisterRepository(t *testing.T) {
 		var response schema.ErrorResponse
 		err := json.Unmarshal(rec.Body.Bytes(), &response)
 		require.NoError(t, err)
-		assert.Equal(t, "INVALID_URL", response.Code)
+		assert.Equal(t, "BAD_REQUEST", response.Code)
 
 		// モックの呼び出しを検証
 		mockUseCase.AssertExpectations(t)
@@ -257,7 +268,7 @@ func TestRegisterRepository(t *testing.T) {
 		var response schema.ErrorResponse
 		err := json.Unmarshal(rec.Body.Bytes(), &response)
 		require.NoError(t, err)
-		assert.Equal(t, "INTERNAL_ERROR", response.Code)
+		assert.Equal(t, "INTERNAL_SERVER_ERROR", response.Code)
 
 		// モックの呼び出しを検証
 		mockUseCase.AssertExpectations(t)
@@ -325,7 +336,11 @@ func TestGetRepository(t *testing.T) {
 		repoID := uuid.NewString()
 
 		// モックの振る舞いを定義
-		mockUseCase.On("GetRepository", mock.Anything, repoID).Return(nil, repository.ErrRepositoryNotFound)
+		mockUseCase.On("GetRepository", mock.Anything, repoID).Return(nil, &apperror.NotFoundError{
+			Code:         apperror.CodeResourceNotFound,
+			ResourceType: "Repository",
+			ResourceID:   repoID,
+		})
 
 		// ルーターの設定
 		router.GET("/repositories/:repoId", handler.GetRepository)
@@ -369,7 +384,7 @@ func TestGetRepository(t *testing.T) {
 		var response schema.ErrorResponse
 		err := json.Unmarshal(rec.Body.Bytes(), &response)
 		require.NoError(t, err)
-		assert.Equal(t, "INTERNAL_ERROR", response.Code)
+		assert.Equal(t, "INTERNAL_SERVER_ERROR", response.Code)
 
 		// モックの呼び出しを検証
 		mockUseCase.AssertExpectations(t)
@@ -469,7 +484,7 @@ func TestListRepositories(t *testing.T) {
 		var response schema.ErrorResponse
 		err := json.Unmarshal(rec.Body.Bytes(), &response)
 		require.NoError(t, err)
-		assert.Equal(t, "INTERNAL_ERROR", response.Code)
+		assert.Equal(t, "INTERNAL_SERVER_ERROR", response.Code)
 
 		// モックの呼び出しを検証
 		mockUseCase.AssertExpectations(t)
@@ -541,7 +556,11 @@ func TestListRepositoryFiles(t *testing.T) {
 		repoID := uuid.NewString()
 
 		// モックの振る舞いを定義
-		mockUseCase.On("ListFiles", mock.Anything, repoID).Return(nil, repository.ErrRepositoryNotFound)
+		mockUseCase.On("ListFiles", mock.Anything, repoID).Return(nil, &apperror.NotFoundError{
+			Code:         apperror.CodeResourceNotFound,
+			ResourceType: "Repository",
+			ResourceID:   repoID,
+		})
 
 		// ルーターの設定
 		router.GET("/repositories/:repoId/files", handler.ListRepositoryFiles)
@@ -570,7 +589,12 @@ func TestListRepositoryFiles(t *testing.T) {
 		repoID := uuid.NewString()
 
 		// モックの振る舞いを定義
-		mockUseCase.On("ListFiles", mock.Anything, repoID).Return(nil, repository.ErrAccessTokenRequired)
+		mockUseCase.On("ListFiles", mock.Anything, repoID).Return(nil, &apperror.ValidationFailedError{
+			Code: apperror.CodeValidationFailed,
+			Errors: []apperror.FieldError{
+				{Field: "access_token", Message: "access token is required for this operation"},
+			},
+		})
 
 		// ルーターの設定
 		router.GET("/repositories/:repoId/files", handler.ListRepositoryFiles)
@@ -585,7 +609,7 @@ func TestListRepositoryFiles(t *testing.T) {
 		var response schema.ErrorResponse
 		err := json.Unmarshal(rec.Body.Bytes(), &response)
 		require.NoError(t, err)
-		assert.Equal(t, "ACCESS_TOKEN_REQUIRED", response.Code)
+		assert.Equal(t, "BAD_REQUEST", response.Code)
 
 		// モックの呼び出しを検証
 		mockUseCase.AssertExpectations(t)
@@ -614,7 +638,7 @@ func TestListRepositoryFiles(t *testing.T) {
 		var response schema.ErrorResponse
 		err := json.Unmarshal(rec.Body.Bytes(), &response)
 		require.NoError(t, err)
-		assert.Equal(t, "INTERNAL_ERROR", response.Code)
+		assert.Equal(t, "INTERNAL_SERVER_ERROR", response.Code)
 
 		// モックの呼び出しを検証
 		mockUseCase.AssertExpectations(t)
@@ -755,7 +779,11 @@ func TestSelectRepositoryFiles(t *testing.T) {
 		jsonBody, _ := json.Marshal(requestBody)
 
 		// モックの振る舞いを定義
-		mockUseCase.On("SelectFiles", mock.Anything, repoID, filePaths).Return(repository.ErrRepositoryNotFound)
+		mockUseCase.On("SelectFiles", mock.Anything, repoID, filePaths).Return(&apperror.NotFoundError{
+			Code:         apperror.CodeResourceNotFound,
+			ResourceType: "Repository",
+			ResourceID:   repoID,
+		})
 
 		// ルーターの設定
 		router.POST("/repositories/:repoId/files/select", handler.SelectRepositoryFiles)
@@ -806,7 +834,7 @@ func TestSelectRepositoryFiles(t *testing.T) {
 		var response schema.ErrorResponse
 		err := json.Unmarshal(rec.Body.Bytes(), &response)
 		require.NoError(t, err)
-		assert.Equal(t, "INTERNAL_ERROR", response.Code)
+		assert.Equal(t, "INTERNAL_SERVER_ERROR", response.Code)
 
 		// モックの呼び出しを検証
 		mockUseCase.AssertExpectations(t)
@@ -873,7 +901,11 @@ func TestGetSelectedMarkdown(t *testing.T) {
 		repoID := uuid.NewString()
 
 		// モックの振る舞いを定義
-		mockUseCase.On("GetSelectedMarkdown", mock.Anything, repoID).Return("", repository.ErrRepositoryNotFound)
+		mockUseCase.On("GetSelectedMarkdown", mock.Anything, repoID).Return("", &apperror.NotFoundError{
+			Code:         apperror.CodeResourceNotFound,
+			ResourceType: "Repository",
+			ResourceID:   repoID,
+		})
 
 		// ルーターの設定
 		router.GET("/repositories/:repoId/markdown", handler.GetSelectedMarkdown)
@@ -917,7 +949,7 @@ func TestGetSelectedMarkdown(t *testing.T) {
 		var response schema.ErrorResponse
 		err := json.Unmarshal(rec.Body.Bytes(), &response)
 		require.NoError(t, err)
-		assert.Equal(t, "INTERNAL_ERROR", response.Code)
+		assert.Equal(t, "INTERNAL_SERVER_ERROR", response.Code)
 
 		// モックの呼び出しを検証
 		mockUseCase.AssertExpectations(t)
@@ -1055,7 +1087,11 @@ func TestUpdateAccessToken(t *testing.T) {
 		jsonBody, _ := json.Marshal(requestBody)
 
 		// モックの振る舞いを定義
-		mockUseCase.On("UpdateAccessToken", mock.Anything, repoID, accessToken).Return(repository.ErrRepositoryNotFound)
+		mockUseCase.On("UpdateAccessToken", mock.Anything, repoID, accessToken).Return(&apperror.NotFoundError{
+			Code:         apperror.CodeResourceNotFound,
+			ResourceType: "Repository",
+			ResourceID:   repoID,
+		})
 
 		// ルーターの設定
 		router.PUT("/repositories/:repoId/token", handler.UpdateAccessToken)
@@ -1106,7 +1142,7 @@ func TestUpdateAccessToken(t *testing.T) {
 		var response schema.ErrorResponse
 		err := json.Unmarshal(rec.Body.Bytes(), &response)
 		require.NoError(t, err)
-		assert.Equal(t, "INTERNAL_ERROR", response.Code)
+		assert.Equal(t, "INTERNAL_SERVER_ERROR", response.Code)
 
 		// モックの呼び出しを検証
 		mockUseCase.AssertExpectations(t)
