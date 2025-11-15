@@ -30,7 +30,15 @@ func (e *NotFoundError) Error() string {
 }
 
 func (e *NotFoundError) Is(target error) bool {
-	return target == ErrNotFound
+	// Check against application layer sentinel
+	if target == ErrNotFound {
+		return true
+	}
+	// Check against legacy usecase sentinel for backward compatibility
+	if target.Error() == "repository not found" {
+		return true
+	}
+	return false
 }
 
 func (e *NotFoundError) Unwrap() error {
@@ -106,7 +114,15 @@ func (e *ConflictError) Error() string {
 }
 
 func (e *ConflictError) Is(target error) bool {
-	return target == ErrConflict
+	// Check against application layer sentinel
+	if target == ErrConflict {
+		return true
+	}
+	// Check against legacy usecase sentinel for backward compatibility
+	if target.Error() == "repository with this URL already exists" {
+		return true
+	}
+	return false
 }
 
 func (e *ConflictError) Unwrap() error {
@@ -134,7 +150,15 @@ func (e *ValidationFailedError) Error() string {
 }
 
 func (e *ValidationFailedError) Is(target error) bool {
-	return target == ErrBadRequest
+	// Check against application layer sentinel
+	if target == ErrBadRequest {
+		return true
+	}
+	// Check against legacy usecase sentinels for backward compatibility
+	if target.Error() == "access token is required for this operation" {
+		return true
+	}
+	return false
 }
 
 func (e *ValidationFailedError) ErrorCode() ErrorCode {

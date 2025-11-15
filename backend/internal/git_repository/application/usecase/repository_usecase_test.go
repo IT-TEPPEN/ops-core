@@ -71,7 +71,7 @@ func TestRegister(t *testing.T) {
 
 		// 検証
 		assert.Error(t, err)
-		assert.Equal(t, ErrRepositoryAlreadyExists, err)
+		assert.True(t, errors.Is(err, ErrRepositoryAlreadyExists), "Error should match ErrRepositoryAlreadyExists")
 		assert.Nil(t, repo)
 
 		// モックの呼び出しを検証
@@ -188,7 +188,7 @@ func TestGetRepository(t *testing.T) {
 
 		// 検証
 		assert.Error(t, err)
-		assert.Equal(t, ErrRepositoryNotFound, err)
+		assert.True(t, errors.Is(err, ErrRepositoryNotFound), "Error should match ErrRepositoryNotFound")
 		assert.Nil(t, repo)
 
 		// モックの呼び出しを検証
@@ -374,7 +374,7 @@ func TestListFiles(t *testing.T) {
 
 		// 検証
 		assert.Error(t, err)
-		assert.Equal(t, ErrRepositoryNotFound, err)
+		assert.True(t, errors.Is(err, ErrRepositoryNotFound), "Error should match ErrRepositoryNotFound")
 		assert.Nil(t, fileNodes)
 
 		// モックの呼び出しを検証
@@ -402,7 +402,7 @@ func TestListFiles(t *testing.T) {
 
 		// 検証
 		assert.Error(t, err)
-		assert.Equal(t, ErrAccessTokenRequired, err)
+		assert.True(t, errors.Is(err, ErrAccessTokenRequired), "Error should match ErrAccessTokenRequired")
 		assert.Nil(t, fileNodes)
 
 		// モックの呼び出しを検証
@@ -526,7 +526,7 @@ func TestSelectFiles(t *testing.T) {
 
 		// 検証
 		assert.Error(t, err)
-		assert.Equal(t, ErrRepositoryNotFound, err)
+		assert.True(t, errors.Is(err, ErrRepositoryNotFound), "Error should match ErrRepositoryNotFound")
 
 		// モックの呼び出しを検証
 		mockRepo.AssertExpectations(t)
@@ -689,7 +689,7 @@ func TestGetSelectedMarkdown(t *testing.T) {
 
 		// 検証
 		assert.Error(t, err)
-		assert.Equal(t, ErrRepositoryNotFound, err)
+		assert.True(t, errors.Is(err, ErrRepositoryNotFound), "Error should match ErrRepositoryNotFound")
 		assert.Empty(t, content)
 
 		// モックの呼び出しを検証
@@ -901,7 +901,7 @@ func TestUpdateAccessToken(t *testing.T) {
 
 		// 検証
 		assert.Error(t, err)
-		assert.Equal(t, ErrRepositoryNotFound, err)
+		assert.True(t, errors.Is(err, ErrRepositoryNotFound), "Error should match ErrRepositoryNotFound")
 
 		// モックの呼び出しを検証
 		mockRepo.AssertExpectations(t)
