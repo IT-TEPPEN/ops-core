@@ -767,7 +767,16 @@ func (uc *UserUsecase) CreateUser(ctx context.Context, req *dto.CreateUserReques
 
 #### 4.1 Error Code System
 
-Use a hierarchical error code format: `<LAYER>_<CATEGORY>_<NUMBER>`
+Use a hierarchical error code format: `<CONTEXT>_<LAYER>_<CATEGORY>_<NUMBER>`
+
+**Context Prefixes:**
+
+Context identifiers prevent error code collisions across different bounded contexts:
+
+* `GITREPO`: git_repository context
+* `USER`: user management context
+* `PROJECT`: project management context
+* (Add more as contexts are added)
 
 **Layer Prefixes:**
 
@@ -783,16 +792,18 @@ Use a hierarchical error code format: `<LAYER>_<CATEGORY>_<NUMBER>`
 * `DB`: Database
 * `EXT`: External Service
 * `INT`: Internal/Unexpected
+* `BUS`: Business rule
+* `RES`: Resource
 
 **Examples:**
 
-* `DOM_VAL_001`: Domain validation error (invalid field value)
-* `DOM_BUS_001`: Business rule violation
-* `APP_AUTH_001`: Unauthorized access
-* `APP_RES_001`: Resource not found
-* `INF_DB_001`: Database connection error
-* `INF_EXT_001`: External API error
-* `API_REQ_001`: Invalid request format
+* `GITREPO_DOM_VAL_001`: git_repository domain validation error (invalid field value)
+* `GITREPO_DOM_BUS_001`: git_repository business rule violation
+* `GITREPO_APP_AUTH_001`: git_repository unauthorized access
+* `GITREPO_APP_RES_001`: git_repository resource not found
+* `GITREPO_INF_DB_001`: git_repository database connection error
+* `GITREPO_INF_EXT_001`: git_repository external API error
+* `USER_APP_RES_001`: user context resource not found
 
 **Error Code Management:**
 
@@ -802,37 +813,26 @@ To enable developers to quickly identify where errors occur, implement centraliz
 // internal/<context>/domain/error/codes.go
 package error
 
-import "strings"
-
 // ErrorCode represents a unique error identifier
+// Format: <CONTEXT>_<LAYER>_<CATEGORY>_<NUMBER>
 type ErrorCode string
 
 const (
-    // Validation errors (DOM_VAL_xxx)
-    CodeInvalidEntityField     ErrorCode = "DOM_VAL_001"
-    CodeRequiredFieldMissing   ErrorCode = "DOM_VAL_002"
-    CodeInvalidFieldFormat     ErrorCode = "DOM_VAL_003"
-    CodeFieldValueOutOfRange   ErrorCode = "DOM_VAL_004"
+    // Validation errors (GITREPO_DOM_VAL_xxx)
+    CodeInvalidEntityField     ErrorCode = "GITREPO_DOM_VAL_001"
+    CodeRequiredFieldMissing   ErrorCode = "GITREPO_DOM_VAL_002"
+    CodeInvalidFieldFormat     ErrorCode = "GITREPO_DOM_VAL_003"
+    CodeFieldValueOutOfRange   ErrorCode = "GITREPO_DOM_VAL_004"
     
-    // Business rule violations (DOM_BUS_xxx)
-    CodeBusinessRuleViolation  ErrorCode = "DOM_BUS_001"
-    CodeInvalidStateTransition ErrorCode = "DOM_BUS_002"
-    CodeInvariantViolation     ErrorCode = "DOM_BUS_003"
+    // Business rule violations (GITREPO_DOM_BUS_xxx)
+    CodeBusinessRuleViolation  ErrorCode = "GITREPO_DOM_BUS_001"
+    CodeInvalidStateTransition ErrorCode = "GITREPO_DOM_BUS_002"
+    CodeInvariantViolation     ErrorCode = "GITREPO_DOM_BUS_003"
 )
 
 // String returns the string representation of the error code
 func (c ErrorCode) String() string {
     return string(c)
-}
-
-// Context returns the layer and category information
-func (c ErrorCode) Context() (layer, category string) {
-    // Parse "DOM_VAL_001" -> layer: "DOM", category: "VAL"
-    parts := strings.Split(string(c), "_")
-    if len(parts) >= 2 {
-        return parts[0], parts[1]
-    }
-    return "UNKNOWN", "UNKNOWN"
 }
 ```
 
@@ -877,19 +877,42 @@ func (e *ValidationError) ErrorCode() ErrorCode {
     return e.Code
 }
 
-// Usage in domain
-func NewRepository(id RepositoryID, url string) (*Repository, error) {
-    if url == "" {
-        return nil, &error.ValidationError{
-            Code:    error.CodeRequiredFieldMissing,
-            Field:   "url",
-            Value:   url,
-            Message: "repository URL cannot be empty",
-        }
+// Factory functions to prevent manual error struct/code pairing errors
+func NewURLValidationError(field string, value interface{}, message string, isSchemeError bool) *ValidationError {
+    code := CodeInvalidURL
+    if isSchemeError {
+        code := CodeUnsupportedURLScheme
     }
-    // ...
+    
+    return &ValidationError{
+        Code:    code,
+        Field:   field,
+        Value:   value,
+        Message: message,
+    }
+}
+
+// Usage in domain
+func validateRepositoryURL(repoURL string) error {
+    parsedURL, err := url.ParseRequestURI(repoURL)
+    if err != nil {
+        return domainerror.NewURLValidationError("url", repoURL, "invalid repository URL format", false)
+    }
+    
+    if parsedURL.Scheme != "https" {
+        return domainerror.NewURLValidationError("url", repoURL, "unsupported repository URL scheme: only https is supported", true)
+    }
+    
+    return nil
 }
 ```
+
+**Benefits of Factory Functions:**
+
+* **Type Safety**: The compiler ensures the correct error code is always used
+* **Reduced Bugs**: Eliminates manual pairing of error struct and error code
+* **Better API**: Clear function signatures document required error context
+* **Consistency**: All errors of the same type are created the same way
 
 **Error Code Registry:**
 
@@ -902,6 +925,7 @@ package error
 // ErrorCodeInfo provides metadata about an error code
 type ErrorCodeInfo struct {
     Code        string
+    Context     string // Context/Bounded Context (e.g., "git_repository", "user")
     Layer       string
     Category    string
     Description string
@@ -911,32 +935,36 @@ type ErrorCodeInfo struct {
 
 // Global error code registry
 var ErrorCodeRegistry = map[string]ErrorCodeInfo{
-    "DOM_VAL_001": {
-        Code:        "DOM_VAL_001",
+    "GITREPO_DOM_VAL_001": {
+        Code:        "GITREPO_DOM_VAL_001",
+        Context:     "git_repository",
         Layer:       "Domain",
         Category:    "Validation",
         Description: "Invalid entity field value",
         Severity:    "MEDIUM",
         Retryable:   false,
     },
-    "DOM_VAL_002": {
-        Code:        "DOM_VAL_002",
+    "GITREPO_DOM_VAL_002": {
+        Code:        "GITREPO_DOM_VAL_002",
+        Context:     "git_repository",
         Layer:       "Domain",
         Category:    "Validation",
         Description: "Required field is missing",
         Severity:    "MEDIUM",
         Retryable:   false,
     },
-    "APP_RES_001": {
-        Code:        "APP_RES_001",
+    "GITREPO_APP_RES_001": {
+        Code:        "GITREPO_APP_RES_001",
+        Context:     "git_repository",
         Layer:       "Application",
         Category:    "Resource",
         Description: "Requested resource not found",
         Severity:    "LOW",
         Retryable:   false,
     },
-    "INF_DB_001": {
-        Code:        "INF_DB_001",
+    "GITREPO_INF_DB_001": {
+        Code:        "GITREPO_INF_DB_001",
+        Context:     "git_repository",
         Layer:       "Infrastructure",
         Category:    "Database",
         Description: "Database connection error",
