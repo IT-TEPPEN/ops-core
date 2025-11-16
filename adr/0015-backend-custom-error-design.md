@@ -767,32 +767,38 @@ func (uc *UserUsecase) CreateUser(ctx context.Context, req *dto.CreateUserReques
 
 #### 4.1 Error Code System
 
-Use a hierarchical error code format: `<LAYER>_<CATEGORY>_<NUMBER>`
+Use a compact hierarchical error code format: `<CONTEXT><LAYER><NUMBER>`
 
-**Layer Prefixes:**
+**Format Specification:**
+- **CONTEXT**: 2 characters - Context identifier
+- **LAYER**: 1 character - Layer identifier
+- **NUMBER**: 4 digits - Sequential error number
 
-* `DOM`: Domain Layer
-* `APP`: Application Layer
-* `INF`: Infrastructure Layer
-* `API`: Interfaces Layer
+**Context Identifiers (2 characters):**
 
-**Category Examples:**
+Context identifiers prevent error code collisions across different bounded contexts:
 
-* `VAL`: Validation
-* `AUTH`: Authentication/Authorization
-* `DB`: Database
-* `EXT`: External Service
-* `INT`: Internal/Unexpected
+* `GR`: git_repository context
+* `US`: user management context
+* `PR`: project management context
+* (Add more as contexts are added)
+
+**Layer Identifiers (1 character):**
+
+* `D`: Domain Layer
+* `A`: Application Layer
+* `I`: Infrastructure Layer
+* `P`: Presentation/Interfaces Layer
 
 **Examples:**
 
-* `DOM_VAL_001`: Domain validation error (invalid field value)
-* `DOM_BUS_001`: Business rule violation
-* `APP_AUTH_001`: Unauthorized access
-* `APP_RES_001`: Resource not found
-* `INF_DB_001`: Database connection error
-* `INF_EXT_001`: External API error
-* `API_REQ_001`: Invalid request format
+* `GRD0001`: git_repository domain error #1 (validation)
+* `GRD0007`: git_repository domain error #7 (business rule violation)
+* `GRA0001`: git_repository application error #1 (resource not found)
+* `GRA0003`: git_repository application error #3 (unauthorized access)
+* `GRI0001`: git_repository infrastructure error #1 (database connection)
+* `GRI0005`: git_repository infrastructure error #5 (external API error)
+* `USA0001`: user context application error #1 (resource not found)
 
 **Error Code Management:**
 
@@ -802,37 +808,30 @@ To enable developers to quickly identify where errors occur, implement centraliz
 // internal/<context>/domain/error/codes.go
 package error
 
-import "strings"
-
 // ErrorCode represents a unique error identifier
+// Format: <CONTEXT><LAYER><NUMBER>
+// - CONTEXT: 2 characters (e.g., GR for git_repository)
+// - LAYER: 1 character (D for domain, A for application, I for infrastructure)
+// - NUMBER: 4 digits (e.g., 0001)
+// Example: GRD0001
 type ErrorCode string
 
 const (
-    // Validation errors (DOM_VAL_xxx)
-    CodeInvalidEntityField     ErrorCode = "DOM_VAL_001"
-    CodeRequiredFieldMissing   ErrorCode = "DOM_VAL_002"
-    CodeInvalidFieldFormat     ErrorCode = "DOM_VAL_003"
-    CodeFieldValueOutOfRange   ErrorCode = "DOM_VAL_004"
+    // Validation errors
+    CodeInvalidEntityField     ErrorCode = "GRD0001"
+    CodeRequiredFieldMissing   ErrorCode = "GRD0002"
+    CodeInvalidFieldFormat     ErrorCode = "GRD0003"
+    CodeFieldValueOutOfRange   ErrorCode = "GRD0004"
     
-    // Business rule violations (DOM_BUS_xxx)
-    CodeBusinessRuleViolation  ErrorCode = "DOM_BUS_001"
-    CodeInvalidStateTransition ErrorCode = "DOM_BUS_002"
-    CodeInvariantViolation     ErrorCode = "DOM_BUS_003"
+    // Business rule violations
+    CodeBusinessRuleViolation  ErrorCode = "GRD0007"
+    CodeInvalidStateTransition ErrorCode = "GRD0008"
+    CodeInvariantViolation     ErrorCode = "GRD0009"
 )
 
 // String returns the string representation of the error code
 func (c ErrorCode) String() string {
     return string(c)
-}
-
-// Context returns the layer and category information
-func (c ErrorCode) Context() (layer, category string) {
-    // Parse "DOM_VAL_001" -> layer: "DOM", category: "VAL"
-    parts := strings.Split(string(c), "_")
-    if len(parts) >= 2 {
-        return parts[0], parts[1]
-    }
-    return "UNKNOWN", "UNKNOWN"
 }
 ```
 
@@ -843,18 +842,18 @@ package error
 type ErrorCode string
 
 const (
-    // Resource errors (APP_RES_xxx)
-    CodeResourceNotFound    ErrorCode = "APP_RES_001"
-    CodeResourceConflict    ErrorCode = "APP_RES_002"
+    // Resource errors
+    CodeResourceNotFound    ErrorCode = "GRA0001"
+    CodeResourceConflict    ErrorCode = "GRA0002"
     
-    // Authentication/Authorization (APP_AUTH_xxx)
-    CodeUnauthorized        ErrorCode = "APP_AUTH_001"
-    CodeForbidden           ErrorCode = "APP_AUTH_002"
-    CodeInvalidCredentials  ErrorCode = "APP_AUTH_003"
+    // Authentication/Authorization
+    CodeUnauthorized        ErrorCode = "GRA0003"
+    CodeForbidden           ErrorCode = "GRA0004"
+    CodeInvalidCredentials  ErrorCode = "GRA0005"
     
-    // Validation errors (APP_VAL_xxx)
-    CodeValidationFailed    ErrorCode = "APP_VAL_001"
-    CodeInvalidRequest      ErrorCode = "APP_VAL_002"
+    // Validation errors
+    CodeValidationFailed    ErrorCode = "GRA0006"
+    CodeInvalidRequest      ErrorCode = "GRA0007"
 )
 ```
 
@@ -877,19 +876,42 @@ func (e *ValidationError) ErrorCode() ErrorCode {
     return e.Code
 }
 
-// Usage in domain
-func NewRepository(id RepositoryID, url string) (*Repository, error) {
-    if url == "" {
-        return nil, &error.ValidationError{
-            Code:    error.CodeRequiredFieldMissing,
-            Field:   "url",
-            Value:   url,
-            Message: "repository URL cannot be empty",
-        }
+// Factory functions to prevent manual error struct/code pairing errors
+func NewURLValidationError(field string, value interface{}, message string, isSchemeError bool) *ValidationError {
+    code := CodeInvalidURL  // GRD0005
+    if isSchemeError {
+        code = CodeUnsupportedURLScheme  // GRD0006
     }
-    // ...
+    
+    return &ValidationError{
+        Code:    code,
+        Field:   field,
+        Value:   value,
+        Message: message,
+    }
+}
+
+// Usage in domain
+func validateRepositoryURL(repoURL string) error {
+    parsedURL, err := url.ParseRequestURI(repoURL)
+    if err != nil {
+        return domainerror.NewURLValidationError("url", repoURL, "invalid repository URL format", false)
+    }
+    
+    if parsedURL.Scheme != "https" {
+        return domainerror.NewURLValidationError("url", repoURL, "unsupported repository URL scheme: only https is supported", true)
+    }
+    
+    return nil
 }
 ```
+
+**Benefits of Factory Functions:**
+
+* **Type Safety**: The compiler ensures the correct error code is always used
+* **Reduced Bugs**: Eliminates manual pairing of error struct and error code
+* **Better API**: Clear function signatures document required error context
+* **Consistency**: All errors of the same type are created the same way
 
 **Error Code Registry:**
 
@@ -902,6 +924,7 @@ package error
 // ErrorCodeInfo provides metadata about an error code
 type ErrorCodeInfo struct {
     Code        string
+    Context     string // Context/Bounded Context (e.g., "git_repository", "user")
     Layer       string
     Category    string
     Description string
@@ -911,32 +934,36 @@ type ErrorCodeInfo struct {
 
 // Global error code registry
 var ErrorCodeRegistry = map[string]ErrorCodeInfo{
-    "DOM_VAL_001": {
-        Code:        "DOM_VAL_001",
+    "GRD0001": {
+        Code:        "GRD0001",
+        Context:     "git_repository",
         Layer:       "Domain",
         Category:    "Validation",
         Description: "Invalid entity field value",
         Severity:    "MEDIUM",
         Retryable:   false,
     },
-    "DOM_VAL_002": {
-        Code:        "DOM_VAL_002",
+    "GRD0002": {
+        Code:        "GRD0002",
+        Context:     "git_repository",
         Layer:       "Domain",
         Category:    "Validation",
         Description: "Required field is missing",
         Severity:    "MEDIUM",
         Retryable:   false,
     },
-    "APP_RES_001": {
-        Code:        "APP_RES_001",
+    "GRA0001": {
+        Code:        "GRA0001",
+        Context:     "git_repository",
         Layer:       "Application",
         Category:    "Resource",
         Description: "Requested resource not found",
         Severity:    "LOW",
         Retryable:   false,
     },
-    "INF_DB_001": {
-        Code:        "INF_DB_001",
+    "GRI0001": {
+        Code:        "GRI0001",
+        Context:     "git_repository",
         Layer:       "Infrastructure",
         Category:    "Database",
         Description: "Database connection error",

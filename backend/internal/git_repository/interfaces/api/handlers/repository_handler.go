@@ -1,10 +1,10 @@
 package handlers
 
 import (
-	"errors"
 	"net/http"
 	"opscore/backend/internal/git_repository/application/dto"
 	"opscore/backend/internal/git_repository/application/usecase"
+	intererror "opscore/backend/internal/git_repository/interfaces/error"
 	"opscore/backend/internal/git_repository/interfaces/api/schema"
 
 	"github.com/gin-gonic/gin"
@@ -63,16 +63,10 @@ func (h *RepositoryHandler) RegisterRepository(c *gin.Context) {
 	newRepo, err := h.repoUseCase.Register(c.Request.Context(), dtoReq.URL, dtoReq.AccessToken)
 
 	if err != nil {
-		if errors.Is(err, repository.ErrRepositoryAlreadyExists) {
-			h.logger.Warn("Repository already exists", "request_id", requestID, "url", dtoReq.URL)
-			c.JSON(http.StatusConflict, schema.ErrorResponse{Code: "CONFLICT", Message: err.Error()})
-		} else if errors.Is(err, repository.ErrInvalidRepositoryURL) {
-			h.logger.Warn("Invalid repository URL", "request_id", requestID, "url", dtoReq.URL)
-			c.JSON(http.StatusBadRequest, schema.ErrorResponse{Code: "INVALID_URL", Message: err.Error()})
-		} else {
-			h.logger.Error("Failed to register repository", "request_id", requestID, "error", err.Error())
-			c.JSON(http.StatusInternalServerError, schema.ErrorResponse{Code: "INTERNAL_ERROR", Message: "Failed to register repository"})
-		}
+		// Use error mapper to convert application errors to HTTP errors
+		httpErr := intererror.MapToHTTPError(err, requestID)
+		h.logger.Error("Failed to register repository", "request_id", requestID, "error", err.Error(), "http_code", httpErr.Code)
+		c.JSON(httpErr.StatusCode, schema.ErrorResponse{Code: httpErr.Code, Message: httpErr.Message})
 		return
 	}
 
@@ -120,13 +114,10 @@ func (h *RepositoryHandler) UpdateAccessToken(c *gin.Context) {
 	err := h.repoUseCase.UpdateAccessToken(c.Request.Context(), repoId, dtoReq.AccessToken)
 
 	if err != nil {
-		if errors.Is(err, repository.ErrRepositoryNotFound) {
-			h.logger.Warn("Repository not found", "request_id", requestID, "repo_id", repoId)
-			c.JSON(http.StatusNotFound, schema.ErrorResponse{Code: "NOT_FOUND", Message: err.Error()})
-		} else {
-			h.logger.Error("Failed to update access token", "request_id", requestID, "repo_id", repoId, "error", err.Error())
-			c.JSON(http.StatusInternalServerError, schema.ErrorResponse{Code: "INTERNAL_ERROR", Message: "Failed to update access token"})
-		}
+		// Use error mapper to convert application errors to HTTP errors
+		httpErr := intererror.MapToHTTPError(err, requestID)
+		h.logger.Error("Failed to update access token", "request_id", requestID, "repo_id", repoId, "error", err.Error(), "http_code", httpErr.Code)
+		c.JSON(httpErr.StatusCode, schema.ErrorResponse{Code: httpErr.Code, Message: httpErr.Message})
 		return
 	}
 
@@ -163,16 +154,10 @@ func (h *RepositoryHandler) ListRepositoryFiles(c *gin.Context) {
 	domainFiles, err := h.repoUseCase.ListFiles(c.Request.Context(), repoId)
 
 	if err != nil {
-		if errors.Is(err, repository.ErrRepositoryNotFound) {
-			h.logger.Warn("Repository not found", "request_id", requestID, "repo_id", repoId)
-			c.JSON(http.StatusNotFound, schema.ErrorResponse{Code: "NOT_FOUND", Message: err.Error()})
-		} else if errors.Is(err, repository.ErrAccessTokenRequired) {
-			h.logger.Warn("Access token required", "request_id", requestID, "repo_id", repoId)
-			c.JSON(http.StatusBadRequest, schema.ErrorResponse{Code: "ACCESS_TOKEN_REQUIRED", Message: "Access token is required to list repository files"})
-		} else {
-			h.logger.Error("Failed to list repository files", "request_id", requestID, "repo_id", repoId, "error", err.Error())
-			c.JSON(http.StatusInternalServerError, schema.ErrorResponse{Code: "INTERNAL_ERROR", Message: "Failed to list repository files"})
-		}
+		// Use error mapper to convert application errors to HTTP errors
+		httpErr := intererror.MapToHTTPError(err, requestID)
+		h.logger.Error("Failed to list repository files", "request_id", requestID, "repo_id", repoId, "error", err.Error(), "http_code", httpErr.Code)
+		c.JSON(httpErr.StatusCode, schema.ErrorResponse{Code: httpErr.Code, Message: httpErr.Message})
 		return
 	}
 
@@ -226,13 +211,10 @@ func (h *RepositoryHandler) SelectRepositoryFiles(c *gin.Context) {
 	err := h.repoUseCase.SelectFiles(c.Request.Context(), repoId, dtoReq.FilePaths)
 
 	if err != nil {
-		if errors.Is(err, repository.ErrRepositoryNotFound) {
-			h.logger.Warn("Repository not found", "request_id", requestID, "repo_id", repoId)
-			c.JSON(http.StatusNotFound, schema.ErrorResponse{Code: "NOT_FOUND", Message: err.Error()})
-		} else {
-			h.logger.Error("Failed to select files", "request_id", requestID, "repo_id", repoId, "error", err.Error())
-			c.JSON(http.StatusInternalServerError, schema.ErrorResponse{Code: "INTERNAL_ERROR", Message: "Failed to select files"})
-		}
+		// Use error mapper to convert application errors to HTTP errors
+		httpErr := intererror.MapToHTTPError(err, requestID)
+		h.logger.Error("Failed to select files", "request_id", requestID, "repo_id", repoId, "error", err.Error(), "http_code", httpErr.Code)
+		c.JSON(httpErr.StatusCode, schema.ErrorResponse{Code: httpErr.Code, Message: httpErr.Message})
 		return
 	}
 
@@ -269,13 +251,10 @@ func (h *RepositoryHandler) GetSelectedMarkdown(c *gin.Context) {
 	markdownContent, err := h.repoUseCase.GetSelectedMarkdown(c.Request.Context(), repoId)
 
 	if err != nil {
-		if errors.Is(err, repository.ErrRepositoryNotFound) {
-			h.logger.Warn("Repository not found", "request_id", requestID, "repo_id", repoId)
-			c.JSON(http.StatusNotFound, schema.ErrorResponse{Code: "NOT_FOUND", Message: err.Error()})
-		} else {
-			h.logger.Error("Failed to retrieve Markdown content", "request_id", requestID, "repo_id", repoId, "error", err.Error())
-			c.JSON(http.StatusInternalServerError, schema.ErrorResponse{Code: "INTERNAL_ERROR", Message: "Failed to retrieve Markdown content"})
-		}
+		// Use error mapper to convert application errors to HTTP errors
+		httpErr := intererror.MapToHTTPError(err, requestID)
+		h.logger.Error("Failed to retrieve Markdown content", "request_id", requestID, "repo_id", repoId, "error", err.Error(), "http_code", httpErr.Code)
+		c.JSON(httpErr.StatusCode, schema.ErrorResponse{Code: httpErr.Code, Message: httpErr.Message})
 		return
 	}
 
@@ -301,8 +280,10 @@ func (h *RepositoryHandler) ListRepositories(c *gin.Context) {
 
 	repos, err := h.repoUseCase.ListRepositories(c.Request.Context())
 	if err != nil {
-		h.logger.Error("Failed to list repositories", "request_id", requestID, "error", err.Error())
-		c.JSON(http.StatusInternalServerError, schema.ErrorResponse{Code: "INTERNAL_ERROR", Message: "Failed to retrieve repositories"})
+		// Use error mapper to convert application errors to HTTP errors
+		httpErr := intererror.MapToHTTPError(err, requestID)
+		h.logger.Error("Failed to list repositories", "request_id", requestID, "error", err.Error(), "http_code", httpErr.Code)
+		c.JSON(httpErr.StatusCode, schema.ErrorResponse{Code: httpErr.Code, Message: httpErr.Message})
 		return
 	}
 
@@ -341,13 +322,10 @@ func (h *RepositoryHandler) GetRepository(c *gin.Context) {
 	repo, err := h.repoUseCase.GetRepository(c.Request.Context(), repoId)
 
 	if err != nil {
-		if errors.Is(err, repository.ErrRepositoryNotFound) {
-			h.logger.Warn("Repository not found", "request_id", requestID, "repo_id", repoId)
-			c.JSON(http.StatusNotFound, schema.ErrorResponse{Code: "NOT_FOUND", Message: "Repository not found"})
-		} else {
-			h.logger.Error("Failed to get repository details", "request_id", requestID, "repo_id", repoId, "error", err.Error())
-			c.JSON(http.StatusInternalServerError, schema.ErrorResponse{Code: "INTERNAL_ERROR", Message: "Failed to retrieve repository details"})
-		}
+		// Use error mapper to convert application errors to HTTP errors
+		httpErr := intererror.MapToHTTPError(err, requestID)
+		h.logger.Error("Failed to get repository details", "request_id", requestID, "repo_id", repoId, "error", err.Error(), "http_code", httpErr.Code)
+		c.JSON(httpErr.StatusCode, schema.ErrorResponse{Code: httpErr.Code, Message: httpErr.Message})
 		return
 	}
 
