@@ -13,7 +13,7 @@ func TestValidationError_Error(t *testing.T) {
 		Message: "must be a valid email address",
 	}
 
-	expected := "[GITREPO_DOM_VAL_003] validation failed for field 'email': must be a valid email address"
+	expected := "[GRD0003] validation failed for field 'email': must be a valid email address"
 	if err.Error() != expected {
 		t.Errorf("Expected error message '%s', got '%s'", expected, err.Error())
 	}
@@ -51,7 +51,7 @@ func TestBusinessRuleViolationError_Error(t *testing.T) {
 		Message: "repository with this URL already exists",
 	}
 
-	expected := "[GITREPO_DOM_BUS_001] business rule 'UniqueURL' violated for Repository: repository with this URL already exists"
+	expected := "[GRD0007] business rule 'UniqueURL' violated for Repository: repository with this URL already exists"
 	if err.Error() != expected {
 		t.Errorf("Expected error message '%s', got '%s'", expected, err.Error())
 	}
@@ -92,7 +92,7 @@ func TestInvalidStateTransitionError_Error(t *testing.T) {
 		Reason:    "cannot delete active repository with pending operations",
 	}
 
-	expected := "[GITREPO_DOM_BUS_002] invalid state transition for Repository from 'Active' to 'Deleted': cannot delete active repository with pending operations"
+	expected := "[GRD0008] invalid state transition for Repository from 'Active' to 'Deleted': cannot delete active repository with pending operations"
 	if err.Error() != expected {
 		t.Errorf("Expected error message '%s', got '%s'", expected, err.Error())
 	}

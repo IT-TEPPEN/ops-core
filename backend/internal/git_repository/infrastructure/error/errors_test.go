@@ -87,7 +87,7 @@ func TestExternalAPIError_Error(t *testing.T) {
 		Retryable:  true,
 	}
 
-	expected := "[GITREPO_INF_EXT_001] external API error calling GitHub at /repos/owner/repo (status 500): internal server error"
+	expected := "[GRI0005] external API error calling GitHub at /repos/owner/repo (status 500): internal server error"
 	if err.Error() != expected {
 		t.Errorf("Expected error message '%s', got '%s'", expected, err.Error())
 	}
@@ -130,7 +130,7 @@ func TestConnectionError_Error(t *testing.T) {
 		Cause:  errors.New("connection refused"),
 	}
 
-	expected := "[GITREPO_INF_CONN_001] connection error to database: connection refused"
+	expected := "[GRI0008] connection error to database: connection refused"
 	if err.Error() != expected {
 		t.Errorf("Expected error message '%s', got '%s'", expected, err.Error())
 	}
@@ -156,7 +156,7 @@ func TestStorageError_Error(t *testing.T) {
 		Cause:     errors.New("disk full"),
 	}
 
-	expected := "[GITREPO_INF_STOR_001] storage error during Upload at path /tmp/file.txt: disk full"
+	expected := "[GRI0010] storage error during Upload at path /tmp/file.txt: disk full"
 	if err.Error() != expected {
 		t.Errorf("Expected error message '%s', got '%s'", expected, err.Error())
 	}

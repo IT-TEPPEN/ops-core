@@ -12,7 +12,7 @@ func TestNotFoundError_Error(t *testing.T) {
 		ResourceID:   "repo-123",
 	}
 
-	expected := "[GITREPO_APP_RES_001] Repository not found (ID: repo-123)"
+	expected := "[GRA0001] Repository not found (ID: repo-123)"
 	if err.Error() != expected {
 		t.Errorf("Expected error message '%s', got '%s'", expected, err.Error())
 	}
@@ -76,7 +76,7 @@ func TestUnauthorizedError_Error(t *testing.T) {
 		Reason: "invalid token",
 	}
 
-	expected := "[GITREPO_APP_AUTH_001] unauthorized: invalid token"
+	expected := "[GRA0003] unauthorized: invalid token"
 	if err.Error() != expected {
 		t.Errorf("Expected error message '%s', got '%s'", expected, err.Error())
 	}
@@ -101,7 +101,7 @@ func TestForbiddenError_Error(t *testing.T) {
 		UserID:   "user-123",
 	}
 
-	expected := "[GITREPO_APP_AUTH_002] user user-123 is forbidden to delete on resource Repository"
+	expected := "[GRA0004] user user-123 is forbidden to delete on resource Repository"
 	if err.Error() != expected {
 		t.Errorf("Expected error message '%s', got '%s'", expected, err.Error())
 	}
@@ -128,7 +128,7 @@ func TestConflictError_Error(t *testing.T) {
 		Reason:       "URL already registered",
 	}
 
-	expected := "[GITREPO_APP_RES_002] conflict: Repository with identifier 'https://github.com/test/repo' already exists: URL already registered"
+	expected := "[GRA0002] conflict: Repository with identifier 'https://github.com/test/repo' already exists: URL already registered"
 	if err.Error() != expected {
 		t.Errorf("Expected error message '%s', got '%s'", expected, err.Error())
 	}
@@ -156,7 +156,7 @@ func TestValidationFailedError_Error(t *testing.T) {
 		},
 	}
 
-	expected := "[GITREPO_APP_VAL_001] validation failed: 2 error(s)"
+	expected := "[GRA0006] validation failed: 2 error(s)"
 	if err.Error() != expected {
 		t.Errorf("Expected error message '%s', got '%s'", expected, err.Error())
 	}

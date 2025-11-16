@@ -767,43 +767,38 @@ func (uc *UserUsecase) CreateUser(ctx context.Context, req *dto.CreateUserReques
 
 #### 4.1 Error Code System
 
-Use a hierarchical error code format: `<CONTEXT>_<LAYER>_<CATEGORY>_<NUMBER>`
+Use a compact hierarchical error code format: `<CONTEXT><LAYER><NUMBER>`
 
-**Context Prefixes:**
+**Format Specification:**
+- **CONTEXT**: 2 characters - Context identifier
+- **LAYER**: 1 character - Layer identifier
+- **NUMBER**: 4 digits - Sequential error number
+
+**Context Identifiers (2 characters):**
 
 Context identifiers prevent error code collisions across different bounded contexts:
 
-* `GITREPO`: git_repository context
-* `USER`: user management context
-* `PROJECT`: project management context
+* `GR`: git_repository context
+* `US`: user management context
+* `PR`: project management context
 * (Add more as contexts are added)
 
-**Layer Prefixes:**
+**Layer Identifiers (1 character):**
 
-* `DOM`: Domain Layer
-* `APP`: Application Layer
-* `INF`: Infrastructure Layer
-* `API`: Interfaces Layer
-
-**Category Examples:**
-
-* `VAL`: Validation
-* `AUTH`: Authentication/Authorization
-* `DB`: Database
-* `EXT`: External Service
-* `INT`: Internal/Unexpected
-* `BUS`: Business rule
-* `RES`: Resource
+* `D`: Domain Layer
+* `A`: Application Layer
+* `I`: Infrastructure Layer
+* `P`: Presentation/Interfaces Layer
 
 **Examples:**
 
-* `GITREPO_DOM_VAL_001`: git_repository domain validation error (invalid field value)
-* `GITREPO_DOM_BUS_001`: git_repository business rule violation
-* `GITREPO_APP_AUTH_001`: git_repository unauthorized access
-* `GITREPO_APP_RES_001`: git_repository resource not found
-* `GITREPO_INF_DB_001`: git_repository database connection error
-* `GITREPO_INF_EXT_001`: git_repository external API error
-* `USER_APP_RES_001`: user context resource not found
+* `GRD0001`: git_repository domain error #1 (validation)
+* `GRD0007`: git_repository domain error #7 (business rule violation)
+* `GRA0001`: git_repository application error #1 (resource not found)
+* `GRA0003`: git_repository application error #3 (unauthorized access)
+* `GRI0001`: git_repository infrastructure error #1 (database connection)
+* `GRI0005`: git_repository infrastructure error #5 (external API error)
+* `USA0001`: user context application error #1 (resource not found)
 
 **Error Code Management:**
 
@@ -814,20 +809,24 @@ To enable developers to quickly identify where errors occur, implement centraliz
 package error
 
 // ErrorCode represents a unique error identifier
-// Format: <CONTEXT>_<LAYER>_<CATEGORY>_<NUMBER>
+// Format: <CONTEXT><LAYER><NUMBER>
+// - CONTEXT: 2 characters (e.g., GR for git_repository)
+// - LAYER: 1 character (D for domain, A for application, I for infrastructure)
+// - NUMBER: 4 digits (e.g., 0001)
+// Example: GRD0001
 type ErrorCode string
 
 const (
-    // Validation errors (GITREPO_DOM_VAL_xxx)
-    CodeInvalidEntityField     ErrorCode = "GITREPO_DOM_VAL_001"
-    CodeRequiredFieldMissing   ErrorCode = "GITREPO_DOM_VAL_002"
-    CodeInvalidFieldFormat     ErrorCode = "GITREPO_DOM_VAL_003"
-    CodeFieldValueOutOfRange   ErrorCode = "GITREPO_DOM_VAL_004"
+    // Validation errors
+    CodeInvalidEntityField     ErrorCode = "GRD0001"
+    CodeRequiredFieldMissing   ErrorCode = "GRD0002"
+    CodeInvalidFieldFormat     ErrorCode = "GRD0003"
+    CodeFieldValueOutOfRange   ErrorCode = "GRD0004"
     
-    // Business rule violations (GITREPO_DOM_BUS_xxx)
-    CodeBusinessRuleViolation  ErrorCode = "GITREPO_DOM_BUS_001"
-    CodeInvalidStateTransition ErrorCode = "GITREPO_DOM_BUS_002"
-    CodeInvariantViolation     ErrorCode = "GITREPO_DOM_BUS_003"
+    // Business rule violations
+    CodeBusinessRuleViolation  ErrorCode = "GRD0007"
+    CodeInvalidStateTransition ErrorCode = "GRD0008"
+    CodeInvariantViolation     ErrorCode = "GRD0009"
 )
 
 // String returns the string representation of the error code
@@ -843,18 +842,18 @@ package error
 type ErrorCode string
 
 const (
-    // Resource errors (APP_RES_xxx)
-    CodeResourceNotFound    ErrorCode = "APP_RES_001"
-    CodeResourceConflict    ErrorCode = "APP_RES_002"
+    // Resource errors
+    CodeResourceNotFound    ErrorCode = "GRA0001"
+    CodeResourceConflict    ErrorCode = "GRA0002"
     
-    // Authentication/Authorization (APP_AUTH_xxx)
-    CodeUnauthorized        ErrorCode = "APP_AUTH_001"
-    CodeForbidden           ErrorCode = "APP_AUTH_002"
-    CodeInvalidCredentials  ErrorCode = "APP_AUTH_003"
+    // Authentication/Authorization
+    CodeUnauthorized        ErrorCode = "GRA0003"
+    CodeForbidden           ErrorCode = "GRA0004"
+    CodeInvalidCredentials  ErrorCode = "GRA0005"
     
-    // Validation errors (APP_VAL_xxx)
-    CodeValidationFailed    ErrorCode = "APP_VAL_001"
-    CodeInvalidRequest      ErrorCode = "APP_VAL_002"
+    // Validation errors
+    CodeValidationFailed    ErrorCode = "GRA0006"
+    CodeInvalidRequest      ErrorCode = "GRA0007"
 )
 ```
 
@@ -879,9 +878,9 @@ func (e *ValidationError) ErrorCode() ErrorCode {
 
 // Factory functions to prevent manual error struct/code pairing errors
 func NewURLValidationError(field string, value interface{}, message string, isSchemeError bool) *ValidationError {
-    code := CodeInvalidURL
+    code := CodeInvalidURL  // GRD0005
     if isSchemeError {
-        code := CodeUnsupportedURLScheme
+        code = CodeUnsupportedURLScheme  // GRD0006
     }
     
     return &ValidationError{
@@ -935,8 +934,8 @@ type ErrorCodeInfo struct {
 
 // Global error code registry
 var ErrorCodeRegistry = map[string]ErrorCodeInfo{
-    "GITREPO_DOM_VAL_001": {
-        Code:        "GITREPO_DOM_VAL_001",
+    "GRD0001": {
+        Code:        "GRD0001",
         Context:     "git_repository",
         Layer:       "Domain",
         Category:    "Validation",
@@ -944,8 +943,8 @@ var ErrorCodeRegistry = map[string]ErrorCodeInfo{
         Severity:    "MEDIUM",
         Retryable:   false,
     },
-    "GITREPO_DOM_VAL_002": {
-        Code:        "GITREPO_DOM_VAL_002",
+    "GRD0002": {
+        Code:        "GRD0002",
         Context:     "git_repository",
         Layer:       "Domain",
         Category:    "Validation",
@@ -953,8 +952,8 @@ var ErrorCodeRegistry = map[string]ErrorCodeInfo{
         Severity:    "MEDIUM",
         Retryable:   false,
     },
-    "GITREPO_APP_RES_001": {
-        Code:        "GITREPO_APP_RES_001",
+    "GRA0001": {
+        Code:        "GRA0001",
         Context:     "git_repository",
         Layer:       "Application",
         Category:    "Resource",
@@ -962,8 +961,8 @@ var ErrorCodeRegistry = map[string]ErrorCodeInfo{
         Severity:    "LOW",
         Retryable:   false,
     },
-    "GITREPO_INF_DB_001": {
-        Code:        "GITREPO_INF_DB_001",
+    "GRI0001": {
+        Code:        "GRI0001",
         Context:     "git_repository",
         Layer:       "Infrastructure",
         Category:    "Database",

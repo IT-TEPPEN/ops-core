@@ -1,23 +1,26 @@
 package error
 
 // ErrorCode represents a unique error identifier for application layer
-// Format: <CONTEXT>_<LAYER>_<CATEGORY>_<NUMBER>
-// Example: GITREPO_APP_RES_001
+// Format: <CONTEXT><LAYER><NUMBER>
+// - CONTEXT: 2 characters (e.g., GR for git_repository)
+// - LAYER: 1 character (D for domain, A for application, I for infrastructure)
+// - NUMBER: 4 digits (e.g., 0001)
+// Example: GRA0001
 type ErrorCode string
 
 const (
-	// Resource errors (GITREPO_APP_RES_xxx)
-	CodeResourceNotFound ErrorCode = "GITREPO_APP_RES_001"
-	CodeResourceConflict ErrorCode = "GITREPO_APP_RES_002"
+	// Resource errors
+	CodeResourceNotFound ErrorCode = "GRA0001"
+	CodeResourceConflict ErrorCode = "GRA0002"
 
-	// Authentication/Authorization (GITREPO_APP_AUTH_xxx)
-	CodeUnauthorized       ErrorCode = "GITREPO_APP_AUTH_001"
-	CodeForbidden          ErrorCode = "GITREPO_APP_AUTH_002"
-	CodeInvalidCredentials ErrorCode = "GITREPO_APP_AUTH_003"
+	// Authentication/Authorization
+	CodeUnauthorized       ErrorCode = "GRA0003"
+	CodeForbidden          ErrorCode = "GRA0004"
+	CodeInvalidCredentials ErrorCode = "GRA0005"
 
-	// Validation errors (GITREPO_APP_VAL_xxx)
-	CodeValidationFailed ErrorCode = "GITREPO_APP_VAL_001"
-	CodeInvalidRequest   ErrorCode = "GITREPO_APP_VAL_002"
+	// Validation errors
+	CodeValidationFailed ErrorCode = "GRA0006"
+	CodeInvalidRequest   ErrorCode = "GRA0007"
 )
 
 // String returns the string representation of the error code

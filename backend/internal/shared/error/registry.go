@@ -12,11 +12,14 @@ Retryable   bool
 }
 
 // ErrorCodeRegistry is the global error code registry
-// Format: <CONTEXT>_<LAYER>_<CATEGORY>_<NUMBER>
+// Format: <CONTEXT><LAYER><NUMBER>
+// - CONTEXT: 2 characters (e.g., GR for git_repository)
+// - LAYER: 1 character (D for domain, A for application, I for infrastructure)
+// - NUMBER: 4 digits (e.g., 0001)
 var ErrorCodeRegistry = map[string]ErrorCodeInfo{
-// Git Repository Context - Domain Layer - Validation Errors
-"GITREPO_DOM_VAL_001": {
-Code:        "GITREPO_DOM_VAL_001",
+// Git Repository Context - Domain Layer
+"GRD0001": {
+Code:        "GRD0001",
 Context:     "git_repository",
 Layer:       "Domain",
 Category:    "Validation",
@@ -24,8 +27,8 @@ Description: "Invalid entity field value",
 Severity:    "MEDIUM",
 Retryable:   false,
 },
-"GITREPO_DOM_VAL_002": {
-Code:        "GITREPO_DOM_VAL_002",
+"GRD0002": {
+Code:        "GRD0002",
 Context:     "git_repository",
 Layer:       "Domain",
 Category:    "Validation",
@@ -33,8 +36,8 @@ Description: "Required field is missing",
 Severity:    "MEDIUM",
 Retryable:   false,
 },
-"GITREPO_DOM_VAL_003": {
-Code:        "GITREPO_DOM_VAL_003",
+"GRD0003": {
+Code:        "GRD0003",
 Context:     "git_repository",
 Layer:       "Domain",
 Category:    "Validation",
@@ -42,8 +45,8 @@ Description: "Invalid field format",
 Severity:    "MEDIUM",
 Retryable:   false,
 },
-"GITREPO_DOM_VAL_004": {
-Code:        "GITREPO_DOM_VAL_004",
+"GRD0004": {
+Code:        "GRD0004",
 Context:     "git_repository",
 Layer:       "Domain",
 Category:    "Validation",
@@ -51,8 +54,8 @@ Description: "Field value out of range",
 Severity:    "MEDIUM",
 Retryable:   false,
 },
-"GITREPO_DOM_VAL_005": {
-Code:        "GITREPO_DOM_VAL_005",
+"GRD0005": {
+Code:        "GRD0005",
 Context:     "git_repository",
 Layer:       "Domain",
 Category:    "Validation",
@@ -60,8 +63,8 @@ Description: "Invalid URL format",
 Severity:    "MEDIUM",
 Retryable:   false,
 },
-"GITREPO_DOM_VAL_006": {
-Code:        "GITREPO_DOM_VAL_006",
+"GRD0006": {
+Code:        "GRD0006",
 Context:     "git_repository",
 Layer:       "Domain",
 Category:    "Validation",
@@ -69,10 +72,8 @@ Description: "Unsupported URL scheme (only HTTPS is supported)",
 Severity:    "MEDIUM",
 Retryable:   false,
 },
-
-// Git Repository Context - Domain Layer - Business Rule Violations
-"GITREPO_DOM_BUS_001": {
-Code:        "GITREPO_DOM_BUS_001",
+"GRD0007": {
+Code:        "GRD0007",
 Context:     "git_repository",
 Layer:       "Domain",
 Category:    "Business",
@@ -80,8 +81,8 @@ Description: "Business rule violation",
 Severity:    "HIGH",
 Retryable:   false,
 },
-"GITREPO_DOM_BUS_002": {
-Code:        "GITREPO_DOM_BUS_002",
+"GRD0008": {
+Code:        "GRD0008",
 Context:     "git_repository",
 Layer:       "Domain",
 Category:    "Business",
@@ -89,8 +90,8 @@ Description: "Invalid state transition",
 Severity:    "HIGH",
 Retryable:   false,
 },
-"GITREPO_DOM_BUS_003": {
-Code:        "GITREPO_DOM_BUS_003",
+"GRD0009": {
+Code:        "GRD0009",
 Context:     "git_repository",
 Layer:       "Domain",
 Category:    "Business",
@@ -99,9 +100,9 @@ Severity:    "HIGH",
 Retryable:   false,
 },
 
-// Git Repository Context - Application Layer - Resource Errors
-"GITREPO_APP_RES_001": {
-Code:        "GITREPO_APP_RES_001",
+// Git Repository Context - Application Layer
+"GRA0001": {
+Code:        "GRA0001",
 Context:     "git_repository",
 Layer:       "Application",
 Category:    "Resource",
@@ -109,8 +110,8 @@ Description: "Requested resource not found",
 Severity:    "LOW",
 Retryable:   false,
 },
-"GITREPO_APP_RES_002": {
-Code:        "GITREPO_APP_RES_002",
+"GRA0002": {
+Code:        "GRA0002",
 Context:     "git_repository",
 Layer:       "Application",
 Category:    "Resource",
@@ -118,10 +119,8 @@ Description: "Resource conflict (duplicate)",
 Severity:    "MEDIUM",
 Retryable:   false,
 },
-
-// Git Repository Context - Application Layer - Authentication/Authorization
-"GITREPO_APP_AUTH_001": {
-Code:        "GITREPO_APP_AUTH_001",
+"GRA0003": {
+Code:        "GRA0003",
 Context:     "git_repository",
 Layer:       "Application",
 Category:    "Authentication",
@@ -129,8 +128,8 @@ Description: "Unauthorized access",
 Severity:    "HIGH",
 Retryable:   false,
 },
-"GITREPO_APP_AUTH_002": {
-Code:        "GITREPO_APP_AUTH_002",
+"GRA0004": {
+Code:        "GRA0004",
 Context:     "git_repository",
 Layer:       "Application",
 Category:    "Authorization",
@@ -138,8 +137,8 @@ Description: "Forbidden access",
 Severity:    "HIGH",
 Retryable:   false,
 },
-"GITREPO_APP_AUTH_003": {
-Code:        "GITREPO_APP_AUTH_003",
+"GRA0005": {
+Code:        "GRA0005",
 Context:     "git_repository",
 Layer:       "Application",
 Category:    "Authentication",
@@ -147,10 +146,8 @@ Description: "Invalid credentials",
 Severity:    "MEDIUM",
 Retryable:   false,
 },
-
-// Git Repository Context - Application Layer - Validation
-"GITREPO_APP_VAL_001": {
-Code:        "GITREPO_APP_VAL_001",
+"GRA0006": {
+Code:        "GRA0006",
 Context:     "git_repository",
 Layer:       "Application",
 Category:    "Validation",
@@ -158,8 +155,8 @@ Description: "Application-level validation failed",
 Severity:    "MEDIUM",
 Retryable:   false,
 },
-"GITREPO_APP_VAL_002": {
-Code:        "GITREPO_APP_VAL_002",
+"GRA0007": {
+Code:        "GRA0007",
 Context:     "git_repository",
 Layer:       "Application",
 Category:    "Validation",
@@ -168,9 +165,9 @@ Severity:    "MEDIUM",
 Retryable:   false,
 },
 
-// Git Repository Context - Infrastructure Layer - Database Errors
-"GITREPO_INF_DB_001": {
-Code:        "GITREPO_INF_DB_001",
+// Git Repository Context - Infrastructure Layer
+"GRI0001": {
+Code:        "GRI0001",
 Context:     "git_repository",
 Layer:       "Infrastructure",
 Category:    "Database",
@@ -178,8 +175,8 @@ Description: "Database connection error",
 Severity:    "CRITICAL",
 Retryable:   true,
 },
-"GITREPO_INF_DB_002": {
-Code:        "GITREPO_INF_DB_002",
+"GRI0002": {
+Code:        "GRI0002",
 Context:     "git_repository",
 Layer:       "Infrastructure",
 Category:    "Database",
@@ -187,8 +184,8 @@ Description: "Database query error",
 Severity:    "HIGH",
 Retryable:   false,
 },
-"GITREPO_INF_DB_003": {
-Code:        "GITREPO_INF_DB_003",
+"GRI0003": {
+Code:        "GRI0003",
 Context:     "git_repository",
 Layer:       "Infrastructure",
 Category:    "Database",
@@ -196,8 +193,8 @@ Description: "Database constraint violation",
 Severity:    "MEDIUM",
 Retryable:   false,
 },
-"GITREPO_INF_DB_004": {
-Code:        "GITREPO_INF_DB_004",
+"GRI0004": {
+Code:        "GRI0004",
 Context:     "git_repository",
 Layer:       "Infrastructure",
 Category:    "Database",
@@ -205,10 +202,8 @@ Description: "Database query timeout",
 Severity:    "HIGH",
 Retryable:   true,
 },
-
-// Git Repository Context - Infrastructure Layer - External API Errors
-"GITREPO_INF_EXT_001": {
-Code:        "GITREPO_INF_EXT_001",
+"GRI0005": {
+Code:        "GRI0005",
 Context:     "git_repository",
 Layer:       "Infrastructure",
 Category:    "ExternalAPI",
@@ -216,8 +211,8 @@ Description: "External API error",
 Severity:    "HIGH",
 Retryable:   false,
 },
-"GITREPO_INF_EXT_002": {
-Code:        "GITREPO_INF_EXT_002",
+"GRI0006": {
+Code:        "GRI0006",
 Context:     "git_repository",
 Layer:       "Infrastructure",
 Category:    "ExternalAPI",
@@ -225,8 +220,8 @@ Description: "External API timeout",
 Severity:    "HIGH",
 Retryable:   true,
 },
-"GITREPO_INF_EXT_003": {
-Code:        "GITREPO_INF_EXT_003",
+"GRI0007": {
+Code:        "GRI0007",
 Context:     "git_repository",
 Layer:       "Infrastructure",
 Category:    "ExternalAPI",
@@ -234,10 +229,8 @@ Description: "External API resource not found",
 Severity:    "MEDIUM",
 Retryable:   false,
 },
-
-// Git Repository Context - Infrastructure Layer - Connection Errors
-"GITREPO_INF_CONN_001": {
-Code:        "GITREPO_INF_CONN_001",
+"GRI0008": {
+Code:        "GRI0008",
 Context:     "git_repository",
 Layer:       "Infrastructure",
 Category:    "Connection",
@@ -245,8 +238,8 @@ Description: "Connection failed",
 Severity:    "CRITICAL",
 Retryable:   true,
 },
-"GITREPO_INF_CONN_002": {
-Code:        "GITREPO_INF_CONN_002",
+"GRI0009": {
+Code:        "GRI0009",
 Context:     "git_repository",
 Layer:       "Infrastructure",
 Category:    "Connection",
@@ -254,10 +247,8 @@ Description: "Connection timeout",
 Severity:    "HIGH",
 Retryable:   true,
 },
-
-// Git Repository Context - Infrastructure Layer - Storage Errors
-"GITREPO_INF_STOR_001": {
-Code:        "GITREPO_INF_STOR_001",
+"GRI0010": {
+Code:        "GRI0010",
 Context:     "git_repository",
 Layer:       "Infrastructure",
 Category:    "Storage",
@@ -265,8 +256,8 @@ Description: "Storage operation failed",
 Severity:    "HIGH",
 Retryable:   false,
 },
-"GITREPO_INF_STOR_002": {
-Code:        "GITREPO_INF_STOR_002",
+"GRI0011": {
+Code:        "GRI0011",
 Context:     "git_repository",
 Layer:       "Infrastructure",
 Category:    "Storage",
