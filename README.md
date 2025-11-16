@@ -19,6 +19,7 @@ Phase 1では、外部リポジトリからMarkdownファイルを取得・表�
 1. **リポジトリ管理**
    - GitHubリポジトリの登録・一覧表示・削除
    - アクセストークンの設定・更新
+   - **アクセストークンの暗号化（AES-256-GCM）**
    - リポジトリ情報の永続化（PostgreSQL）
 
 2. **ファイル管理**
@@ -45,7 +46,6 @@ Phase 1では、外部リポジトリからMarkdownファイルを取得・表�
 
 #### Phase 1の残タスク
 
-- アクセストークンの暗号化実装
 - テストカバレッジの向上
 - エラーハンドリングとユーザーフィードバックの改善
 - ADRと実装の整合性確保
@@ -131,6 +131,9 @@ Phase 3では、生成AIを活用した高度な運用支援機能を提供し�
 # 開発環境の起動（Docker Compose）
 docker compose up -d
 
+# 暗号化キーの設定（開発環境用）
+export ENCRYPTION_KEY="dev-key-12345678901234567890123"  # 32 bytes
+
 # バックエンドの起動
 cd backend
 go run cmd/server/main.go
@@ -140,6 +143,8 @@ cd frontend
 npm install
 npm run dev
 ```
+
+**重要**: 本番環境では、セキュアな32バイトの暗号化キーを生成し、環境変数 `ENCRYPTION_KEY` に設定してください。詳細は [backend/internal/git_repository/infrastructure/encryption/README.md](backend/internal/git_repository/infrastructure/encryption/README.md) を参照してください。
 
 ## ライセンス
 
