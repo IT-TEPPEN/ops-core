@@ -75,3 +75,59 @@ func (e *InvalidStateTransitionError) Is(target error) bool {
 func (e *InvalidStateTransitionError) ErrorCode() ErrorCode {
 	return e.Code
 }
+
+// Factory functions to prevent manual error struct/code pairing errors
+
+// NewValidationError creates a new ValidationError with the appropriate error code
+func NewValidationError(field string, value interface{}, message string) *ValidationError {
+	// Determine the appropriate code based on the message or field
+	code := CodeInvalidFieldFormat // Default
+	if message == "required" || field == "url" && message == "repository URL cannot be empty" {
+		code = CodeRequiredFieldMissing
+	} else if field == "url" {
+		code = CodeInvalidURL
+	}
+	
+	return &ValidationError{
+		Code:    code,
+		Field:   field,
+		Value:   value,
+		Message: message,
+	}
+}
+
+// NewURLValidationError creates a new ValidationError specifically for URL validation
+func NewURLValidationError(field string, value interface{}, message string, isSchemeError bool) *ValidationError {
+	code := CodeInvalidURL
+	if isSchemeError {
+		code = CodeUnsupportedURLScheme
+	}
+	
+	return &ValidationError{
+		Code:    code,
+		Field:   field,
+		Value:   value,
+		Message: message,
+	}
+}
+
+// NewBusinessRuleViolationError creates a new BusinessRuleViolationError with the correct error code
+func NewBusinessRuleViolationError(rule, entity, message string) *BusinessRuleViolationError {
+	return &BusinessRuleViolationError{
+		Code:    CodeBusinessRuleViolation,
+		Rule:    rule,
+		Entity:  entity,
+		Message: message,
+	}
+}
+
+// NewInvalidStateTransitionError creates a new InvalidStateTransitionError with the correct error code
+func NewInvalidStateTransitionError(entity, fromState, toState, reason string) *InvalidStateTransitionError {
+	return &InvalidStateTransitionError{
+		Code:      CodeInvalidStateTransition,
+		Entity:    entity,
+		FromState: fromState,
+		ToState:   toState,
+		Reason:    reason,
+	}
+}

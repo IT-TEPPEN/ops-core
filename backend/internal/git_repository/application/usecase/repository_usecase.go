@@ -70,32 +70,17 @@ func validateRepositoryURL(repoURL string) error {
 	// 1. Parse the URL
 	parsedURL, err := url.ParseRequestURI(repoURL)
 	if err != nil {
-		return &domainerror.ValidationError{
-			Code:    domainerror.CodeInvalidURL,
-			Field:   "url",
-			Value:   repoURL,
-			Message: "invalid repository URL format",
-		}
+		return domainerror.NewURLValidationError("url", repoURL, "invalid repository URL format", false)
 	}
 
 	// 2. Ensure the scheme is https only (more secure)
 	if parsedURL.Scheme != "https" {
-		return &domainerror.ValidationError{
-			Code:    domainerror.CodeUnsupportedURLScheme,
-			Field:   "url",
-			Value:   repoURL,
-			Message: "unsupported repository URL scheme: only https is supported",
-		}
+		return domainerror.NewURLValidationError("url", repoURL, "unsupported repository URL scheme: only https is supported", true)
 	}
 
 	// 3. Validate against whitelist pattern
 	if !validGitURLPattern.MatchString(repoURL) {
-		return &domainerror.ValidationError{
-			Code:    domainerror.CodeInvalidURL,
-			Field:   "url",
-			Value:   repoURL,
-			Message: "repository URL must match pattern: https://github.com|gitlab.com|bitbucket.org/owner/repo",
-		}
+		return domainerror.NewURLValidationError("url", repoURL, "repository URL must match pattern: https://github.com|gitlab.com|bitbucket.org/owner/repo", false)
 	}
 
 	return nil
@@ -107,12 +92,9 @@ func (uc *repositoryUseCase) Register(ctx context.Context, repoURL string, acces
 	if err := validateRepositoryURL(repoURL); err != nil {
 		// Wrap domain validation error with application context
 		if errors.Is(err, domainerror.ErrInvalidEntity) {
-			return nil, &apperror.ValidationFailedError{
-				Code: apperror.CodeValidationFailed,
-				Errors: []apperror.FieldError{
-					{Field: "url", Message: err.Error()},
-				},
-			}
+			return nil, apperror.NewValidationFailedError([]apperror.FieldError{
+				{Field: "url", Message: err.Error()},
+			})
 		}
 		return nil, err
 	}
@@ -127,12 +109,7 @@ func (uc *repositoryUseCase) Register(ctx context.Context, repoURL string, acces
 		return nil, fmt.Errorf("failed to check for existing repository: %w", err)
 	}
 	if existingRepo != nil {
-		return nil, &apperror.ConflictError{
-			Code:         apperror.CodeResourceConflict,
-			ResourceType: "Repository",
-			Identifier:   repoURL,
-			Reason:       "repository with this URL already exists",
-		}
+		return nil, apperror.NewConflictError("Repository", repoURL, "repository with this URL already exists", nil)
 	}
 
 	// 3. Extract repository name from URL (simple approach)
@@ -171,11 +148,7 @@ func (uc *repositoryUseCase) GetRepository(ctx context.Context, repoID string) (
 	}
 
 	if repo == nil {
-		return nil, &apperror.NotFoundError{
-			Code:         apperror.CodeResourceNotFound,
-			ResourceType: "Repository",
-			ResourceID:   repoID,
-		}
+		return nil, apperror.NewNotFoundError("Repository", repoID, nil)
 	}
 
 	return repo, nil
@@ -200,21 +173,14 @@ func (uc *repositoryUseCase) ListFiles(ctx context.Context, repoID string) ([]en
 		return nil, fmt.Errorf("failed to retrieve repository details: %w", err)
 	}
 	if repo == nil {
-		return nil, &apperror.NotFoundError{
-			Code:         apperror.CodeResourceNotFound,
-			ResourceType: "Repository",
-			ResourceID:   repoID,
-		}
+		return nil, apperror.NewNotFoundError("Repository", repoID, nil)
 	}
 
 	// Check if access token is set
 	if repo.AccessToken() == "" {
-		return nil, &apperror.ValidationFailedError{
-			Code: apperror.CodeValidationFailed,
-			Errors: []apperror.FieldError{
-				{Field: "access_token", Message: "access token is required for this operation"},
-			},
-		}
+		return nil, apperror.NewValidationFailedError([]apperror.FieldError{
+			{Field: "access_token", Message: "access token is required for this operation"},
+		})
 	}
 
 	// 3. Ensure repository is cloned/updated locally and get its path
@@ -247,11 +213,7 @@ func (uc *repositoryUseCase) SelectFiles(ctx context.Context, repoID string, fil
 		return fmt.Errorf("failed to retrieve repository details: %w", err)
 	}
 	if repo == nil {
-		return &apperror.NotFoundError{
-			Code:         apperror.CodeResourceNotFound,
-			ResourceType: "Repository",
-			ResourceID:   repoID,
-		}
+		return apperror.NewNotFoundError("Repository", repoID, nil)
 	}
 
 	// 3. Ensure repository is cloned/updated locally and get its path
@@ -283,11 +245,7 @@ func (uc *repositoryUseCase) GetSelectedMarkdown(ctx context.Context, repoID str
 		return "", fmt.Errorf("failed to retrieve repository details: %w", err)
 	}
 	if repo == nil {
-		return "", &apperror.NotFoundError{
-			Code:         apperror.CodeResourceNotFound,
-			ResourceType: "Repository",
-			ResourceID:   repoID,
-		}
+		return "", apperror.NewNotFoundError("Repository", repoID, nil)
 	}
 
 	// 3. Retrieve the list of selected file paths for this repoID
@@ -339,11 +297,7 @@ func (uc *repositoryUseCase) UpdateAccessToken(ctx context.Context, repoID strin
 		return fmt.Errorf("failed to retrieve repository details: %w", err)
 	}
 	if repo == nil {
-		return &apperror.NotFoundError{
-			Code:         apperror.CodeResourceNotFound,
-			ResourceType: "Repository",
-			ResourceID:   repoID,
-		}
+		return apperror.NewNotFoundError("Repository", repoID, nil)
 	}
 
 	// 2. Update the access token in the repository

@@ -164,3 +164,53 @@ func (e *ValidationFailedError) Is(target error) bool {
 func (e *ValidationFailedError) ErrorCode() ErrorCode {
 	return e.Code
 }
+
+// Factory functions to prevent manual error struct/code pairing errors
+
+// NewNotFoundError creates a new NotFoundError with the correct error code
+func NewNotFoundError(resourceType, resourceID string, cause error) *NotFoundError {
+	return &NotFoundError{
+		Code:         CodeResourceNotFound,
+		ResourceType: resourceType,
+		ResourceID:   resourceID,
+		Cause:        cause,
+	}
+}
+
+// NewUnauthorizedError creates a new UnauthorizedError with the correct error code
+func NewUnauthorizedError(reason string, cause error) *UnauthorizedError {
+	return &UnauthorizedError{
+		Code:   CodeUnauthorized,
+		Reason: reason,
+		Cause:  cause,
+	}
+}
+
+// NewForbiddenError creates a new ForbiddenError with the correct error code
+func NewForbiddenError(resource, action, userID string) *ForbiddenError {
+	return &ForbiddenError{
+		Code:     CodeForbidden,
+		Resource: resource,
+		Action:   action,
+		UserID:   userID,
+	}
+}
+
+// NewConflictError creates a new ConflictError with the correct error code
+func NewConflictError(resourceType, identifier, reason string, cause error) *ConflictError {
+	return &ConflictError{
+		Code:         CodeResourceConflict,
+		ResourceType: resourceType,
+		Identifier:   identifier,
+		Reason:       reason,
+		Cause:        cause,
+	}
+}
+
+// NewValidationFailedError creates a new ValidationFailedError with the correct error code
+func NewValidationFailedError(errors []FieldError) *ValidationFailedError {
+	return &ValidationFailedError{
+		Code:   CodeValidationFailed,
+		Errors: errors,
+	}
+}

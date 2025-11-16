@@ -120,3 +120,89 @@ func (e *StorageError) Unwrap() error {
 func (e *StorageError) ErrorCode() ErrorCode {
 	return e.Code
 }
+
+// Factory functions to prevent manual error struct/code pairing errors
+
+// NewDatabaseError creates a new DatabaseError with the appropriate error code
+func NewDatabaseError(operation, table string, cause error, retryable bool) *DatabaseError {
+	code := CodeDatabaseQuery
+	if retryable {
+		code = CodeDatabaseTimeout
+	}
+	
+	return &DatabaseError{
+		Code:      code,
+		Operation: operation,
+		Table:     table,
+		Cause:     cause,
+		Retryable: retryable,
+	}
+}
+
+// NewDatabaseConnectionError creates a DatabaseError specifically for connection errors
+func NewDatabaseConnectionError(operation, table string, cause error) *DatabaseError {
+	return &DatabaseError{
+		Code:      CodeDatabaseConnection,
+		Operation: operation,
+		Table:     table,
+		Cause:     cause,
+		Retryable: true,
+	}
+}
+
+// NewDatabaseConstraintError creates a DatabaseError specifically for constraint violations
+func NewDatabaseConstraintError(operation, table string, cause error) *DatabaseError {
+	return &DatabaseError{
+		Code:      CodeDatabaseConstraint,
+		Operation: operation,
+		Table:     table,
+		Cause:     cause,
+		Retryable: false,
+	}
+}
+
+// NewExternalAPIError creates a new ExternalAPIError with the appropriate error code
+func NewExternalAPIError(service, endpoint string, statusCode int, cause error, retryable bool) *ExternalAPIError {
+	code := CodeExternalAPIError
+	if retryable {
+		code = CodeExternalAPITimeout
+	}
+	
+	return &ExternalAPIError{
+		Code:       code,
+		Service:    service,
+		Endpoint:   endpoint,
+		StatusCode: statusCode,
+		Cause:      cause,
+		Retryable:  retryable,
+	}
+}
+
+// NewConnectionError creates a new ConnectionError with the correct error code
+func NewConnectionError(target string, cause error, isTimeout bool) *ConnectionError {
+	code := CodeConnectionFailed
+	if isTimeout {
+		code = CodeConnectionTimeout
+	}
+	
+	return &ConnectionError{
+		Code:   code,
+		Target: target,
+		Cause:  cause,
+	}
+}
+
+// NewStorageError creates a new StorageError with the appropriate error code
+func NewStorageError(operation, path string, cause error, notFound bool) *StorageError {
+	code := CodeStorageOperation
+	if notFound {
+		code = CodeStorageNotFound
+	}
+	
+	return &StorageError{
+		Code:      code,
+		Operation: operation,
+		Path:      path,
+		Cause:     cause,
+	}
+}
