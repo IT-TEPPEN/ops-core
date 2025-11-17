@@ -2,7 +2,9 @@ package persistence
 
 import (
 	"context"
+	"crypto/rand"
 	"opscore/backend/internal/git_repository/domain/entity"
+	"opscore/backend/internal/git_repository/infrastructure/encryption"
 	"os"
 	"testing"
 	"time"
@@ -44,8 +46,23 @@ func (s *PostgresRepositoryTestSuite) SetupSuite() {
 		s.T().Fatalf("テスト用のデータベース接続に失敗しました: %v", err)
 	}
 
+	// テスト用の暗号化キーを生成
+	key := make([]byte, 32)
+	_, err = rand.Read(key)
+	if err != nil {
+		s.T().Fatalf("テスト用の暗号化キーの生成に失敗しました: %v", err)
+	}
+
+	encryptor, err := encryption.NewEncryptor(key)
+	if err != nil {
+		s.T().Fatalf("暗号化器の作成に失敗しました: %v", err)
+	}
+
 	// PostgresRepositoryのインスタンスを作成
-	s.repository = &PostgresRepository{db: s.db}
+	s.repository = &PostgresRepository{
+		db:        s.db,
+		encryptor: encryptor,
+	}
 }
 
 // TearDownSuite はテストスイート全体の後処理を行います。

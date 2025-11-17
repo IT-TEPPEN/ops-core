@@ -10,6 +10,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"log/slog"
 	"opscore/backend/internal/git_repository/application/usecase"
+	"opscore/backend/internal/git_repository/infrastructure/encryption"
 	"opscore/backend/internal/git_repository/infrastructure/git"
 	"opscore/backend/internal/git_repository/infrastructure/persistence"
 	"opscore/backend/internal/git_repository/interfaces/api/handlers"
@@ -25,7 +26,11 @@ import (
 
 // InitializeAPI initializes all dependencies for the API handlers, using Postgres.
 func InitializeAPI(db *pgxpool.Pool) (*handlers.RepositoryHandler, error) {
-	repositoryRepository := persistence.NewPostgresRepository(db)
+	encryptor, err := provideEncryptor()
+	if err != nil {
+		return nil, err
+	}
+	repositoryRepository := persistence.NewPostgresRepository(db, encryptor)
 	gitManager, err := provideGitManager()
 	if err != nil {
 		return nil, err
@@ -102,4 +107,20 @@ func provideAppLogger() *slog.Logger {
 // provideHandlerLogger adapts slog.Logger to the handlers.Logger interface
 func provideHandlerLogger() handlers.Logger {
 	return &SlogLoggerAdapter{logger: provideAppLogger()}
+}
+
+// provideEncryptor creates an Encryptor from the environment variable
+func provideEncryptor() (*encryption.Encryptor, error) {
+	keyStr := os.Getenv("ENCRYPTION_KEY")
+	if keyStr == "" {
+		slog.Warn("ENCRYPTION_KEY not set, using development default key. DO NOT USE IN PRODUCTION!")
+		keyStr = "dev-key-12345678901234567890123"
+	}
+
+	key := []byte(keyStr)
+	if len(key) != 32 {
+		return nil, encryption.ErrInvalidKey
+	}
+
+	return encryption.NewEncryptor(key)
 }

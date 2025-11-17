@@ -9,6 +9,7 @@ import (
 
 	"opscore/backend/internal/git_repository/domain/entity"
 	"opscore/backend/internal/git_repository/domain/repository"
+	"opscore/backend/internal/git_repository/infrastructure/encryption"
 
 	"github.com/jackc/pgx/v5"        // For checking specific errors
 	"github.com/jackc/pgx/v5/pgconn" // Import pgconn for error handling
@@ -17,16 +18,26 @@ import (
 
 // PostgresRepository is a PostgreSQL implementation of the repository.Repository interface.
 type PostgresRepository struct {
-	db *pgxpool.Pool
+	db        *pgxpool.Pool
+	encryptor *encryption.Encryptor
 }
 
 // NewPostgresRepository creates a new PostgresRepository.
-func NewPostgresRepository(db *pgxpool.Pool) repository.Repository {
-	return &PostgresRepository{db: db}
+func NewPostgresRepository(db *pgxpool.Pool, encryptor *encryption.Encryptor) repository.Repository {
+	return &PostgresRepository{
+		db:        db,
+		encryptor: encryptor,
+	}
 }
 
 // Save persists a repository in the PostgreSQL database.
 func (r *PostgresRepository) Save(ctx context.Context, repo entity.Repository) error {
+	// Encrypt the access token before saving
+	encryptedToken, err := r.encryptor.Encrypt(repo.AccessToken())
+	if err != nil {
+		return fmt.Errorf("failed to encrypt access token: %w", err)
+	}
+
 	query := `
 		INSERT INTO repositories (id, name, url, access_token, created_at, updated_at)
 		VALUES ($1, $2, $3, $4, $5, $6)
@@ -36,7 +47,7 @@ func (r *PostgresRepository) Save(ctx context.Context, repo entity.Repository) e
 			access_token = EXCLUDED.access_token,
 			updated_at = EXCLUDED.updated_at;
 	`
-	_, err := r.db.Exec(ctx, query, repo.ID(), repo.Name(), repo.URL(), repo.AccessToken(), repo.CreatedAt(), repo.UpdatedAt())
+	_, err = r.db.Exec(ctx, query, repo.ID(), repo.Name(), repo.URL(), encryptedToken, repo.CreatedAt(), repo.UpdatedAt())
 	if err != nil {
 		// Check for unique constraint violation on URL if a separate constraint exists
 		// var pgErr *pgconn.PgError
@@ -75,10 +86,14 @@ func (r *PostgresRepository) FindByURL(ctx context.Context, url string) (entity.
 		return nil, fmt.Errorf("failed to find repository by URL: %w", err)
 	}
 
-	// NullString から通常の string へ変換
+	// NullString から通常の string へ変換し、復号化
 	tokenStr := ""
-	if accessToken.Valid {
-		tokenStr = accessToken.String
+	if accessToken.Valid && accessToken.String != "" {
+		decrypted, err := r.encryptor.Decrypt(accessToken.String)
+		if err != nil {
+			return nil, fmt.Errorf("failed to decrypt access token: %w", err)
+		}
+		tokenStr = decrypted
 	}
 
 	return entity.ReconstructRepository(id, name, repoURL, tokenStr, createdAt, updatedAt), nil
@@ -112,10 +127,14 @@ func (r *PostgresRepository) FindByID(ctx context.Context, id string) (entity.Re
 		return nil, fmt.Errorf("failed to find repository by ID: %w", err)
 	}
 
-	// NullString から通常の string へ変換
+	// NullString から通常の string へ変換し、復号化
 	tokenStr := ""
-	if accessToken.Valid {
-		tokenStr = accessToken.String
+	if accessToken.Valid && accessToken.String != "" {
+		decrypted, err := r.encryptor.Decrypt(accessToken.String)
+		if err != nil {
+			return nil, fmt.Errorf("failed to decrypt access token: %w", err)
+		}
+		tokenStr = decrypted
 	}
 
 	return entity.ReconstructRepository(repoID, name, url, tokenStr, createdAt, updatedAt), nil
@@ -145,10 +164,14 @@ func (r *PostgresRepository) FindAll(ctx context.Context) ([]entity.Repository, 
 			return nil, fmt.Errorf("failed to scan repository row: %w", err)
 		}
 
-		// NullString から通常の string へ変換
+		// NullString から通常の string へ変換し、復号化
 		tokenStr := ""
-		if accessToken.Valid {
-			tokenStr = accessToken.String
+		if accessToken.Valid && accessToken.String != "" {
+			decrypted, err := r.encryptor.Decrypt(accessToken.String)
+			if err != nil {
+				return nil, fmt.Errorf("failed to decrypt access token: %w", err)
+			}
+			tokenStr = decrypted
 		}
 
 		repo := entity.ReconstructRepository(id, name, url, tokenStr, createdAt, updatedAt)
@@ -256,13 +279,19 @@ func (r *PostgresRepository) GetManagedFiles(ctx context.Context, repoID string)
 
 // UpdateAccessToken updates the access token for a repository.
 func (r *PostgresRepository) UpdateAccessToken(ctx context.Context, repoID string, accessToken string) error {
+	// Encrypt the access token before updating
+	encryptedToken, err := r.encryptor.Encrypt(accessToken)
+	if err != nil {
+		return fmt.Errorf("failed to encrypt access token: %w", err)
+	}
+
 	query := `
 		UPDATE repositories
 		SET access_token = $1, updated_at = $2
 		WHERE id = $3;
 	`
 	now := time.Now()
-	res, err := r.db.Exec(ctx, query, accessToken, now, repoID)
+	res, err := r.db.Exec(ctx, query, encryptedToken, now, repoID)
 	if err != nil {
 		return fmt.Errorf("failed to update repository access token: %w", err)
 	}

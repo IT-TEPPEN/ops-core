@@ -2,8 +2,10 @@ package persistence
 
 import (
 	"context"
+	"crypto/rand"
 	"fmt"
 	"opscore/backend/internal/git_repository/domain/entity"
+	"opscore/backend/internal/git_repository/infrastructure/encryption"
 	"os"
 	"testing"
 	"time"
@@ -115,8 +117,19 @@ func setupPostgreSQLRepository(t *testing.T) (*PostgresRepository, func()) {
 	`)
 	require.NoError(t, err, "Failed to apply migrations")
 
+	// テスト用の暗号化キーを生成
+	key := make([]byte, 32)
+	_, err = rand.Read(key)
+	require.NoError(t, err, "Failed to generate encryption key")
+
+	encryptor, err := encryption.NewEncryptor(key)
+	require.NoError(t, err, "Failed to create encryptor")
+
 	// リポジトリの作成
-	repo := &PostgresRepository{db: testConn}
+	repo := &PostgresRepository{
+		db:        testConn,
+		encryptor: encryptor,
+	}
 
 	// クリーンアップ関数を返す
 	cleanup := func() {
