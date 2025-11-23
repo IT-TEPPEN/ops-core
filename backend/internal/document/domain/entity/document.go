@@ -11,13 +11,7 @@ import (
 type document struct {
 	id             value_object.DocumentID
 	repositoryID   value_object.RepositoryID
-	filePath       value_object.FilePath
-	title          string
 	owner          string
-	docType        value_object.DocumentType
-	tags           []value_object.Tag
-	category       value_object.Category
-	variables      []value_object.VariableDefinition
 	isPublished    bool
 	isAutoUpdate   bool
 	accessScope    value_object.AccessScope
@@ -31,13 +25,7 @@ type document struct {
 type Document interface {
 	ID() value_object.DocumentID
 	RepositoryID() value_object.RepositoryID
-	FilePath() value_object.FilePath
-	Title() string
 	Owner() string
-	Type() value_object.DocumentType
-	Tags() []value_object.Tag
-	Category() value_object.Category
-	Variables() []value_object.VariableDefinition
 	IsPublished() bool
 	IsAutoUpdate() bool
 	AccessScope() value_object.AccessScope
@@ -47,9 +35,15 @@ type Document interface {
 	UpdatedAt() time.Time
 
 	// Behaviors
-	Publish(commitHash value_object.CommitHash, content string) error
+	Publish(
+		source value_object.DocumentSource,
+		title string,
+		docType value_object.DocumentType,
+		tags []value_object.Tag,
+		variables []value_object.VariableDefinition,
+		content string,
+	) error
 	Unpublish() error
-	UpdateMetadata(title string, owner string, tags []value_object.Tag, category value_object.Category, variables []value_object.VariableDefinition) error
 	UpdateAccessScope(scope value_object.AccessScope) error
 	EnableAutoUpdate()
 	DisableAutoUpdate()
@@ -61,13 +55,7 @@ type Document interface {
 func NewDocument(
 	id value_object.DocumentID,
 	repositoryID value_object.RepositoryID,
-	filePath value_object.FilePath,
-	title string,
 	owner string,
-	docType value_object.DocumentType,
-	tags []value_object.Tag,
-	category value_object.Category,
-	variables []value_object.VariableDefinition,
 	accessScope value_object.AccessScope,
 ) (Document, error) {
 	if id.IsEmpty() {
@@ -76,17 +64,8 @@ func NewDocument(
 	if repositoryID.IsEmpty() {
 		return nil, errors.New("repository ID cannot be empty")
 	}
-	if filePath.IsEmpty() {
-		return nil, errors.New("file path cannot be empty")
-	}
-	if title == "" {
-		return nil, errors.New("title cannot be empty")
-	}
 	if owner == "" {
 		return nil, errors.New("owner cannot be empty")
-	}
-	if !docType.IsValid() {
-		return nil, errors.New("invalid document type")
 	}
 	if !accessScope.IsValid() {
 		return nil, errors.New("invalid access scope")
@@ -96,13 +75,7 @@ func NewDocument(
 	return &document{
 		id:           id,
 		repositoryID: repositoryID,
-		filePath:     filePath,
-		title:        title,
 		owner:        owner,
-		docType:      docType,
-		tags:         tags,
-		category:     category,
-		variables:    variables,
 		isPublished:  false,
 		isAutoUpdate: false,
 		accessScope:  accessScope,
@@ -116,13 +89,7 @@ func NewDocument(
 func ReconstructDocument(
 	id value_object.DocumentID,
 	repositoryID value_object.RepositoryID,
-	filePath value_object.FilePath,
-	title string,
 	owner string,
-	docType value_object.DocumentType,
-	tags []value_object.Tag,
-	category value_object.Category,
-	variables []value_object.VariableDefinition,
 	isPublished bool,
 	isAutoUpdate bool,
 	accessScope value_object.AccessScope,
@@ -134,13 +101,7 @@ func ReconstructDocument(
 	return &document{
 		id:             id,
 		repositoryID:   repositoryID,
-		filePath:       filePath,
-		title:          title,
 		owner:          owner,
-		docType:        docType,
-		tags:           tags,
-		category:       category,
-		variables:      variables,
 		isPublished:    isPublished,
 		isAutoUpdate:   isAutoUpdate,
 		accessScope:    accessScope,
@@ -160,32 +121,8 @@ func (d *document) RepositoryID() value_object.RepositoryID {
 	return d.repositoryID
 }
 
-func (d *document) FilePath() value_object.FilePath {
-	return d.filePath
-}
-
-func (d *document) Title() string {
-	return d.title
-}
-
 func (d *document) Owner() string {
 	return d.owner
-}
-
-func (d *document) Type() value_object.DocumentType {
-	return d.docType
-}
-
-func (d *document) Tags() []value_object.Tag {
-	return d.tags
-}
-
-func (d *document) Category() value_object.Category {
-	return d.category
-}
-
-func (d *document) Variables() []value_object.VariableDefinition {
-	return d.variables
 }
 
 func (d *document) IsPublished() bool {
@@ -217,9 +154,25 @@ func (d *document) UpdatedAt() time.Time {
 }
 
 // Publish publishes a new version of the document.
-func (d *document) Publish(commitHash value_object.CommitHash, content string) error {
-	if commitHash.IsEmpty() {
-		return errors.New("commit hash cannot be empty")
+func (d *document) Publish(
+	source value_object.DocumentSource,
+	title string,
+	docType value_object.DocumentType,
+	tags []value_object.Tag,
+	variables []value_object.VariableDefinition,
+	content string,
+) error {
+	if source.FilePath().IsEmpty() {
+		return errors.New("source file path cannot be empty")
+	}
+	if source.CommitHash().IsEmpty() {
+		return errors.New("source commit hash cannot be empty")
+	}
+	if title == "" {
+		return errors.New("title cannot be empty")
+	}
+	if !docType.IsValid() {
+		return errors.New("invalid document type")
 	}
 	if content == "" {
 		return errors.New("content cannot be empty")
@@ -246,18 +199,19 @@ func (d *document) Publish(commitHash value_object.CommitHash, content string) e
 
 	// Create a new version
 	versionID := value_object.GenerateVersionID()
-	newVersion, err := NewDocumentVersion(versionID, d.id, nextVersionNumber, commitHash, content)
+	newVersion, err := NewDocumentVersion(
+		versionID,
+		d.id,
+		nextVersionNumber,
+		source,
+		title,
+		docType,
+		tags,
+		variables,
+		content,
+	)
 	if err != nil {
 		return err
-	}
-
-	// Mark all existing versions as not current
-	for _, v := range d.versions {
-		if v.IsCurrentVersion() {
-			// We can't modify the version directly since it's an interface
-			// This should be handled at the repository level
-			// For now, we'll just track the current version
-		}
 	}
 
 	// Add the new version and set as current
@@ -282,30 +236,6 @@ func (d *document) Unpublish() error {
 	}
 
 	d.isPublished = false
-	d.updatedAt = time.Now()
-	return nil
-}
-
-// UpdateMetadata updates the document's metadata.
-func (d *document) UpdateMetadata(
-	title string,
-	owner string,
-	tags []value_object.Tag,
-	category value_object.Category,
-	variables []value_object.VariableDefinition,
-) error {
-	if title == "" {
-		return errors.New("title cannot be empty")
-	}
-	if owner == "" {
-		return errors.New("owner cannot be empty")
-	}
-
-	d.title = title
-	d.owner = owner
-	d.tags = tags
-	d.category = category
-	d.variables = variables
 	d.updatedAt = time.Now()
 	return nil
 }

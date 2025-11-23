@@ -12,7 +12,11 @@ type documentVersion struct {
 	id               value_object.VersionID
 	documentID       value_object.DocumentID
 	versionNumber    value_object.VersionNumber
-	commitHash       value_object.CommitHash
+	source           value_object.DocumentSource
+	title            string
+	docType          value_object.DocumentType
+	tags             []value_object.Tag
+	variables        []value_object.VariableDefinition
 	content          string
 	publishedAt      time.Time
 	unpublishedAt    *time.Time
@@ -24,7 +28,11 @@ type DocumentVersion interface {
 	ID() value_object.VersionID
 	DocumentID() value_object.DocumentID
 	VersionNumber() value_object.VersionNumber
-	CommitHash() value_object.CommitHash
+	Source() value_object.DocumentSource
+	Title() string
+	Type() value_object.DocumentType
+	Tags() []value_object.Tag
+	Variables() []value_object.VariableDefinition
 	Content() string
 	PublishedAt() time.Time
 	UnpublishedAt() *time.Time
@@ -39,7 +47,11 @@ func NewDocumentVersion(
 	id value_object.VersionID,
 	documentID value_object.DocumentID,
 	versionNumber value_object.VersionNumber,
-	commitHash value_object.CommitHash,
+	source value_object.DocumentSource,
+	title string,
+	docType value_object.DocumentType,
+	tags []value_object.Tag,
+	variables []value_object.VariableDefinition,
 	content string,
 ) (DocumentVersion, error) {
 	if id.IsEmpty() {
@@ -51,8 +63,17 @@ func NewDocumentVersion(
 	if versionNumber.IsZero() {
 		return nil, errors.New("version number cannot be zero")
 	}
-	if commitHash.IsEmpty() {
-		return nil, errors.New("commit hash cannot be empty")
+	if source.FilePath().IsEmpty() {
+		return nil, errors.New("source file path cannot be empty")
+	}
+	if source.CommitHash().IsEmpty() {
+		return nil, errors.New("source commit hash cannot be empty")
+	}
+	if title == "" {
+		return nil, errors.New("title cannot be empty")
+	}
+	if !docType.IsValid() {
+		return nil, errors.New("invalid document type")
 	}
 	if content == "" {
 		return nil, errors.New("content cannot be empty")
@@ -63,7 +84,11 @@ func NewDocumentVersion(
 		id:               id,
 		documentID:       documentID,
 		versionNumber:    versionNumber,
-		commitHash:       commitHash,
+		source:           source,
+		title:            title,
+		docType:          docType,
+		tags:             tags,
+		variables:        variables,
 		content:          content,
 		publishedAt:      now,
 		unpublishedAt:    nil,
@@ -76,7 +101,11 @@ func ReconstructDocumentVersion(
 	id value_object.VersionID,
 	documentID value_object.DocumentID,
 	versionNumber value_object.VersionNumber,
-	commitHash value_object.CommitHash,
+	source value_object.DocumentSource,
+	title string,
+	docType value_object.DocumentType,
+	tags []value_object.Tag,
+	variables []value_object.VariableDefinition,
 	content string,
 	publishedAt time.Time,
 	unpublishedAt *time.Time,
@@ -86,7 +115,11 @@ func ReconstructDocumentVersion(
 		id:               id,
 		documentID:       documentID,
 		versionNumber:    versionNumber,
-		commitHash:       commitHash,
+		source:           source,
+		title:            title,
+		docType:          docType,
+		tags:             tags,
+		variables:        variables,
 		content:          content,
 		publishedAt:      publishedAt,
 		unpublishedAt:    unpublishedAt,
@@ -109,9 +142,29 @@ func (v *documentVersion) VersionNumber() value_object.VersionNumber {
 	return v.versionNumber
 }
 
-// CommitHash returns the commit hash.
-func (v *documentVersion) CommitHash() value_object.CommitHash {
-	return v.commitHash
+// Source returns the document source (file path and commit hash).
+func (v *documentVersion) Source() value_object.DocumentSource {
+	return v.source
+}
+
+// Title returns the title.
+func (v *documentVersion) Title() string {
+	return v.title
+}
+
+// Type returns the document type.
+func (v *documentVersion) Type() value_object.DocumentType {
+	return v.docType
+}
+
+// Tags returns the tags.
+func (v *documentVersion) Tags() []value_object.Tag {
+	return v.tags
+}
+
+// Variables returns the variable definitions.
+func (v *documentVersion) Variables() []value_object.VariableDefinition {
+	return v.variables
 }
 
 // Content returns the content.

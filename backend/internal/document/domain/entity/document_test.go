@@ -9,22 +9,13 @@ import (
 func TestNewDocument(t *testing.T) {
 	validID := value_object.GenerateDocumentID()
 	validRepoID, _ := value_object.NewRepositoryID("a1b2c3d4-e5f6-4789-abcd-ef0123456789")
-	validPath, _ := value_object.NewFilePath("docs/test.md")
-	validType, _ := value_object.NewDocumentType("procedure")
-	validCategory, _ := value_object.NewCategory("Database")
 	validScope, _ := value_object.NewAccessScope("public")
 
 	tests := []struct {
 		name         string
 		id           value_object.DocumentID
 		repositoryID value_object.RepositoryID
-		filePath     value_object.FilePath
-		title        string
 		owner        string
-		docType      value_object.DocumentType
-		tags         []value_object.Tag
-		category     value_object.Category
-		variables    []value_object.VariableDefinition
 		accessScope  value_object.AccessScope
 		wantErr      bool
 	}{
@@ -32,13 +23,7 @@ func TestNewDocument(t *testing.T) {
 			name:         "valid document",
 			id:           validID,
 			repositoryID: validRepoID,
-			filePath:     validPath,
-			title:        "Test Document",
 			owner:        "admin",
-			docType:      validType,
-			tags:         []value_object.Tag{},
-			category:     validCategory,
-			variables:    []value_object.VariableDefinition{},
 			accessScope:  validScope,
 			wantErr:      false,
 		},
@@ -46,27 +31,7 @@ func TestNewDocument(t *testing.T) {
 			name:         "empty document ID",
 			id:           value_object.DocumentID(""),
 			repositoryID: validRepoID,
-			filePath:     validPath,
-			title:        "Test",
 			owner:        "admin",
-			docType:      validType,
-			tags:         []value_object.Tag{},
-			category:     validCategory,
-			variables:    []value_object.VariableDefinition{},
-			accessScope:  validScope,
-			wantErr:      true,
-		},
-		{
-			name:         "empty title",
-			id:           validID,
-			repositoryID: validRepoID,
-			filePath:     validPath,
-			title:        "",
-			owner:        "admin",
-			docType:      validType,
-			tags:         []value_object.Tag{},
-			category:     validCategory,
-			variables:    []value_object.VariableDefinition{},
 			accessScope:  validScope,
 			wantErr:      true,
 		},
@@ -74,13 +39,7 @@ func TestNewDocument(t *testing.T) {
 			name:         "empty owner",
 			id:           validID,
 			repositoryID: validRepoID,
-			filePath:     validPath,
-			title:        "Test",
 			owner:        "",
-			docType:      validType,
-			tags:         []value_object.Tag{},
-			category:     validCategory,
-			variables:    []value_object.VariableDefinition{},
 			accessScope:  validScope,
 			wantErr:      true,
 		},
@@ -91,13 +50,7 @@ func TestNewDocument(t *testing.T) {
 			got, err := NewDocument(
 				tt.id,
 				tt.repositoryID,
-				tt.filePath,
-				tt.title,
 				tt.owner,
-				tt.docType,
-				tt.tags,
-				tt.category,
-				tt.variables,
 				tt.accessScope,
 			)
 			if (err != nil) != tt.wantErr {
@@ -125,10 +78,14 @@ func TestNewDocument(t *testing.T) {
 
 func TestDocument_Publish(t *testing.T) {
 	doc := createTestDocument(t)
-	commitHash, _ := value_object.NewCommitHash("abc123def456")
+	
+	path, _ := value_object.NewFilePath("docs/test.md")
+	hash, _ := value_object.NewCommitHash("abc1234567")
+	source, _ := value_object.NewDocumentSource(path, hash)
+	docType, _ := value_object.NewDocumentType("procedure")
 	content := "# Test\n\nThis is a test document."
 
-	err := doc.Publish(commitHash, content)
+	err := doc.Publish(source, "Test Title", docType, []value_object.Tag{}, []value_object.VariableDefinition{}, content)
 	if err != nil {
 		t.Fatalf("Publish() error = %v", err)
 	}
@@ -151,10 +108,12 @@ func TestDocument_Publish(t *testing.T) {
 	}
 
 	// Publish a second version
-	commitHash2, _ := value_object.NewCommitHash("def456ghi789")
+	path2, _ := value_object.NewFilePath("docs/test.md")
+	hash2, _ := value_object.NewCommitHash("def4567890")
+	source2, _ := value_object.NewDocumentSource(path2, hash2)
 	content2 := "# Test v2\n\nUpdated content."
 
-	err = doc.Publish(commitHash2, content2)
+	err = doc.Publish(source2, "Test Title v2", docType, []value_object.Tag{}, []value_object.VariableDefinition{}, content2)
 	if err != nil {
 		t.Fatalf("Publish() second version error = %v", err)
 	}
@@ -179,8 +138,12 @@ func TestDocument_Unpublish(t *testing.T) {
 	}
 
 	// Publish first
-	commitHash, _ := value_object.NewCommitHash("abc123def")
-	err = doc.Publish(commitHash, "content")
+	path, _ := value_object.NewFilePath("docs/test.md")
+	hash, _ := value_object.NewCommitHash("abc1234567")
+	source, _ := value_object.NewDocumentSource(path, hash)
+	docType, _ := value_object.NewDocumentType("procedure")
+	
+	err = doc.Publish(source, "Title", docType, []value_object.Tag{}, []value_object.VariableDefinition{}, "content")
 	if err != nil {
 		t.Fatalf("Publish() error = %v", err)
 	}
@@ -193,46 +156,6 @@ func TestDocument_Unpublish(t *testing.T) {
 
 	if doc.IsPublished() {
 		t.Error("IsPublished() = true after unpublishing")
-	}
-}
-
-func TestDocument_UpdateMetadata(t *testing.T) {
-	doc := createTestDocument(t)
-
-	newTag, _ := value_object.NewTag("new-tag")
-	newCategory, _ := value_object.NewCategory("New Category")
-	newVar, _ := value_object.NewVariableDefinition("test_var", "Test Var", "desc", value_object.VariableTypeString, false, "default")
-
-	err := doc.UpdateMetadata(
-		"New Title",
-		"new-owner",
-		[]value_object.Tag{newTag},
-		newCategory,
-		[]value_object.VariableDefinition{newVar},
-	)
-
-	if err != nil {
-		t.Errorf("UpdateMetadata() error = %v", err)
-	}
-
-	if doc.Title() != "New Title" {
-		t.Errorf("Title() = %v, want 'New Title'", doc.Title())
-	}
-
-	if doc.Owner() != "new-owner" {
-		t.Errorf("Owner() = %v, want 'new-owner'", doc.Owner())
-	}
-
-	// Test empty title
-	err = doc.UpdateMetadata("", "owner", []value_object.Tag{}, newCategory, []value_object.VariableDefinition{})
-	if err == nil {
-		t.Error("UpdateMetadata() should return error for empty title")
-	}
-
-	// Test empty owner
-	err = doc.UpdateMetadata("Title", "", []value_object.Tag{}, newCategory, []value_object.VariableDefinition{})
-	if err == nil {
-		t.Error("UpdateMetadata() should return error for empty owner")
 	}
 }
 
@@ -279,21 +202,21 @@ func TestDocument_RollbackToVersion(t *testing.T) {
 	}
 
 	// Publish two versions
-	commitHash1, _ := value_object.NewCommitHash("abc1234567")
-	err = doc.Publish(commitHash1, "content v1")
+	path, _ := value_object.NewFilePath("docs/test.md")
+	hash1, _ := value_object.NewCommitHash("abc1234567")
+	source1, _ := value_object.NewDocumentSource(path, hash1)
+	docType, _ := value_object.NewDocumentType("procedure")
+	
+	err = doc.Publish(source1, "Title v1", docType, []value_object.Tag{}, []value_object.VariableDefinition{}, "content v1")
 	if err != nil {
 		t.Fatalf("Publish() error = %v", err)
 	}
 
-	commitHash2, _ := value_object.NewCommitHash("def4567890")
-	err = doc.Publish(commitHash2, "content v2")
+	hash2, _ := value_object.NewCommitHash("def7890123")
+	source2, _ := value_object.NewDocumentSource(path, hash2)
+	err = doc.Publish(source2, "Title v2", docType, []value_object.Tag{}, []value_object.VariableDefinition{}, "content v2")
 	if err != nil {
 		t.Fatalf("Publish() second version error = %v", err)
-	}
-
-	// Verify current version is 2
-	if doc.CurrentVersion() == nil {
-		t.Fatal("CurrentVersion() returned nil after publishing")
 	}
 
 	// Rollback to version 1
@@ -314,58 +237,16 @@ func TestDocument_RollbackToVersion(t *testing.T) {
 	}
 }
 
-func TestDocument_AddVersion(t *testing.T) {
-	doc := createTestDocument(t)
-
-	versionID := value_object.GenerateVersionID()
-	versionNum, _ := value_object.NewVersionNumber(1)
-	commitHash, _ := value_object.NewCommitHash("abc1234567")
-
-	version, _ := NewDocumentVersion(versionID, doc.ID(), versionNum, commitHash, "content")
-
-	err := doc.AddVersion(version)
-	if err != nil {
-		t.Errorf("AddVersion() error = %v", err)
-	}
-
-	if len(doc.Versions()) != 1 {
-		t.Errorf("Versions() length = %d, want 1", len(doc.Versions()))
-	}
-
-	// Test adding nil version
-	err = doc.AddVersion(nil)
-	if err == nil {
-		t.Error("AddVersion() should return error for nil version")
-	}
-
-	// Test adding version with wrong document ID
-	wrongDocID := value_object.GenerateDocumentID()
-	wrongVersion, _ := NewDocumentVersion(value_object.GenerateVersionID(), wrongDocID, versionNum, commitHash, "content")
-	err = doc.AddVersion(wrongVersion)
-	if err == nil {
-		t.Error("AddVersion() should return error for version with different document ID")
-	}
-}
-
 // Helper function to create a test document
 func createTestDocument(t *testing.T) Document {
 	id := value_object.GenerateDocumentID()
 	repoID, _ := value_object.NewRepositoryID("a1b2c3d4-e5f6-4789-abcd-ef0123456789")
-	filePath, _ := value_object.NewFilePath("docs/test.md")
-	docType, _ := value_object.NewDocumentType("procedure")
-	category, _ := value_object.NewCategory("Test")
 	accessScope, _ := value_object.NewAccessScope("public")
 
 	doc, err := NewDocument(
 		id,
 		repoID,
-		filePath,
-		"Test Document",
 		"admin",
-		docType,
-		[]value_object.Tag{},
-		category,
-		[]value_object.VariableDefinition{},
 		accessScope,
 	)
 

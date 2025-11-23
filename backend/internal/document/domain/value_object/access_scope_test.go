@@ -22,20 +22,20 @@ func TestNewAccessScope(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name:    "group scope",
-			scope:   "group",
-			want:    AccessScopeGroup,
-			wantErr: false,
-		},
-		{
-			name:    "user scope",
-			scope:   "user",
-			want:    AccessScopeUser,
-			wantErr: false,
-		},
-		{
 			name:    "invalid scope",
 			scope:   "invalid",
+			want:    "",
+			wantErr: true,
+		},
+		{
+			name:    "group scope is invalid",
+			scope:   "group",
+			want:    "",
+			wantErr: true,
+		},
+		{
+			name:    "user scope is invalid",
+			scope:   "user",
 			want:    "",
 			wantErr: true,
 		},
@@ -61,40 +61,18 @@ func TestAccessScope_Checks(t *testing.T) {
 		scope     AccessScope
 		isPublic  bool
 		isPrivate bool
-		isGroup   bool
-		isUser    bool
 	}{
 		{
 			name:      "public scope",
 			scope:     AccessScopePublic,
 			isPublic:  true,
 			isPrivate: false,
-			isGroup:   false,
-			isUser:    false,
 		},
 		{
 			name:      "private scope",
 			scope:     AccessScopePrivate,
 			isPublic:  false,
 			isPrivate: true,
-			isGroup:   false,
-			isUser:    false,
-		},
-		{
-			name:      "group scope",
-			scope:     AccessScopeGroup,
-			isPublic:  false,
-			isPrivate: false,
-			isGroup:   true,
-			isUser:    false,
-		},
-		{
-			name:      "user scope",
-			scope:     AccessScopeUser,
-			isPublic:  false,
-			isPrivate: false,
-			isGroup:   false,
-			isUser:    true,
 		},
 	}
 
@@ -105,12 +83,6 @@ func TestAccessScope_Checks(t *testing.T) {
 			}
 			if got := tt.scope.IsPrivate(); got != tt.isPrivate {
 				t.Errorf("IsPrivate() = %v, want %v", got, tt.isPrivate)
-			}
-			if got := tt.scope.IsGroup(); got != tt.isGroup {
-				t.Errorf("IsGroup() = %v, want %v", got, tt.isGroup)
-			}
-			if got := tt.scope.IsUser(); got != tt.isUser {
-				t.Errorf("IsUser() = %v, want %v", got, tt.isUser)
 			}
 		})
 	}

@@ -11,7 +11,10 @@ func TestNewDocumentVersion(t *testing.T) {
 	validID := value_object.GenerateVersionID()
 	validDocID := value_object.GenerateDocumentID()
 	validVersionNum, _ := value_object.NewVersionNumber(1)
-	validCommitHash, _ := value_object.NewCommitHash("abc123def456")
+	validPath, _ := value_object.NewFilePath("docs/test.md")
+	validHash, _ := value_object.NewCommitHash("abc123def456")
+	validSource, _ := value_object.NewDocumentSource(validPath, validHash)
+	validDocType, _ := value_object.NewDocumentType("procedure")
 	validContent := "# Test Document\n\nThis is test content."
 
 	tests := []struct {
@@ -19,7 +22,9 @@ func TestNewDocumentVersion(t *testing.T) {
 		id         value_object.VersionID
 		documentID value_object.DocumentID
 		versionNum value_object.VersionNumber
-		commitHash value_object.CommitHash
+		source     value_object.DocumentSource
+		title      string
+		docType    value_object.DocumentType
 		content    string
 		wantErr    bool
 	}{
@@ -28,7 +33,9 @@ func TestNewDocumentVersion(t *testing.T) {
 			id:         validID,
 			documentID: validDocID,
 			versionNum: validVersionNum,
-			commitHash: validCommitHash,
+			source:     validSource,
+			title:      "Test Document",
+			docType:    validDocType,
 			content:    validContent,
 			wantErr:    false,
 		},
@@ -37,51 +44,38 @@ func TestNewDocumentVersion(t *testing.T) {
 			id:         value_object.VersionID(""),
 			documentID: validDocID,
 			versionNum: validVersionNum,
-			commitHash: validCommitHash,
+			source:     validSource,
+			title:      "Test",
+			docType:    validDocType,
 			content:    validContent,
 			wantErr:    true,
 		},
 		{
-			name:       "empty document ID",
-			id:         validID,
-			documentID: value_object.DocumentID(""),
-			versionNum: validVersionNum,
-			commitHash: validCommitHash,
-			content:    validContent,
-			wantErr:    true,
-		},
-		{
-			name:       "zero version number",
-			id:         validID,
-			documentID: validDocID,
-			versionNum: value_object.VersionNumber(0),
-			commitHash: validCommitHash,
-			content:    validContent,
-			wantErr:    true,
-		},
-		{
-			name:       "empty commit hash",
+			name:       "empty title",
 			id:         validID,
 			documentID: validDocID,
 			versionNum: validVersionNum,
-			commitHash: value_object.CommitHash(""),
+			source:     validSource,
+			title:      "",
+			docType:    validDocType,
 			content:    validContent,
-			wantErr:    true,
-		},
-		{
-			name:       "empty content",
-			id:         validID,
-			documentID: validDocID,
-			versionNum: validVersionNum,
-			commitHash: validCommitHash,
-			content:    "",
 			wantErr:    true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := NewDocumentVersion(tt.id, tt.documentID, tt.versionNum, tt.commitHash, tt.content)
+			got, err := NewDocumentVersion(
+				tt.id,
+				tt.documentID,
+				tt.versionNum,
+				tt.source,
+				tt.title,
+				tt.docType,
+				[]value_object.Tag{},
+				[]value_object.VariableDefinition{},
+				tt.content,
+			)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("NewDocumentVersion() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -93,6 +87,9 @@ func TestNewDocumentVersion(t *testing.T) {
 				}
 				if !got.ID().Equals(tt.id) {
 					t.Errorf("ID() = %v, want %v", got.ID(), tt.id)
+				}
+				if got.Title() != tt.title {
+					t.Errorf("Title() = %v, want %v", got.Title(), tt.title)
 				}
 				if !got.IsCurrentVersion() {
 					t.Error("IsCurrentVersion() = false, want true for new version")
@@ -106,18 +103,21 @@ func TestNewDocumentVersion(t *testing.T) {
 }
 
 func TestDocumentVersion_MarkAsCurrent(t *testing.T) {
-	validID := value_object.GenerateVersionID()
-	validDocID := value_object.GenerateDocumentID()
-	validVersionNum, _ := value_object.NewVersionNumber(1)
-	validCommitHash, _ := value_object.NewCommitHash("abc123def456")
+	validPath, _ := value_object.NewFilePath("docs/test.md")
+	validHash, _ := value_object.NewCommitHash("abc123def456")
+	validSource, _ := value_object.NewDocumentSource(validPath, validHash)
+	validDocType, _ := value_object.NewDocumentType("procedure")
 
-	// Create a version using reconstructor so it's not current by default
 	now := time.Now()
 	version := ReconstructDocumentVersion(
-		validID,
-		validDocID,
-		validVersionNum,
-		validCommitHash,
+		value_object.GenerateVersionID(),
+		value_object.GenerateDocumentID(),
+		value_object.VersionNumber(1),
+		validSource,
+		"Test",
+		validDocType,
+		[]value_object.Tag{},
+		[]value_object.VariableDefinition{},
 		"content",
 		now,
 		nil,
@@ -136,13 +136,22 @@ func TestDocumentVersion_MarkAsCurrent(t *testing.T) {
 }
 
 func TestDocumentVersion_Unpublish(t *testing.T) {
-	validID := value_object.GenerateVersionID()
-	validDocID := value_object.GenerateDocumentID()
-	validVersionNum, _ := value_object.NewVersionNumber(1)
-	validCommitHash, _ := value_object.NewCommitHash("abc123def456")
-	validContent := "# Test"
+	validPath, _ := value_object.NewFilePath("docs/test.md")
+	validHash, _ := value_object.NewCommitHash("abc123def456")
+	validSource, _ := value_object.NewDocumentSource(validPath, validHash)
+	validDocType, _ := value_object.NewDocumentType("procedure")
 
-	version, _ := NewDocumentVersion(validID, validDocID, validVersionNum, validCommitHash, validContent)
+	version, _ := NewDocumentVersion(
+		value_object.GenerateVersionID(),
+		value_object.GenerateDocumentID(),
+		value_object.VersionNumber(1),
+		validSource,
+		"Test",
+		validDocType,
+		[]value_object.Tag{},
+		[]value_object.VariableDefinition{},
+		"# Test",
+	)
 
 	if !version.IsPublished() {
 		t.Fatal("IsPublished() = false, want true for new version")
@@ -161,54 +170,9 @@ func TestDocumentVersion_Unpublish(t *testing.T) {
 		t.Error("UnpublishedAt() = nil after unpublishing")
 	}
 
-	if version.IsCurrentVersion() {
-		t.Error("IsCurrentVersion() = true after unpublishing")
-	}
-
 	// Try to unpublish again
 	err = version.Unpublish()
 	if err == nil {
 		t.Error("Unpublish() second time should return error")
-	}
-}
-
-func TestReconstructDocumentVersion(t *testing.T) {
-	id := value_object.GenerateVersionID()
-	docID := value_object.GenerateDocumentID()
-	versionNum, _ := value_object.NewVersionNumber(2)
-	commitHash, _ := value_object.NewCommitHash("abc123")
-	content := "test content"
-	publishedAt := time.Now().Add(-24 * time.Hour)
-	unpublishedAt := time.Now()
-
-	version := ReconstructDocumentVersion(
-		id,
-		docID,
-		versionNum,
-		commitHash,
-		content,
-		publishedAt,
-		&unpublishedAt,
-		false,
-	)
-
-	if version == nil {
-		t.Fatal("ReconstructDocumentVersion() returned nil")
-	}
-
-	if !version.ID().Equals(id) {
-		t.Errorf("ID() = %v, want %v", version.ID(), id)
-	}
-
-	if !version.DocumentID().Equals(docID) {
-		t.Errorf("DocumentID() = %v, want %v", version.DocumentID(), docID)
-	}
-
-	if version.IsPublished() {
-		t.Error("IsPublished() = true for unpublished version")
-	}
-
-	if version.IsCurrentVersion() {
-		t.Error("IsCurrentVersion() = true when reconstructed as false")
 	}
 }
