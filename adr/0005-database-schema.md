@@ -22,6 +22,7 @@ Related ADRs:
 - ADR 0013: Document Variable Definition and Substitution
 - ADR 0014: Execution Record and Evidence Management
 - ADR 0016: Document Domain Model Design
+- ADR 0017: Application-Level Data Validation
 
 ## Decision
 
@@ -429,32 +430,15 @@ For private resources that need to be shared with specific users or groups, a se
 
 **Note:** JSONB-based AccessScope with `sharedWith` arrays was replaced with this simpler model per ADR 0016 design decisions.
 
-### Application-Level Validation Rules
+### Data Validation
 
-While the database enforces basic constraints (NOT NULL, CHECK), the application layer must enforce additional validation:
+While this ADR defines database-level constraints (NOT NULL, CHECK, foreign keys), application-level validation rules are documented in **ADR 0017: Application-Level Data Validation**. This includes:
+- VariableDefinition validation (name format, type checking)
+- VariableValue validation (type matching, required fields)
+- DocumentVersion validation (path safety, commit hash format)
+- ExecutionRecord validation (state machine transitions)
 
-#### VariableDefinition Validation
-- `name`: Alphanumeric and underscore only, max 100 characters
-- `label`: Non-empty, max 255 characters
-- `type`: Must be one of: "string", "number", "boolean", "date"
-- `required`: Must be boolean
-- `defaultValue`: Type must match `type` field (string for "string", number for "number", etc.)
-
-#### VariableValue Validation
-- `name`: Must match a variable name in the document's VariableDefinition array
-- `value`: Type must match the corresponding VariableDefinition's type
-- All required variables must have values
-
-#### DocumentVersion Validation
-- `title`: Non-empty, max 255 characters
-- `file_path`: Valid relative path, no directory traversal sequences
-- `commit_hash`: Valid Git SHA (40 or 64 hex characters)
-- `variables`: Must be valid VariableDefinition array (can be null/empty)
-- `content`: Non-empty Markdown text
-
-#### ExecutionRecord Validation
-- `variable_values`: All names must exist in the document version's variables
-- `status`: Transitions must follow state machine (in_progress → completed/failed)
+See ADR 0017 for complete validation specifications.
 
 ### Indexing Strategy
 
@@ -530,7 +514,7 @@ WHERE EXISTS (
 
 - **Metadata duplication:** Title, type, tags stored per version instead of once per document
 - **More complex version table:** DocumentVersion has more fields than before
-- **JSONB Validation:** Application-level validation required for JSONB structures
+- **Application validation required:** JSONB structures require validation per ADR 0017
 - **Storage Requirements:** Version history and attachments increase storage needs
 - **Migration Effort:** Existing code needs updates for new schema structure
 - **Index Overhead:** GIN indexes consume more space and update time
@@ -552,5 +536,5 @@ WHERE EXISTS (
 - Access control enforced at application layer using `access_scope` VARCHAR field
 - Simple `public`/`private` model reduces attack surface compared to complex JSONB
 - Administrators have implicit access to all resources
-- Attachment storage paths should be validated to prevent directory traversal
-- JSONB validation critical to prevent injection attacks
+- Attachment storage paths must be validated to prevent directory traversal (see ADR 0017)
+- JSONB validation critical to prevent injection attacks (see ADR 0017)
