@@ -312,6 +312,20 @@ CREATE INDEX idx_view_history_user_id ON view_history(user_id);
 CREATE INDEX idx_view_history_viewed_at ON view_history(viewed_at);
 ```
 
+#### Data Retention and Partitioning for `view_history`
+
+To ensure the `view_history` table does not grow indefinitely and impact database performance, the following strategies are adopted:
+
+- **Retention Policy:**  
+  View history records will be retained for a maximum of 90 days. Records older than this will be purged on a scheduled basis (e.g., nightly or weekly job).
+
+- **Partitioning Strategy:**  
+  The `view_history` table should be partitioned by month using PostgreSQL's native partitioning features (e.g., `PARTITION BY RANGE (viewed_at)` with monthly partitions). This improves query performance and simplifies purging of old data.
+
+- **Archive/Purge Strategy:**  
+  Old records (older than 90 days) may be deleted directly or exported to cold storage for long-term analytics if required. Purging should be performed using partition drops for efficiency.
+
+These strategies should be reviewed periodically to ensure they meet operational and compliance requirements.
 #### `view_statistics` Table
 
 Aggregates view statistics for documents.
