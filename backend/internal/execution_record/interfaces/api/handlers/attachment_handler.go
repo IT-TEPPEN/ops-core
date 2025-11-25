@@ -42,10 +42,11 @@ func (h *AttachmentHandler) UploadAttachment(c *gin.Context) {
 	}
 	defer file.Close()
 
-	// Get uploader ID from context (would normally come from auth middleware)
+	// Get uploader ID from context (should be set by auth middleware)
 	uploaderID := c.GetString("user_id")
 	if uploaderID == "" {
-		uploaderID = "anonymous" // Fallback for testing
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+		return
 	}
 
 	// Detect MIME type from file header content type

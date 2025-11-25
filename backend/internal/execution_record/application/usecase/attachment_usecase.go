@@ -106,7 +106,9 @@ func (uc *AttachmentUsecase) UploadAttachment(
 		}
 	}
 
-	// Save to repository (without the file, as it's already stored)
+	// Save to repository (without the file, as it's already stored via storageManager).
+	// The file parameter is nil because file storage is handled separately by the storage layer.
+	// The repository is only responsible for persisting the attachment metadata.
 	if err := uc.attachmentRepo.Save(ctx, attachment, nil); err != nil {
 		// Clean up the stored file
 		_ = uc.storageManager.Delete(ctx, storagePath)

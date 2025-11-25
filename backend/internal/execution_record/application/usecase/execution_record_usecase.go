@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"strconv"
 
 	docvo "opscore/backend/internal/document/domain/value_object"
 	apperror "opscore/backend/internal/execution_record/application/error"
@@ -176,7 +177,7 @@ func (uc *ExecutionRecordUsecase) UpdateStepNotes(
 	if err := record.UpdateStepNotes(req.StepNumber, req.Notes); err != nil {
 		return nil, &apperror.NotFoundError{
 			ResourceType: "ExecutionStep",
-			ResourceID:   "step " + string(rune(req.StepNumber)),
+			ResourceID:   "step " + strconv.Itoa(req.StepNumber),
 		}
 	}
 

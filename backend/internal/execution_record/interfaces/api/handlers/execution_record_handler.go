@@ -31,10 +31,11 @@ func (h *ExecutionRecordHandler) CreateExecutionRecord(c *gin.Context) {
 		return
 	}
 
-	// Get executor ID from context (would normally come from auth middleware)
+	// Get executor ID from context (should be set by auth middleware)
 	executorID := c.GetString("user_id")
 	if executorID == "" {
-		executorID = "anonymous" // Fallback for testing
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+		return
 	}
 
 	dtoReq := schema.ToCreateExecutionRecordDTO(req, executorID)
