@@ -38,7 +38,7 @@ export function ToastProvider({
 
   const addToast = useCallback(
     (type: Variant, message: string, duration = defaultDuration) => {
-      const id = Math.random().toString(36).substr(2, 9);
+      const id = crypto.randomUUID();
       setToasts((prev) => [...prev, { id, type, message, duration }]);
     },
     [defaultDuration]
