@@ -19,7 +19,7 @@ CREATE INDEX idx_view_history_viewed_at ON view_history(viewed_at);
 CREATE TABLE view_statistics (
     document_id UUID PRIMARY KEY REFERENCES documents(id) ON DELETE CASCADE,
     total_views BIGINT NOT NULL DEFAULT 0,
-    unique_users INTEGER NOT NULL DEFAULT 0,
+    unique_users BIGINT NOT NULL DEFAULT 0,
     last_viewed_at TIMESTAMPTZ,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
