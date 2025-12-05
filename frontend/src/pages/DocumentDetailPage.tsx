@@ -94,8 +94,16 @@ function DocumentDetailPage() {
         return (
           <input
             type="number"
-            value={Number(value)}
-            onChange={(e) => handleVariableChange(variable.name, parseFloat(e.target.value) || 0)}
+            value={value === "" ? "" : Number(value)}
+            onChange={(e) => {
+              const inputValue = e.target.value;
+              if (inputValue === "") {
+                handleVariableChange(variable.name, "");
+              } else {
+                const numValue = parseFloat(inputValue);
+                handleVariableChange(variable.name, isNaN(numValue) ? 0 : numValue);
+              }
+            }}
             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
           />
         );

@@ -71,8 +71,16 @@ function DocumentVersionHistoryPage() {
       );
 
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.message || "Failed to rollback");
+        let message = "Failed to rollback";
+        try {
+          const data = await response.json();
+          if (data && typeof data.message === "string") {
+            message = data.message;
+          }
+        } catch {
+          // Use default message if JSON parsing fails
+        }
+        throw new Error(message);
       }
 
       setActionMessage({
@@ -103,8 +111,16 @@ function DocumentVersionHistoryPage() {
       );
 
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.message || "Failed to publish");
+        let message = "Failed to publish";
+        try {
+          const data = await response.json();
+          if (data && typeof data.message === "string") {
+            message = data.message;
+          }
+        } catch {
+          // Use default message if JSON parsing fails
+        }
+        throw new Error(message);
       }
 
       setActionMessage({

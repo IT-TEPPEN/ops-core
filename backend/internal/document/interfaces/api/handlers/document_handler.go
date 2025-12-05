@@ -50,7 +50,7 @@ func (h *DocumentHandler) CreateDocument(c *gin.Context) {
 
 	if err := c.ShouldBindJSON(&req); err != nil {
 		h.logger.Error("Invalid request body", "request_id", requestID, "error", err.Error())
-		c.JSON(http.StatusBadRequest, schema.ErrorResponse{Code: "INVALID_REQUEST", Message: "Invalid request body: " + err.Error()})
+		c.JSON(http.StatusBadRequest, schema.ErrorResponse{Code: "INVALID_REQUEST", Message: "Invalid request format"})
 		return
 	}
 
@@ -134,7 +134,7 @@ func (h *DocumentHandler) UpdateDocument(c *gin.Context) {
 
 	if err := c.ShouldBindJSON(&req); err != nil {
 		h.logger.Error("Invalid request body", "request_id", requestID, "doc_id", docID, "error", err.Error())
-		c.JSON(http.StatusBadRequest, schema.ErrorResponse{Code: "INVALID_REQUEST", Message: "Invalid request body: " + err.Error()})
+		c.JSON(http.StatusBadRequest, schema.ErrorResponse{Code: "INVALID_REQUEST", Message: "Invalid request format"})
 		return
 	}
 
@@ -400,7 +400,7 @@ func (h *DocumentHandler) UpdateDocumentMetadata(c *gin.Context) {
 
 	if err := c.ShouldBindJSON(&req); err != nil {
 		h.logger.Error("Invalid request body", "request_id", requestID, "doc_id", docID, "error", err.Error())
-		c.JSON(http.StatusBadRequest, schema.ErrorResponse{Code: "INVALID_REQUEST", Message: "Invalid request body: " + err.Error()})
+		c.JSON(http.StatusBadRequest, schema.ErrorResponse{Code: "INVALID_REQUEST", Message: "Invalid request format"})
 		return
 	}
 
