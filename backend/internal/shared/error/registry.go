@@ -442,7 +442,6 @@ Description: "S3/MinIO connection error",
 Severity:    "CRITICAL",
 Retryable:   true,
 },
-
 // User Context - Domain Layer
 "USD0001": {
 Code:        "USD0001",
