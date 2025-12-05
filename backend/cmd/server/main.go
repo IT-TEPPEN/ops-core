@@ -48,7 +48,7 @@ func main() {
 	// --- End Database Connection ---
 
 	// Initialize dependencies using Wire, passing the db pool
-	repoHandler, err := InitializeAPI(dbpool) // Pass dbpool and handle error
+	repoHandler, docHandler, err := InitializeAPI(dbpool) // Pass dbpool and handle error
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to initialize API dependencies: %v\n", err)
 		os.Exit(1)
@@ -86,6 +86,17 @@ func main() {
 		v1.POST("/repositories/:repoId/files/select", repoHandler.SelectRepositoryFiles)
 		v1.GET("/repositories/:repoId/markdown", repoHandler.GetSelectedMarkdown)
 		v1.PUT("/repositories/:repoId/token", repoHandler.UpdateAccessToken) // アクセストークン更新用エンドポイント
+
+		// Document routes
+		v1.POST("/documents", docHandler.CreateDocument)
+		v1.GET("/documents", docHandler.ListDocuments)
+		v1.GET("/documents/:docId", docHandler.GetDocument)
+		v1.PUT("/documents/:docId", docHandler.UpdateDocument)
+		v1.PATCH("/documents/:docId/metadata", docHandler.UpdateDocumentMetadata)
+		v1.GET("/documents/:docId/versions", docHandler.GetDocumentVersions)
+		v1.GET("/documents/:docId/versions/:version", docHandler.GetDocumentVersion)
+		v1.POST("/documents/:docId/versions/:version/publish", docHandler.PublishDocumentVersion)
+		v1.POST("/documents/:docId/versions/:version/rollback", docHandler.RollbackDocumentVersion)
 	}
 
 	// Static file serving (Frontend)

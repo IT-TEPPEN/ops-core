@@ -3,6 +3,9 @@ import { Routes, Route, Link } from "react-router-dom";
 import BlogPage from "./pages/BlogPage";
 import RepositoriesPage from "./pages/RepositoriesPage";
 import RepositoryDetailPage from "./pages/RepositoryDetailPage";
+import DocumentListPage from "./pages/DocumentListPage";
+import DocumentDetailPage from "./pages/DocumentDetailPage";
+import DocumentVersionHistoryPage from "./pages/DocumentVersionHistoryPage";
 
 // Define a simple Home component for the root path
 function HomePage() {
@@ -99,6 +102,14 @@ function App() {
               </li>
               <li>
                 <Link
+                  to="/documents"
+                  className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 px-3 py-2 rounded-md text-sm font-medium transition duration-150 ease-in-out"
+                >
+                  Documents
+                </Link>
+              </li>
+              <li>
+                <Link
                   to="/blog"
                   className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 px-3 py-2 rounded-md text-sm font-medium transition duration-150 ease-in-out"
                 >
@@ -119,6 +130,9 @@ function App() {
             path="/repositories/:repoId"
             element={<RepositoryDetailPage />}
           />
+          <Route path="/documents" element={<DocumentListPage />} />
+          <Route path="/documents/:docId" element={<DocumentDetailPage />} />
+          <Route path="/documents/:docId/versions" element={<DocumentVersionHistoryPage />} />
           <Route path="/blog" element={<BlogPage />} />
         </Routes>
       </main>

@@ -11,7 +11,10 @@ import (
 	"opscore/backend/internal/git_repository/infrastructure/encryption"
 	"opscore/backend/internal/git_repository/infrastructure/git"
 	"opscore/backend/internal/git_repository/infrastructure/persistence"
-	"opscore/backend/internal/git_repository/interfaces/api/handlers"
+	repohandlers "opscore/backend/internal/git_repository/interfaces/api/handlers"
+
+	docusecase "opscore/backend/internal/document/application/usecase"
+	dochandlers "opscore/backend/internal/document/interfaces/api/handlers"
 )
 
 // Base path for cloning repositories
@@ -73,7 +76,12 @@ func provideAppLogger() *slog.Logger {
 }
 
 // provideHandlerLogger adapts slog.Logger to the handlers.Logger interface.
-func provideHandlerLogger() handlers.Logger {
+func provideRepoHandlerLogger() repohandlers.Logger {
+	return &SlogLoggerAdapter{logger: provideAppLogger()}
+}
+
+// provideDocHandlerLogger adapts slog.Logger to the document handlers.Logger interface.
+func provideDocHandlerLogger() dochandlers.Logger {
 	return &SlogLoggerAdapter{logger: provideAppLogger()}
 }
 
@@ -94,11 +102,11 @@ func provideEncryptor() (*encryption.Encryptor, error) {
 }
 
 // InitializeAPI initializes all dependencies for the API handlers, using Postgres.
-func InitializeAPI(db *pgxpool.Pool) (*handlers.RepositoryHandler, error) {
+func InitializeAPI(db *pgxpool.Pool) (*repohandlers.RepositoryHandler, *dochandlers.DocumentHandler, error) {
 	// Create encryptor
 	encryptor, err := provideEncryptor()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	// Create repository (persistence layer)
@@ -107,16 +115,30 @@ func InitializeAPI(db *pgxpool.Pool) (*handlers.RepositoryHandler, error) {
 	// Create git manager
 	gitManager, err := provideGitManager()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	// Create use case
 	repositoryUseCase := repository.NewRepositoryUseCase(repositoryRepository, gitManager)
 
-	// Create logger
-	logger := provideHandlerLogger()
+	// Create repo logger
+	repoLogger := provideRepoHandlerLogger()
 
-	// Create and return handler
-	repositoryHandler := handlers.NewRepositoryHandler(repositoryUseCase, logger)
-	return repositoryHandler, nil
+	// Create and return repository handler
+	repositoryHandler := repohandlers.NewRepositoryHandler(repositoryUseCase, repoLogger)
+
+	// Create document repository (in-memory for now, until persistence is implemented)
+	// TODO: Replace with actual persistence implementation when DB migration is complete
+	documentRepository := NewInMemoryDocumentRepository()
+
+	// Create document use case
+	documentUseCase := docusecase.NewDocumentUseCase(documentRepository)
+
+	// Create document logger
+	docLogger := provideDocHandlerLogger()
+
+	// Create document handler
+	documentHandler := dochandlers.NewDocumentHandler(documentUseCase, docLogger)
+
+	return repositoryHandler, documentHandler, nil
 }

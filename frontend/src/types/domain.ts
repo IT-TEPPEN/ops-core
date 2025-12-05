@@ -17,16 +17,66 @@ export interface FileNode {
   type: "file" | "dir";
 }
 
+/** Variable definition for documents */
+export interface VariableDefinition {
+  name: string;
+  label: string;
+  description?: string;
+  type: "string" | "number" | "boolean" | "date";
+  required: boolean;
+  default_value?: string | number | boolean;
+}
+
+/** Document version entity */
+export interface DocumentVersion {
+  id: string;
+  document_id: string;
+  version_number: number;
+  file_path: string;
+  commit_hash: string;
+  title: string;
+  doc_type: DocumentType;
+  tags: string[];
+  variables: VariableDefinition[];
+  content: string;
+  published_at: string;
+  unpublished_at?: string;
+  is_current: boolean;
+}
+
 /** Document entity */
 export interface Document {
   id: string;
-  title: string;
-  content: string;
-  repositoryId: string;
-  filePath: string;
-  createdAt: string;
-  updatedAt: string;
+  repository_id: string;
+  owner: string;
+  is_published: boolean;
+  is_auto_update: boolean;
+  access_scope: AccessScope;
+  current_version?: DocumentVersion;
+  version_count: number;
+  created_at: string;
+  updated_at: string;
 }
+
+/** Document list item (simplified for list display) */
+export interface DocumentListItem {
+  id: string;
+  repository_id: string;
+  title: string;
+  owner: string;
+  doc_type: DocumentType;
+  tags: string[];
+  is_published: boolean;
+  version_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Document type */
+export type DocumentType = "procedure" | "knowledge";
+
+/** Access scope */
+export type AccessScope = "public" | "private";
 
 /** Document metadata */
 export interface DocumentMetadata {
