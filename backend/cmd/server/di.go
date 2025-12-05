@@ -82,7 +82,7 @@ func provideEncryptor() (*encryption.Encryptor, error) {
 	keyStr := os.Getenv("ENCRYPTION_KEY")
 	if keyStr == "" {
 		slog.Warn("ENCRYPTION_KEY not set, using development default key. DO NOT USE IN PRODUCTION!")
-		keyStr = "dev-key-12345678901234567890123"
+		keyStr = "dev-key-123456789012345678901234"
 	}
 
 	key := []byte(keyStr)
