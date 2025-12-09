@@ -5,7 +5,7 @@ import RepositoriesPage from "./RepositoriesPage";
 
 // Mock fetch globally
 const mockFetch = vi.fn();
-global.fetch = mockFetch;
+globalThis.fetch = mockFetch as any;
 
 describe("RepositoriesPage", () => {
   beforeEach(() => {
@@ -216,8 +216,6 @@ describe("RepositoriesPage", () => {
       expect(screen.getByPlaceholderText("https://github.com/username/repo.git")).toBeInTheDocument();
     });
 
-    const submitButton = screen.getByRole("button", { name: /Register Repository/i });
-    
     // The form has a required attribute, so it will use browser validation
     // Instead of checking for error message, just verify the input is required
     const input = screen.getByPlaceholderText("https://github.com/username/repo.git");

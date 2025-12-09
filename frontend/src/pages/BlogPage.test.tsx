@@ -5,7 +5,7 @@ import BlogPage from "./BlogPage";
 
 // Mock fetch globally
 const mockFetch = vi.fn();
-global.fetch = mockFetch;
+globalThis.fetch = mockFetch as any;
 
 // Mock useSearchParams
 const mockSearchParams = new URLSearchParams();
