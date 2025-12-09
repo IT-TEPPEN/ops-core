@@ -39,7 +39,8 @@ function DocumentDetailPage() {
     if (document?.current_version?.content) {
       let content = document.current_version.content;
       Object.entries(variableValues).forEach(([name, value]) => {
-        const regex = new RegExp(`\\{\\{\\s*${name}\\s*\\}\\}`, "g");
+        const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const regex = new RegExp(`\\{\\{\\s*${escapedName}\\s*\\}\\}`, "g");
         content = content.replace(regex, String(value));
       });
       setProcessedContent(content);
