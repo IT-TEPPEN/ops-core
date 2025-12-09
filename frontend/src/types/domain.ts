@@ -98,6 +98,46 @@ export interface User {
 /** User roles */
 export type UserRole = "admin" | "editor" | "viewer";
 
+/** View History entity */
+export interface ViewHistory {
+  id: string;
+  document_id: string;
+  user_id: string;
+  viewed_at: string;
+  view_duration: number;
+}
+
+/** Document Statistics entity */
+export interface DocumentStatistics {
+  document_id: string;
+  total_views: number;
+  unique_viewers: number;
+  last_viewed_at: string;
+  average_view_duration: number;
+}
+
+/** User Statistics entity */
+export interface UserStatistics {
+  user_id: string;
+  total_views: number;
+  unique_documents: number;
+}
+
+/** Popular Document entity */
+export interface PopularDocument {
+  document_id: string;
+  total_views: number;
+  unique_viewers: number;
+  last_viewed_at: string;
+}
+
+/** Recent Document entity */
+export interface RecentDocument {
+  document_id: string;
+  last_viewed_at: string;
+  total_views: number;
+}
+
 /** Execution record */
 export interface ExecutionRecord {
   id: string;

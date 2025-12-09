@@ -46,6 +46,21 @@ export type { TagProps } from "./Display/Tag";
 export { StatusIndicator } from "./Display/StatusIndicator";
 export type { StatusIndicatorProps } from "./Display/StatusIndicator";
 
+export { ViewHistoryList } from "./Display/ViewHistoryList";
+export type { ViewHistoryListProps } from "./Display/ViewHistoryList";
+
+export { DocumentStatistics } from "./Display/DocumentStatistics";
+export type { DocumentStatisticsProps } from "./Display/DocumentStatistics";
+
+export { PopularDocumentsList } from "./Display/PopularDocumentsList";
+export type { PopularDocumentsListProps } from "./Display/PopularDocumentsList";
+
+export { RecentViewsList } from "./Display/RecentViewsList";
+export type { RecentViewsListProps } from "./Display/RecentViewsList";
+
+export { StatisticsChart } from "./Display/StatisticsChart";
+export type { StatisticsChartProps } from "./Display/StatisticsChart";
+
 // Navigation components
 export { Tabs } from "./Navigation/Tabs";
 export type { TabsProps } from "./Navigation/Tabs";
