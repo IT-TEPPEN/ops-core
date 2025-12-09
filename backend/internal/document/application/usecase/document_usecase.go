@@ -436,6 +436,12 @@ func (uc *documentUseCase) PublishDocumentVersion(ctx context.Context, documentI
 		if err != nil {
 			return nil, fmt.Errorf("failed to publish version: %w", err)
 		}
+	} else {
+		// If the document is not published, publish it with the specified version
+		err = doc.PublishWithVersion(verNum)
+		if err != nil {
+			return nil, fmt.Errorf("failed to publish version: %w", err)
+		}
 	}
 
 	// Update the document
