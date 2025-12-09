@@ -34,20 +34,20 @@ func (m *MockViewHistoryRepository) FindByID(ctx context.Context, id value_objec
 	return args.Get(0).(entity.ViewHistory), args.Error(1)
 }
 
-func (m *MockViewHistoryRepository) FindByUserID(ctx context.Context, userID userVO.UserID, limit int, offset int) ([]entity.ViewHistory, error) {
+func (m *MockViewHistoryRepository) FindByUserID(ctx context.Context, userID userVO.UserID, limit int, offset int) ([]entity.ViewHistory, int64, error) {
 	args := m.Called(ctx, userID, limit, offset)
 	if args.Get(0) == nil {
-		return nil, args.Error(1)
+		return nil, 0, args.Error(2)
 	}
-	return args.Get(0).([]entity.ViewHistory), args.Error(1)
+	return args.Get(0).([]entity.ViewHistory), args.Get(1).(int64), args.Error(2)
 }
 
-func (m *MockViewHistoryRepository) FindByDocumentID(ctx context.Context, documentID documentVO.DocumentID, limit int, offset int) ([]entity.ViewHistory, error) {
+func (m *MockViewHistoryRepository) FindByDocumentID(ctx context.Context, documentID documentVO.DocumentID, limit int, offset int) ([]entity.ViewHistory, int64, error) {
 	args := m.Called(ctx, documentID, limit, offset)
 	if args.Get(0) == nil {
-		return nil, args.Error(1)
+		return nil, 0, args.Error(2)
 	}
-	return args.Get(0).([]entity.ViewHistory), args.Error(1)
+	return args.Get(0).([]entity.ViewHistory), args.Get(1).(int64), args.Error(2)
 }
 
 func (m *MockViewHistoryRepository) FindByUserIDAndDocumentID(ctx context.Context, userID userVO.UserID, documentID documentVO.DocumentID) ([]entity.ViewHistory, error) {
@@ -151,7 +151,7 @@ func TestViewHistoryUseCase_GetViewHistory(t *testing.T) {
 		vh2, _ := entity.RecordViewHistory(documentVO.GenerateDocumentID(), userID)
 		histories := []entity.ViewHistory{vh1, vh2}
 
-		mockRepo.On("FindByUserID", mock.Anything, userID, 50, 0).Return(histories, nil)
+		mockRepo.On("FindByUserID", mock.Anything, userID, 50, 0).Return(histories, int64(100), nil)
 
 		uc := NewViewHistoryUseCase(mockRepo)
 		result, err := uc.GetViewHistory(context.Background(), userID.String(), 50, 0)
@@ -159,6 +159,7 @@ func TestViewHistoryUseCase_GetViewHistory(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
 		assert.Equal(t, 2, len(result.Items))
+		assert.Equal(t, 100, result.TotalCount)
 		assert.Equal(t, 50, result.Limit)
 		assert.Equal(t, 0, result.Offset)
 
@@ -178,7 +179,7 @@ func TestViewHistoryUseCase_GetDocumentViewHistory(t *testing.T) {
 		vh2, _ := entity.RecordViewHistory(docID, userID2)
 		histories := []entity.ViewHistory{vh1, vh2}
 
-		mockRepo.On("FindByDocumentID", mock.Anything, docID, 50, 0).Return(histories, nil)
+		mockRepo.On("FindByDocumentID", mock.Anything, docID, 50, 0).Return(histories, int64(50), nil)
 
 		uc := NewViewHistoryUseCase(mockRepo)
 		result, err := uc.GetDocumentViewHistory(context.Background(), docID.String(), 50, 0)
@@ -186,6 +187,7 @@ func TestViewHistoryUseCase_GetDocumentViewHistory(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
 		assert.Equal(t, 2, len(result.Items))
+		assert.Equal(t, 50, result.TotalCount)
 		assert.Equal(t, 50, result.Limit)
 		assert.Equal(t, 0, result.Offset)
 

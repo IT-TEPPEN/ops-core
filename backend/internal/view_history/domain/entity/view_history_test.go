@@ -57,8 +57,9 @@ func TestNewViewHistory(t *testing.T) {
 		id := value_object.GenerateViewHistoryID()
 		docID := documentVO.GenerateDocumentID()
 		viewedAt := time.Now()
+		emptyUserID, _ := userVO.NewUserID("")
 
-		vh, err := NewViewHistory(id, docID, userVO.UserID{}, viewedAt)
+		vh, err := NewViewHistory(id, docID, emptyUserID, viewedAt)
 
 		assert.Error(t, err)
 		assert.Nil(t, vh)

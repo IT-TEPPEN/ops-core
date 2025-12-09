@@ -19,10 +19,10 @@ type ViewHistoryRepository interface {
 	FindByID(ctx context.Context, id value_object.ViewHistoryID) (entity.ViewHistory, error)
 
 	// FindByUserID retrieves view history records for a specific user.
-	FindByUserID(ctx context.Context, userID userVO.UserID, limit int, offset int) ([]entity.ViewHistory, error)
+	FindByUserID(ctx context.Context, userID userVO.UserID, limit int, offset int) ([]entity.ViewHistory, int64, error)
 
 	// FindByDocumentID retrieves view history records for a specific document.
-	FindByDocumentID(ctx context.Context, documentID documentVO.DocumentID, limit int, offset int) ([]entity.ViewHistory, error)
+	FindByDocumentID(ctx context.Context, documentID documentVO.DocumentID, limit int, offset int) ([]entity.ViewHistory, int64, error)
 
 	// FindByUserIDAndDocumentID retrieves view history records for a specific user and document.
 	FindByUserIDAndDocumentID(ctx context.Context, userID userVO.UserID, documentID documentVO.DocumentID) ([]entity.ViewHistory, error)

@@ -87,7 +87,7 @@ func (uc *viewHistoryUseCase) GetViewHistory(ctx context.Context, userID string,
 	}
 
 	// Retrieve view history
-	histories, err := uc.repo.FindByUserID(ctx, uid, limit, offset)
+	histories, totalCount, err := uc.repo.FindByUserID(ctx, uid, limit, offset)
 	if err != nil {
 		return nil, fmt.Errorf("failed to retrieve view history: %w", err)
 	}
@@ -106,7 +106,7 @@ func (uc *viewHistoryUseCase) GetViewHistory(ctx context.Context, userID string,
 
 	return &dto.ViewHistoryListResponse{
 		Items:      items,
-		TotalCount: len(items),
+		TotalCount: int(totalCount),
 		Limit:      limit,
 		Offset:     offset,
 	}, nil
@@ -129,7 +129,7 @@ func (uc *viewHistoryUseCase) GetDocumentViewHistory(ctx context.Context, docume
 	}
 
 	// Retrieve view history
-	histories, err := uc.repo.FindByDocumentID(ctx, docID, limit, offset)
+	histories, totalCount, err := uc.repo.FindByDocumentID(ctx, docID, limit, offset)
 	if err != nil {
 		return nil, fmt.Errorf("failed to retrieve document view history: %w", err)
 	}
@@ -148,7 +148,7 @@ func (uc *viewHistoryUseCase) GetDocumentViewHistory(ctx context.Context, docume
 
 	return &dto.ViewHistoryListResponse{
 		Items:      items,
-		TotalCount: len(items),
+		TotalCount: int(totalCount),
 		Limit:      limit,
 		Offset:     offset,
 	}, nil
