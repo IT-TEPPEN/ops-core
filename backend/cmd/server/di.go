@@ -102,11 +102,11 @@ func provideEncryptor() (*encryption.Encryptor, error) {
 }
 
 // InitializeAPI initializes all dependencies for the API handlers, using Postgres.
-func InitializeAPI(db *pgxpool.Pool) (*repohandlers.RepositoryHandler, *dochandlers.DocumentHandler, error) {
+func InitializeAPI(db *pgxpool.Pool) (*repohandlers.RepositoryHandler, *dochandlers.DocumentHandler, *dochandlers.VariableHandler, error) {
 	// Create encryptor
 	encryptor, err := provideEncryptor()
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
 	// Create repository (persistence layer)
@@ -115,7 +115,7 @@ func InitializeAPI(db *pgxpool.Pool) (*repohandlers.RepositoryHandler, *dochandl
 	// Create git manager
 	gitManager, err := provideGitManager()
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
 	// Create use case
@@ -134,11 +134,17 @@ func InitializeAPI(db *pgxpool.Pool) (*repohandlers.RepositoryHandler, *dochandl
 	// Create document use case
 	documentUseCase := docusecase.NewDocumentUseCase(documentRepository)
 
+	// Create variable use case
+	variableUseCase := docusecase.NewVariableUseCase(documentRepository)
+
 	// Create document logger
 	docLogger := provideDocHandlerLogger()
 
 	// Create document handler
 	documentHandler := dochandlers.NewDocumentHandler(documentUseCase, docLogger)
 
-	return repositoryHandler, documentHandler, nil
+	// Create variable handler
+	variableHandler := dochandlers.NewVariableHandler(variableUseCase, docLogger)
+
+	return repositoryHandler, documentHandler, variableHandler, nil
 }
