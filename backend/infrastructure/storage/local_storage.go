@@ -157,11 +157,6 @@ func (l *LocalStorage) resolvePath(key string) (string, error) {
 // Clean the key to remove any ".." or other path manipulation attempts
 cleanKey := filepath.Clean(key)
 
-// Reject keys that try to escape the base path
-if strings.Contains(cleanKey, "..") {
-return "", errors.New("invalid key: path traversal attempt detected")
-}
-
 // Join with base path
 fullPath := filepath.Join(l.basePath, cleanKey)
 
@@ -171,7 +166,15 @@ if err != nil {
 return "", fmt.Errorf("failed to resolve path: %w", err)
 }
 
-if !strings.HasPrefix(absPath, l.basePath) {
+// Use filepath.Rel to verify the path is within base directory
+// This is more robust than string prefix checking
+relPath, err := filepath.Rel(l.basePath, absPath)
+if err != nil {
+return "", fmt.Errorf("failed to compute relative path: %w", err)
+}
+
+// If the relative path starts with "..", it's outside the base directory
+if strings.HasPrefix(relPath, "..") {
 return "", errors.New("invalid key: path outside base directory")
 }
 

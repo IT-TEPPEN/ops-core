@@ -133,6 +133,11 @@ Key:    aws.String(key),
 _, err := s.client.HeadObject(ctx, input)
 if err != nil {
 // Check if it's a "not found" error
+var noSuchKey *types.NoSuchKey
+if errors.As(err, &noSuchKey) {
+return false, nil
+}
+// Also check for NotFound which may be returned in some cases
 var notFound *types.NotFound
 if errors.As(err, &notFound) {
 return false, nil
