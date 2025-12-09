@@ -16,8 +16,32 @@ const docTemplate = `{
     "basePath": "{{.BasePath}}",
     "paths": {
         "/repositories": {
+            "get": {
+                "description": "Retrieves a list of all repositories registered in OpsCore",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "repositories"
+                ],
+                "summary": "List all repositories",
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved repositories",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ListRepositoriesResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse"
+                        }
+                    }
+                }
+            },
             "post": {
-                "description": "Add a new repository to be managed by OpsCore by providing its Git URL.",
+                "description": "Add a new repository to be managed by OpsCore by providing its Git URL and optional access token.",
                 "consumes": [
                     "application/json"
                 ],
@@ -30,12 +54,12 @@ const docTemplate = `{
                 "summary": "Register a new repository",
                 "parameters": [
                     {
-                        "description": "Repository URL",
+                        "description": "Repository information",
                         "name": "repository",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handlers.RegisterRepositoryRequest"
+                            "$ref": "#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.RegisterRepositoryRequest"
                         }
                     }
                 ],
@@ -43,25 +67,72 @@ const docTemplate = `{
                     "201": {
                         "description": "Repository registered successfully",
                         "schema": {
-                            "$ref": "#/definitions/handlers.RepositoryResponse"
+                            "$ref": "#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.RepositoryResponse"
                         }
                     },
                     "400": {
                         "description": "Invalid request body or URL format",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ErrorResponse"
+                            "$ref": "#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse"
                         }
                     },
                     "409": {
                         "description": "Repository with this URL already exists",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ErrorResponse"
+                            "$ref": "#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ErrorResponse"
+                            "$ref": "#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/repositories/{repoId}": {
+            "get": {
+                "description": "Retrieves detailed information about a specific repository by ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "repositories"
+                ],
+                "summary": "Get repository details",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Repository ID",
+                        "name": "repoId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved repository details",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.RepositoryResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid repository ID format",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Repository not found",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse"
                         }
                     }
                 }
@@ -90,25 +161,25 @@ const docTemplate = `{
                     "200": {
                         "description": "Successfully retrieved file list",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ListFilesResponse"
+                            "$ref": "#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ListFilesResponse"
                         }
                     },
                     "400": {
-                        "description": "Invalid repository ID format",
+                        "description": "Invalid repository ID format or access token missing",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ErrorResponse"
+                            "$ref": "#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Repository not found",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ErrorResponse"
+                            "$ref": "#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ErrorResponse"
+                            "$ref": "#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse"
                         }
                     }
                 }
@@ -141,7 +212,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handlers.SelectFilesRequest"
+                            "$ref": "#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.SelectFilesRequest"
                         }
                     }
                 ],
@@ -149,25 +220,25 @@ const docTemplate = `{
                     "200": {
                         "description": "Files selected successfully",
                         "schema": {
-                            "$ref": "#/definitions/handlers.SelectFilesResponse"
+                            "$ref": "#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.SelectFilesResponse"
                         }
                     },
                     "400": {
                         "description": "Invalid request body or repository ID",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ErrorResponse"
+                            "$ref": "#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Repository not found",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ErrorResponse"
+                            "$ref": "#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ErrorResponse"
+                            "$ref": "#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse"
                         }
                     }
                 }
@@ -196,25 +267,87 @@ const docTemplate = `{
                     "200": {
                         "description": "Successfully retrieved Markdown content",
                         "schema": {
-                            "$ref": "#/definitions/handlers.GetMarkdownResponse"
+                            "$ref": "#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.GetMarkdownResponse"
                         }
                     },
                     "400": {
                         "description": "Invalid repository ID format",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ErrorResponse"
+                            "$ref": "#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Repository not found or no files selected",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ErrorResponse"
+                            "$ref": "#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ErrorResponse"
+                            "$ref": "#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/repositories/{repoId}/token": {
+            "put": {
+                "description": "Updates the access token used for accessing a private repository",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "repositories"
+                ],
+                "summary": "Update repository access token",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Repository ID",
+                        "name": "repoId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Access token information",
+                        "name": "tokenInfo",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.UpdateAccessTokenRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Access token updated successfully",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body or repository ID",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Repository not found",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse"
                         }
                     }
                 }
@@ -222,7 +355,7 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "handlers.ErrorResponse": {
+        "opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse": {
             "type": "object",
             "properties": {
                 "code": {
@@ -235,7 +368,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handlers.FileNode": {
+        "opscore_backend_internal_git_repository_interfaces_api_schema.FileNode": {
             "type": "object",
             "properties": {
                 "path": {
@@ -249,7 +382,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handlers.GetMarkdownResponse": {
+        "opscore_backend_internal_git_repository_interfaces_api_schema.GetMarkdownResponse": {
             "type": "object",
             "properties": {
                 "content": {
@@ -263,30 +396,46 @@ const docTemplate = `{
                 }
             }
         },
-        "handlers.ListFilesResponse": {
+        "opscore_backend_internal_git_repository_interfaces_api_schema.ListFilesResponse": {
             "type": "object",
             "properties": {
                 "files": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/handlers.FileNode"
+                        "$ref": "#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.FileNode"
                     }
                 }
             }
         },
-        "handlers.RegisterRepositoryRequest": {
+        "opscore_backend_internal_git_repository_interfaces_api_schema.ListRepositoriesResponse": {
+            "type": "object",
+            "properties": {
+                "repositories": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.RepositoryResponse"
+                    }
+                }
+            }
+        },
+        "opscore_backend_internal_git_repository_interfaces_api_schema.RegisterRepositoryRequest": {
             "type": "object",
             "required": [
                 "url"
             ],
             "properties": {
+                "accessToken": {
+                    "description": "Optional access token for private repositories",
+                    "type": "string",
+                    "example": "ghp_1234567890abcdefghijklmnopqrstuvwxyz"
+                },
                 "url": {
                     "type": "string",
                     "example": "https://github.com/user/repo.git"
                 }
             }
         },
-        "handlers.RepositoryResponse": {
+        "opscore_backend_internal_git_repository_interfaces_api_schema.RepositoryResponse": {
             "type": "object",
             "properties": {
                 "created_at": {
@@ -311,7 +460,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handlers.SelectFilesRequest": {
+        "opscore_backend_internal_git_repository_interfaces_api_schema.SelectFilesRequest": {
             "type": "object",
             "required": [
                 "filePaths"
@@ -330,7 +479,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handlers.SelectFilesResponse": {
+        "opscore_backend_internal_git_repository_interfaces_api_schema.SelectFilesResponse": {
             "type": "object",
             "properties": {
                 "message": {
@@ -344,6 +493,18 @@ const docTemplate = `{
                 "selectedFiles": {
                     "type": "integer",
                     "example": 2
+                }
+            }
+        },
+        "opscore_backend_internal_git_repository_interfaces_api_schema.UpdateAccessTokenRequest": {
+            "type": "object",
+            "required": [
+                "accessToken"
+            ],
+            "properties": {
+                "accessToken": {
+                    "type": "string",
+                    "example": "ghp_1234567890abcdefghijklmnopqrstuvwxyz"
                 }
             }
         }
