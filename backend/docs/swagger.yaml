@@ -1,6 +1,6 @@
 basePath: /api/v1
 definitions:
-  handlers.ErrorResponse:
+  opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse:
     properties:
       code:
         example: INVALID_REQUEST
@@ -9,7 +9,7 @@ definitions:
         example: Invalid request body
         type: string
     type: object
-  handlers.FileNode:
+  opscore_backend_internal_git_repository_interfaces_api_schema.FileNode:
     properties:
       path:
         example: src/main.go
@@ -19,7 +19,7 @@ definitions:
         example: file
         type: string
     type: object
-  handlers.GetMarkdownResponse:
+  opscore_backend_internal_git_repository_interfaces_api_schema.GetMarkdownResponse:
     properties:
       content:
         description: Concatenated Markdown content
@@ -29,22 +29,33 @@ definitions:
         example: a1b2c3d4-e5f6-7890-1234-567890abcdef
         type: string
     type: object
-  handlers.ListFilesResponse:
+  opscore_backend_internal_git_repository_interfaces_api_schema.ListFilesResponse:
     properties:
       files:
         items:
-          $ref: '#/definitions/handlers.FileNode'
+          $ref: '#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.FileNode'
         type: array
     type: object
-  handlers.RegisterRepositoryRequest:
+  opscore_backend_internal_git_repository_interfaces_api_schema.ListRepositoriesResponse:
     properties:
+      repositories:
+        items:
+          $ref: '#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.RepositoryResponse'
+        type: array
+    type: object
+  opscore_backend_internal_git_repository_interfaces_api_schema.RegisterRepositoryRequest:
+    properties:
+      accessToken:
+        description: Optional access token for private repositories
+        example: ghp_1234567890abcdefghijklmnopqrstuvwxyz
+        type: string
       url:
         example: https://github.com/user/repo.git
         type: string
     required:
     - url
     type: object
-  handlers.RepositoryResponse:
+  opscore_backend_internal_git_repository_interfaces_api_schema.RepositoryResponse:
     properties:
       created_at:
         example: "2025-04-22T10:00:00Z"
@@ -62,7 +73,7 @@ definitions:
         example: https://github.com/user/repo.git
         type: string
     type: object
-  handlers.SelectFilesRequest:
+  opscore_backend_internal_git_repository_interfaces_api_schema.SelectFilesRequest:
     properties:
       filePaths:
         description: List of file paths to select
@@ -75,7 +86,7 @@ definitions:
     required:
     - filePaths
     type: object
-  handlers.SelectFilesResponse:
+  opscore_backend_internal_git_repository_interfaces_api_schema.SelectFilesResponse:
     properties:
       message:
         example: Files selected successfully
@@ -87,6 +98,14 @@ definitions:
         example: 2
         type: integer
     type: object
+  opscore_backend_internal_git_repository_interfaces_api_schema.UpdateAccessTokenRequest:
+    properties:
+      accessToken:
+        example: ghp_1234567890abcdefghijklmnopqrstuvwxyz
+        type: string
+    required:
+    - accessToken
+    type: object
 host: localhost:8080
 info:
   contact: {}
@@ -95,38 +114,85 @@ info:
   version: "1.0"
 paths:
   /repositories:
+    get:
+      description: Retrieves a list of all repositories registered in OpsCore
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved repositories
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ListRepositoriesResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse'
+      summary: List all repositories
+      tags:
+      - repositories
     post:
       consumes:
       - application/json
       description: Add a new repository to be managed by OpsCore by providing its
-        Git URL.
+        Git URL and optional access token.
       parameters:
-      - description: Repository URL
+      - description: Repository information
         in: body
         name: repository
         required: true
         schema:
-          $ref: '#/definitions/handlers.RegisterRepositoryRequest'
+          $ref: '#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.RegisterRepositoryRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Repository registered successfully
           schema:
-            $ref: '#/definitions/handlers.RepositoryResponse'
+            $ref: '#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.RepositoryResponse'
         "400":
           description: Invalid request body or URL format
           schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
+            $ref: '#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse'
         "409":
           description: Repository with this URL already exists
           schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
+            $ref: '#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
+            $ref: '#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse'
       summary: Register a new repository
+      tags:
+      - repositories
+  /repositories/{repoId}:
+    get:
+      description: Retrieves detailed information about a specific repository by ID
+      parameters:
+      - description: Repository ID
+        in: path
+        name: repoId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved repository details
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.RepositoryResponse'
+        "400":
+          description: Invalid repository ID format
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse'
+        "404":
+          description: Repository not found
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse'
+      summary: Get repository details
       tags:
       - repositories
   /repositories/{repoId}/files:
@@ -144,19 +210,19 @@ paths:
         "200":
           description: Successfully retrieved file list
           schema:
-            $ref: '#/definitions/handlers.ListFilesResponse'
+            $ref: '#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ListFilesResponse'
         "400":
-          description: Invalid repository ID format
+          description: Invalid repository ID format or access token missing
           schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
+            $ref: '#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse'
         "404":
           description: Repository not found
           schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
+            $ref: '#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
+            $ref: '#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse'
       summary: List files in a repository
       tags:
       - repositories
@@ -176,26 +242,26 @@ paths:
         name: files
         required: true
         schema:
-          $ref: '#/definitions/handlers.SelectFilesRequest'
+          $ref: '#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.SelectFilesRequest'
       produces:
       - application/json
       responses:
         "200":
           description: Files selected successfully
           schema:
-            $ref: '#/definitions/handlers.SelectFilesResponse'
+            $ref: '#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.SelectFilesResponse'
         "400":
           description: Invalid request body or repository ID
           schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
+            $ref: '#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse'
         "404":
           description: Repository not found
           schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
+            $ref: '#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
+            $ref: '#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse'
       summary: Select manageable files in a repository
       tags:
       - repositories
@@ -215,20 +281,61 @@ paths:
         "200":
           description: Successfully retrieved Markdown content
           schema:
-            $ref: '#/definitions/handlers.GetMarkdownResponse'
+            $ref: '#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.GetMarkdownResponse'
         "400":
           description: Invalid repository ID format
           schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
+            $ref: '#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse'
         "404":
           description: Repository not found or no files selected
           schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
+            $ref: '#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
+            $ref: '#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse'
       summary: Get selected Markdown content from a repository
+      tags:
+      - repositories
+  /repositories/{repoId}/token:
+    put:
+      consumes:
+      - application/json
+      description: Updates the access token used for accessing a private repository
+      parameters:
+      - description: Repository ID
+        in: path
+        name: repoId
+        required: true
+        type: string
+      - description: Access token information
+        in: body
+        name: tokenInfo
+        required: true
+        schema:
+          $ref: '#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.UpdateAccessTokenRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Access token updated successfully
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid request body or repository ID
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse'
+        "404":
+          description: Repository not found
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse'
+      summary: Update repository access token
       tags:
       - repositories
 swagger: "2.0"

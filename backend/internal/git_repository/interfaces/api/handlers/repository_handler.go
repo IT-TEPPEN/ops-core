@@ -3,9 +3,9 @@ package handlers
 import (
 	"net/http"
 	"opscore/backend/internal/git_repository/application/dto"
-	"opscore/backend/internal/git_repository/application/usecase"
-	intererror "opscore/backend/internal/git_repository/interfaces/error"
+	repository "opscore/backend/internal/git_repository/application/usecase"
 	"opscore/backend/internal/git_repository/interfaces/api/schema"
+	intererror "opscore/backend/internal/git_repository/interfaces/error"
 
 	"github.com/gin-gonic/gin"
 )
