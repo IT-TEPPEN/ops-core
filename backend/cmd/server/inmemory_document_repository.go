@@ -34,7 +34,10 @@ func (r *InMemoryDocumentRepository) Save(ctx context.Context, document entity.D
 
 	// Store versions
 	if document.CurrentVersion() != nil {
-		r.versions[document.ID().String()] = document.Versions()
+		versions := document.Versions()
+		versionsCopy := make([]entity.DocumentVersion, len(versions))
+		copy(versionsCopy, versions)
+		r.versions[document.ID().String()] = versionsCopy
 	}
 
 	return nil
