@@ -5,7 +5,7 @@ import RepositoryDetailPage from "./RepositoryDetailPage";
 
 // Mock fetch globally
 const mockFetch = vi.fn();
-globalThis.fetch = mockFetch as any;
+globalThis.fetch = mockFetch as unknown as typeof fetch;
 
 // Mock useNavigate
 const mockNavigate = vi.fn();
