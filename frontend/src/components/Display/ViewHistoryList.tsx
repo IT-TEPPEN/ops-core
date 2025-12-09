@@ -2,7 +2,7 @@ import React from "react";
 import type { ViewHistory } from "../../types/domain";
 import { formatDateTime } from "../../utils/date";
 
-interface ViewHistoryListProps {
+export interface ViewHistoryListProps {
   items: ViewHistory[];
   isLoading?: boolean;
 }

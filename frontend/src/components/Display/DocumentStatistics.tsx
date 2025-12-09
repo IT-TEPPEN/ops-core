@@ -2,7 +2,7 @@ import React from "react";
 import type { DocumentStatistics } from "../../types/domain";
 import { formatDateTime } from "../../utils/date";
 
-interface DocumentStatisticsProps {
+export interface DocumentStatisticsProps {
   statistics: DocumentStatistics;
   isLoading?: boolean;
 }

@@ -2,7 +2,7 @@ import React from "react";
 import type { RecentDocument } from "../../types/domain";
 import { formatDateTime } from "../../utils/date";
 
-interface RecentViewsListProps {
+export interface RecentViewsListProps {
   items: RecentDocument[];
   isLoading?: boolean;
 }

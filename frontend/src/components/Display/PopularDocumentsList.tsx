@@ -2,7 +2,7 @@ import React from "react";
 import type { PopularDocument } from "../../types/domain";
 import { formatDateTime } from "../../utils/date";
 
-interface PopularDocumentsListProps {
+export interface PopularDocumentsListProps {
   items: PopularDocument[];
   isLoading?: boolean;
 }

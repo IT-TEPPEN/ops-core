@@ -1,6 +1,6 @@
 import React from "react";
 
-interface StatisticsChartProps {
+export interface StatisticsChartProps {
   title: string;
   data: Array<{ label: string; value: number }>;
   isLoading?: boolean;
