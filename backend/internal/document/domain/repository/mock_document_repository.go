@@ -42,7 +42,7 @@ func (m *MockDocumentRepository) FindByRepositoryID(ctx context.Context, repoID 
 func (m *MockDocumentRepository) FindPublished(ctx context.Context, filters ...Filter) ([]entity.Document, error) {
 	args := m.Called(ctx, filters)
 	if args.Get(0) == nil {
-		return nil, args.Error(1)
+		return []entity.Document{}, args.Error(1)
 	}
 	return args.Get(0).([]entity.Document), args.Error(1)
 }
