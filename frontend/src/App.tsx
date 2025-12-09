@@ -5,6 +5,7 @@ import RepositoriesPage from "./pages/RepositoriesPage";
 import RepositoryDetailPage from "./pages/RepositoryDetailPage";
 import DocumentListPage from "./pages/DocumentListPage";
 import DocumentDetailPage from "./pages/DocumentDetailPage";
+import DocumentViewPage from "./pages/DocumentViewPage";
 import DocumentVersionHistoryPage from "./pages/DocumentVersionHistoryPage";
 
 // Define a simple Home component for the root path
@@ -132,6 +133,7 @@ function App() {
           />
           <Route path="/documents" element={<DocumentListPage />} />
           <Route path="/documents/:docId" element={<DocumentDetailPage />} />
+          <Route path="/documents/:docId/view" element={<DocumentViewPage />} />
           <Route path="/documents/:docId/versions" element={<DocumentVersionHistoryPage />} />
           <Route path="/blog" element={<BlogPage />} />
         </Routes>
