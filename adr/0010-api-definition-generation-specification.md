@@ -173,4 +173,4 @@ r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 - **Regeneration Required**: The `swag init` command must be run every time handler annotations are added or modified
 - **Version Control**: All files in `backend/docs/` are generated artifacts but should be committed to the repository for consistency
-- **Swagger Version**: Currently generates Swagger 2.0 specification (not OpenAPI 3.x as originally planned). This may be updated in future versions of `swaggo/swag` or by using additional configuration flags
+- **Specification Version**: OpenAPI 3.x remains the intended and accepted specification for the project (see Decision above). However, due to current limitations of `swaggo/swag`, the generated documentation is in Swagger 2.0 format. Migration to OpenAPI 3.x will be prioritized as soon as tool support becomes available or an alternative solution is adopted.
