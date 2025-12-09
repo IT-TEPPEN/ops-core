@@ -7,6 +7,55 @@ Currently, two official plugins are available:
 - [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
 - [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
 
+## Testing
+
+This project uses Vitest and React Testing Library for testing.
+
+### Running Tests
+
+```bash
+# Run all tests once
+npm test
+
+# Run tests in watch mode
+npm run test:watch
+
+# Run tests with coverage
+npm run test:coverage
+```
+
+### Test Structure
+
+- Unit tests for utilities are located in `src/utils/*.test.ts`
+- Hook tests are located in `src/hooks/*.test.ts`
+- Component tests are colocated with components (e.g., `src/App.test.tsx`, `src/pages/*.test.tsx`)
+
+### Writing Tests
+
+Tests use the following libraries:
+- **Vitest**: Test runner and assertion library
+- **React Testing Library**: For testing React components
+- **@testing-library/jest-dom**: For additional DOM matchers
+
+Example test:
+```typescript
+import { describe, it, expect } from "vitest";
+import { render, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
+import MyComponent from "./MyComponent";
+
+describe("MyComponent", () => {
+  it("renders correctly", () => {
+    render(
+      <MemoryRouter>
+        <MyComponent />
+      </MemoryRouter>
+    );
+    expect(screen.getByText("Hello")).toBeInTheDocument();
+  });
+});
+```
+
 ## Expanding the ESLint configuration
 
 If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
