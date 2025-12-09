@@ -14,8 +14,9 @@ export function substituteVariables(
     // Create a regex to match {{variable_name}} (case-sensitive, exact match)
     const regex = new RegExp(`\\{\\{${escapeRegExp(name)}\\}\\}`, 'g');
     
-    // Convert value to string, handling different types
-    const strValue = String(value ?? '');
+    // Convert value to string, handling null/undefined
+    // Note: false and 0 are valid values and should be converted to string
+    const strValue = value == null ? '' : String(value);
     
     // Replace all occurrences
     result = result.replace(regex, strValue);

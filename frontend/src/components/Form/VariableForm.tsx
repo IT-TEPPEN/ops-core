@@ -62,7 +62,7 @@ export function VariableForm({
         return (
           <input
             type="number"
-            value={value === "" ? "" : Number(value)}
+            value={value === "" ? "" : String(value)}
             onChange={(e) => {
               const inputValue = e.target.value;
               if (inputValue === "") {
