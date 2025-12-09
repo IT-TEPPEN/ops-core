@@ -77,8 +77,9 @@ function DocumentVersionHistoryPage() {
           if (data && typeof data.message === "string") {
             message = data.message;
           }
-        } catch {
+        } catch (parseError) {
           // Use default message if JSON parsing fails
+          console.error('Failed to parse error response:', parseError);
         }
         throw new Error(message);
       }
