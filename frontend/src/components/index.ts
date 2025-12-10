@@ -33,6 +33,9 @@ export type { FormFieldProps } from "./Form/FormField";
 export { VariableForm } from "./Form/VariableForm";
 export type { VariableFormProps } from "./Form/VariableForm";
 
+export { ExecutionStepPanel } from "./Form/ExecutionStepPanel";
+export type { ExecutionStepPanelProps } from "./Form/ExecutionStepPanel";
+
 // Display components
 export { DataTable } from "./Display/DataTable";
 export type { DataTableProps } from "./Display/DataTable";
@@ -63,6 +66,9 @@ export type { RecentViewsListProps } from "./Display/RecentViewsList";
 
 export { StatisticsChart } from "./Display/StatisticsChart";
 export type { StatisticsChartProps } from "./Display/StatisticsChart";
+
+export { ExecutionRecordList } from "./Display/ExecutionRecordList";
+export type { ExecutionRecordListProps } from "./Display/ExecutionRecordList";
 
 // Navigation components
 export { Tabs } from "./Navigation/Tabs";

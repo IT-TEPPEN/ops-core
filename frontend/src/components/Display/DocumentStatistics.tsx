@@ -1,9 +1,9 @@
 import React from "react";
-import type { DocumentStatistics } from "../../types/domain";
+import type { DocumentStatistics as DocumentStatsType } from "../../types/domain";
 import { formatDateTime } from "../../utils/date";
 
 export interface DocumentStatisticsProps {
-  statistics: DocumentStatistics;
+  statistics: DocumentStatsType;
   isLoading?: boolean;
 }
 
