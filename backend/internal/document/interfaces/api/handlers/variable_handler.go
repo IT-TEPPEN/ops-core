@@ -77,13 +77,20 @@ func (h *VariableHandler) GetVariableDefinitions(c *gin.Context) {
 
 // ValidateVariableValues godoc
 // @Summary Validate variable values for a document
-// @Description Validates the provided variable values against the document's variable definitions
+// @Description Validates the provided variable values against the document's variable definitions.
+// @Description
+// @Description **Note on Response Status Codes:**
+// @Description This endpoint returns HTTP 200 OK for both successful validations and validation failures.
+// @Description The response body's "valid" field indicates whether validation passed or failed.
+// @Description This design allows distinguishing between:
+// @Description - Validation failures (HTTP 200 with valid:false) - client provided invalid data
+// @Description - System errors (HTTP 4xx/5xx) - server-side issues or malformed requests
 // @Tags variables
 // @Accept json
 // @Produce json
 // @Param docId path string true "Document ID" example:"a1b2c3d4-e5f6-7890-1234-567890abcdef"
 // @Param values body schema.ValidateVariableValuesRequest true "Variable values to validate"
-// @Success 200 {object} schema.ValidateVariableValuesResponse "Validation result"
+// @Success 200 {object} schema.ValidateVariableValuesResponse "Validation result (valid:true or valid:false with errors)"
 // @Failure 400 {object} schema.ErrorResponse "Invalid request body or document ID"
 // @Failure 404 {object} schema.ErrorResponse "Document not found"
 // @Failure 500 {object} schema.ErrorResponse "Internal server error"

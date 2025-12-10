@@ -28,6 +28,16 @@ type ValidateVariableValuesRequest struct {
 }
 
 // ValidateVariableValuesResponse represents the response for validating variable values
+// 
+// Design Note: This endpoint returns HTTP 200 OK for both successful and failed validations.
+// The "valid" field indicates the validation result:
+//   - valid: true  - All variable values passed validation
+//   - valid: false - One or more validation errors occurred (see "errors" field)
+// 
+// This differs from typical REST conventions where validation failures return 4xx codes.
+// The rationale is to distinguish between:
+//   - Validation failures (HTTP 200, valid:false) - Expected client behavior, values don't meet requirements
+//   - System errors (HTTP 4xx/5xx) - Malformed requests or server issues
 type ValidateVariableValuesResponse struct {
 	Valid  bool                `json:"valid"`
 	Errors []ValidationErrorDTO `json:"errors,omitempty"`
