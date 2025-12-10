@@ -8,7 +8,7 @@ This package provides a unified interface for file storage operations, supportin
 - **Security**: Path traversal protection for local storage
 - **Pre-signed URLs**: Support for temporary file access URLs (S3/MinIO)
 - **Factory Pattern**: Easy configuration-based storage creation
-- **Comprehensive Testing**: Full test coverage with security tests
+- **Comprehensive Testing**: Comprehensive testing for LocalStorage with security tests
 
 ## Installation
 
