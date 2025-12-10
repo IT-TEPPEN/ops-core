@@ -48,7 +48,7 @@ func main() {
 	// --- End Database Connection ---
 
 	// Initialize dependencies using Wire, passing the db pool
-	repoHandler, docHandler, varHandler, execHandler, attachHandler, err := InitializeAPI(dbpool) // Pass dbpool and handle error
+	repoHandler, docHandler, varHandler, execHandler, attachHandler, userHandler, groupHandler, err := InitializeAPI(dbpool) // Pass dbpool and handle error
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to initialize API dependencies: %v\n", err)
 		os.Exit(1)
@@ -123,6 +123,23 @@ func main() {
 		v1.GET("/execution-records/:id/attachments", attachHandler.ListAttachments)
 		v1.GET("/execution-records/:id/steps/:stepId/attachments", attachHandler.ListStepAttachments)
 		v1.DELETE("/attachments/:id", attachHandler.DeleteAttachment)
+
+		// User routes
+		v1.POST("/users", userHandler.CreateUser)
+		v1.GET("/users/:userId", userHandler.GetUser)
+		v1.GET("/users", userHandler.ListUsers)
+		v1.PUT("/users/:userId", userHandler.UpdateUser)
+		v1.DELETE("/users/:userId", userHandler.DeleteUser)
+
+		// Group routes
+		v1.POST("/groups", groupHandler.CreateGroup)
+		v1.GET("/groups/:groupId", groupHandler.GetGroup)
+		v1.GET("/groups", groupHandler.ListGroups)
+		v1.PUT("/groups/:groupId", groupHandler.UpdateGroup)
+		v1.DELETE("/groups/:groupId", groupHandler.DeleteGroup)
+		v1.POST("/groups/:groupId/members", groupHandler.AddMember)
+		v1.DELETE("/groups/:groupId/members", groupHandler.RemoveMember)
+		v1.GET("/users/:userId/groups", groupHandler.GetUserGroups)
 	}
 
 	// Static file serving (Frontend)
