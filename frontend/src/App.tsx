@@ -8,6 +8,8 @@ import DocumentDetailPage from "./pages/DocumentDetailPage";
 import DocumentViewPage from "./pages/DocumentViewPage";
 import DocumentVersionHistoryPage from "./pages/DocumentVersionHistoryPage";
 import ExecutionRecordPage from "./pages/ExecutionRecordPage";
+import GroupListPage from "./pages/GroupListPage";
+import GroupDetailPage from "./pages/GroupDetailPage";
 
 // Define a simple Home component for the root path
 function HomePage() {
@@ -118,6 +120,14 @@ function App() {
                   Documentation
                 </Link>
               </li>
+              <li>
+                <Link
+                  to="/groups"
+                  className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 px-3 py-2 rounded-md text-sm font-medium transition duration-150 ease-in-out"
+                >
+                  Groups
+                </Link>
+              </li>
             </ul>
           </div>
         </div>
@@ -138,6 +148,8 @@ function App() {
           <Route path="/documents/:docId/execute" element={<ExecutionRecordPage />} />
           <Route path="/documents/:docId/execute/:recordId" element={<ExecutionRecordPage />} />
           <Route path="/documents/:docId/versions" element={<DocumentVersionHistoryPage />} />
+          <Route path="/groups" element={<GroupListPage />} />
+          <Route path="/groups/:groupId" element={<GroupDetailPage />} />
           <Route path="/blog" element={<BlogPage />} />
         </Routes>
       </main>
