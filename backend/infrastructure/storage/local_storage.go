@@ -61,18 +61,31 @@ if err := os.MkdirAll(dir, 0755); err != nil {
 return fmt.Errorf("failed to create directory: %w", err)
 }
 
-// Create the file
-file, err := os.Create(fullPath)
+// Write to a temporary file first, then atomically rename
+tmpFile, err := os.CreateTemp(dir, "tmp-*")
 if err != nil {
-return fmt.Errorf("failed to create file: %w", err)
+    return fmt.Errorf("failed to create temp file: %w", err)
 }
-defer file.Close()
+defer func() {
+    // Remove temp file in case of error or after rename
+    os.Remove(tmpFile.Name())
+}()
 
-// Copy content from reader to file
-if _, err := io.Copy(file, reader); err != nil {
-return fmt.Errorf("failed to write file: %w", err)
+// Copy content from reader to temp file
+if _, err := io.Copy(tmpFile, reader); err != nil {
+    tmpFile.Close()
+    return fmt.Errorf("failed to write file: %w", err)
 }
 
+// Close temp file before renaming
+if err := tmpFile.Close(); err != nil {
+    return fmt.Errorf("failed to close temp file: %w", err)
+}
+
+// Atomically rename temp file to final destination
+if err := os.Rename(tmpFile.Name(), fullPath); err != nil {
+    return fmt.Errorf("failed to move file: %w", err)
+}
 return nil
 }
 
