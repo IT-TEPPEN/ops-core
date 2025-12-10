@@ -21,10 +21,34 @@ function DocumentViewPage() {
 
   // Fetch document on component mount
   useEffect(() => {
-    if (docId) {
-      fetchDocument();
-    }
-  }, [docId]);
+    if (!docId) return;
+
+    const fetchDocument = async () => {
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const response = await fetch(`${apiUrl}/documents/${docId}`);
+        if (!response.ok) {
+          if (response.status === 404) {
+            setError("Document not found");
+          } else {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          return;
+        }
+        const data = await response.json();
+        setDocument(data);
+      } catch (err) {
+        setError("Failed to load document. Please try again later.");
+        console.error("Error fetching document:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchDocument();
+  }, [docId, apiUrl]);
 
   // Initialize variable values when document is loaded
   useEffect(() => {
@@ -47,30 +71,6 @@ function DocumentViewPage() {
       setProcessedContent(substituted);
     }
   }, [document, variableValues]);
-
-  const fetchDocument = async () => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const response = await fetch(`${apiUrl}/documents/${docId}`);
-      if (!response.ok) {
-        if (response.status === 404) {
-          setError("Document not found");
-        } else {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return;
-      }
-      const data = await response.json();
-      setDocument(data);
-    } catch (err) {
-      setError("Failed to load document. Please try again later.");
-      console.error("Error fetching document:", err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleVariableChange = (name: string, value: any) => {
     setVariableValues((prev) => ({
@@ -113,7 +113,7 @@ function DocumentViewPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-screen">
+      <div className="flex items-center justify-center h-screen" role="status" aria-live="polite">
         <p className="text-gray-500">Loading document...</p>
       </div>
     );
@@ -122,7 +122,7 @@ function DocumentViewPage() {
   if (error) {
     return (
       <div className="p-8 space-y-4">
-        <div className="p-4 bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100 rounded">
+        <div className="p-4 bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100 rounded" role="alert" aria-live="assertive">
           {error}
         </div>
         <Link

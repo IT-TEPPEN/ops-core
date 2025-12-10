@@ -86,6 +86,24 @@ describe('substituteVariables', () => {
     expect(result).toBe('Value: ');
   });
 
+  it('should handle undefined values', () => {
+    const content = 'Value: {{test_value}}';
+    const values = { test_value: undefined };
+    
+    const result = substituteVariables(content, values);
+    
+    expect(result).toBe('Value: ');
+  });
+
+  it('should handle missing variables from values object', () => {
+    const content = 'Value: {{missing_var}} and {{present_var}}';
+    const values = { present_var: 'hello' };
+    
+    const result = substituteVariables(content, values);
+    
+    expect(result).toBe('Value: {{missing_var}} and hello');
+  });
+
   it('should escape special regex characters in variable names', () => {
     const content = 'Path: {{base.path}}';
     const values = { 'base.path': '/home/user' };

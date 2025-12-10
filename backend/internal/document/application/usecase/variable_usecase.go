@@ -113,7 +113,7 @@ func (uc *variableUseCase) ValidateVariableValues(ctx context.Context, documentI
 				empty = true
 			} else {
 				switch def.Type {
-				case "string":
+				case "string", "date":
 					strVal, ok := val.(string)
 					if ok && strVal == "" {
 						empty = true

@@ -161,6 +161,40 @@ func TestVariableUseCase_SubstituteVariables(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, "Connect to prod-server and backup to {{backup_path}}", result)
 	})
+
+	t.Run("変数値にnilを指定した場合は空文字列に置換される", func(t *testing.T) {
+		mockRepo := new(repository.MockDocumentRepository)
+
+		uc := NewVariableUseCase(mockRepo)
+
+		content := "Server: {{server_name}}, Path: {{backup_path}}"
+		values := []VariableValue{
+			{Name: "server_name", Value: nil},
+			{Name: "backup_path", Value: "/backup"},
+		}
+
+		result, err := uc.SubstituteVariables(context.Background(), content, values)
+
+		assert.NoError(t, err)
+		assert.Equal(t, "Server: , Path: /backup", result)
+	})
+
+	t.Run("変数値に特殊文字が含まれていても正しく置換される", func(t *testing.T) {
+		mockRepo := new(repository.MockDocumentRepository)
+
+		uc := NewVariableUseCase(mockRepo)
+
+		content := "Path: {{path}}, Pattern: {{pattern}}"
+		values := []VariableValue{
+			{Name: "path", Value: "C:\\Program Files\\App"},
+			{Name: "pattern", Value: "*.txt"},
+		}
+
+		result, err := uc.SubstituteVariables(context.Background(), content, values)
+
+		assert.NoError(t, err)
+		assert.Equal(t, "Path: C:\\Program Files\\App, Pattern: *.txt", result)
+	})
 }
 
 // Helper function to create a test document with variables

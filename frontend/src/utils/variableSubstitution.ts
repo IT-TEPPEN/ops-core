@@ -8,6 +8,9 @@ export function substituteVariables(
   content: string,
   values: { [key: string]: any }
 ): string {
+  if (!content) return content;
+  if (!values || typeof values !== 'object') return content;
+
   let result = content;
 
   for (const [name, value] of Object.entries(values)) {
