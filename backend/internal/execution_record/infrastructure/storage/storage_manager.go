@@ -18,6 +18,10 @@ type StorageManager interface {
 	// Delete deletes a file by its path.
 	Delete(ctx context.Context, path string) error
 
+	// GeneratePresignedURL generates a presigned URL for accessing a file.
+	// Returns empty string if not supported (e.g., local storage).
+	GeneratePresignedURL(ctx context.Context, path string, expirationMinutes int) (string, error)
+
 	// Type returns the storage type.
 	Type() value_object.StorageType
 }

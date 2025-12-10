@@ -1,22 +1,34 @@
 package handlers
 
 import (
+	"context"
+	"io"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 
 	"opscore/backend/internal/execution_record/application/dto"
-	"opscore/backend/internal/execution_record/application/usecase"
 	"opscore/backend/internal/execution_record/interfaces/api/schema"
 )
 
+// AttachmentUsecase defines the interface for attachment business logic.
+type AttachmentUsecase interface {
+	UploadAttachment(ctx context.Context, req *dto.UploadAttachmentRequest) (*dto.AttachmentResponse, error)
+	GetAttachment(ctx context.Context, attachmentID string) (*dto.AttachmentResponse, error)
+	GetAttachmentFile(ctx context.Context, attachmentID string) (io.ReadCloser, *dto.AttachmentResponse, error)
+	ListAttachmentsByRecordID(ctx context.Context, recordID string) ([]*dto.AttachmentResponse, error)
+	ListAttachmentsByStepID(ctx context.Context, stepID string) ([]*dto.AttachmentResponse, error)
+	DeleteAttachment(ctx context.Context, attachmentID string) error
+	GetAttachmentURL(ctx context.Context, attachmentID string, expirationMinutes int) (string, error)
+}
+
 // AttachmentHandler handles HTTP requests for attachments.
 type AttachmentHandler struct {
-	usecase *usecase.AttachmentUsecase
+	usecase AttachmentUsecase
 }
 
 // NewAttachmentHandler creates a new AttachmentHandler.
-func NewAttachmentHandler(uc *usecase.AttachmentUsecase) *AttachmentHandler {
+func NewAttachmentHandler(uc AttachmentUsecase) *AttachmentHandler {
 	return &AttachmentHandler{usecase: uc}
 }
 
@@ -170,4 +182,29 @@ func (h *AttachmentHandler) DeleteAttachment(c *gin.Context) {
 	}
 
 	c.Status(http.StatusNoContent)
+}
+
+// GetAttachmentURL handles GET /attachments/:id/url
+func (h *AttachmentHandler) GetAttachmentURL(c *gin.Context) {
+	attachmentID := c.Param("id")
+	if attachmentID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Attachment ID is required"})
+		return
+	}
+
+	// Default expiration is 60 minutes
+	expirationMinutes := 60
+
+	url, err := h.usecase.GetAttachmentURL(c.Request.Context(), attachmentID, expirationMinutes)
+	if err != nil {
+		handleError(c, err)
+		return
+	}
+
+	// If URL is empty (local storage), return the download endpoint URL
+	if url == "" {
+		url = "/api/v1/attachments/" + attachmentID + "/download"
+	}
+
+	c.JSON(http.StatusOK, gin.H{"url": url})
 }

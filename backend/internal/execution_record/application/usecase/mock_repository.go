@@ -124,10 +124,11 @@ func (m *MockAttachmentRepository) Delete(ctx context.Context, id value_object.A
 
 // MockStorageManager is a mock implementation of StorageManager for testing.
 type MockStorageManager struct {
-	StoreFunc    func(ctx context.Context, path string, file io.Reader) (string, error)
-	RetrieveFunc func(ctx context.Context, path string) (io.ReadCloser, error)
-	DeleteFunc   func(ctx context.Context, path string) error
-	TypeFunc     func() value_object.StorageType
+	StoreFunc               func(ctx context.Context, path string, file io.Reader) (string, error)
+	RetrieveFunc            func(ctx context.Context, path string) (io.ReadCloser, error)
+	DeleteFunc              func(ctx context.Context, path string) error
+	GeneratePresignedURLFunc func(ctx context.Context, path string, expirationMinutes int) (string, error)
+	TypeFunc                func() value_object.StorageType
 }
 
 func (m *MockStorageManager) Store(ctx context.Context, path string, file io.Reader) (string, error) {
@@ -149,6 +150,13 @@ func (m *MockStorageManager) Delete(ctx context.Context, path string) error {
 		return m.DeleteFunc(ctx, path)
 	}
 	return nil
+}
+
+func (m *MockStorageManager) GeneratePresignedURL(ctx context.Context, path string, expirationMinutes int) (string, error) {
+	if m.GeneratePresignedURLFunc != nil {
+		return m.GeneratePresignedURLFunc(ctx, path, expirationMinutes)
+	}
+	return "", nil
 }
 
 func (m *MockStorageManager) Type() value_object.StorageType {
