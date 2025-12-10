@@ -108,7 +108,20 @@ func (uc *variableUseCase) ValidateVariableValues(ctx context.Context, documentI
 	for _, def := range definitions {
 		if def.Required {
 			val, exists := valueMap[def.Name]
-			if !exists || val == nil || val == "" {
+			empty := false
+			if !exists || val == nil {
+				empty = true
+			} else {
+				switch def.Type {
+				case "string":
+					strVal, ok := val.(string)
+					if ok && strVal == "" {
+						empty = true
+					}
+				// For number and boolean, nil or missing is empty, 0/false is valid
+				}
+			}
+			if empty {
 				fieldErrors = append(fieldErrors, apperror.FieldError{
 					Field:   def.Name,
 					Message: fmt.Sprintf("%s is required", def.Label),
