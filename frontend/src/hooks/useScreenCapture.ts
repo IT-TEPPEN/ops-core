@@ -14,8 +14,9 @@ export function useScreenCapture() {
       // Request screen capture permission
       const stream = await navigator.mediaDevices.getDisplayMedia({
         video: {
-          mediaSource: "screen" as MediaStreamConstraint["video"],
-        },
+          // @ts-ignore - mediaSource is a valid property but not in standard types
+          mediaSource: "screen",
+        } as MediaTrackConstraints,
       });
 
       // Create video element to capture the stream

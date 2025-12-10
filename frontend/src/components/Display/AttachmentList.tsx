@@ -33,7 +33,9 @@ function formatFileSize(bytes: number): string {
  */
 function formatDate(dateString: string): string {
   const date = new Date(dateString);
-  return new Intl.DateTimeFormat("ja-JP", {
+  // Use user's locale or fallback to en-US
+  const locale = typeof navigator !== "undefined" ? navigator.language : "en-US";
+  return new Intl.DateTimeFormat(locale, {
     year: "numeric",
     month: "short",
     day: "numeric",

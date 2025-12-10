@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"sync"
 
@@ -78,7 +79,7 @@ func (r *InMemoryAttachmentRepository) FindByExecutionStepID(ctx context.Context
 func (r *InMemoryAttachmentRepository) GetFile(ctx context.Context, id value_object.AttachmentID) (io.ReadCloser, error) {
 	// This method is not used in the current implementation
 	// File retrieval is done through the StorageManager in the usecase layer
-	return nil, nil
+	return nil, fmt.Errorf("GetFile is not implemented: use StorageManager for file retrieval")
 }
 
 // Delete deletes an attachment by ID.
