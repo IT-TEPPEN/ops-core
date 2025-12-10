@@ -2,9 +2,6 @@
  * useScreenCapture hook for capturing screen using browser API
  */
 
-/**
- * Hook for capturing screen using the Screen Capture API
- */
 export function useScreenCapture() {
   /**
    * Captures the screen and returns a Blob containing the image
