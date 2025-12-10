@@ -66,6 +66,14 @@ func (s *S3StorageManager) Delete(ctx context.Context, path string) error {
 	return fmt.Errorf("S3 storage not implemented: requires AWS SDK integration")
 }
 
+// GeneratePresignedURL generates a presigned URL for accessing a file from S3.
+// Note: This is a placeholder implementation. In production, use the AWS SDK.
+func (s *S3StorageManager) GeneratePresignedURL(ctx context.Context, path string, expirationMinutes int) (string, error) {
+	// TODO: Implement actual S3 presigned URL generation using AWS SDK
+	// Log that this feature is not yet implemented
+	return "", fmt.Errorf("unimplemented: S3 presigned URL generation requires AWS SDK integration")
+}
+
 // Type returns the storage type.
 func (s *S3StorageManager) Type() value_object.StorageType {
 	return s.storageType

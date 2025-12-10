@@ -81,6 +81,14 @@ func (l *LocalStorageManager) Delete(ctx context.Context, path string) error {
 	return nil
 }
 
+// GeneratePresignedURL generates a presigned URL for accessing a file.
+// Local storage does not support presigned URLs, so it returns an empty string.
+func (l *LocalStorageManager) GeneratePresignedURL(ctx context.Context, path string, expirationMinutes int) (string, error) {
+	// Local storage doesn't support presigned URLs
+	// Files are served directly by the API handler
+	return "", nil
+}
+
 // Type returns the storage type.
 func (l *LocalStorageManager) Type() value_object.StorageType {
 	return value_object.StorageTypeLocal

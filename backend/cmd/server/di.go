@@ -18,6 +18,7 @@ import (
 
 	execusecase "opscore/backend/internal/execution_record/application/usecase"
 	exechandlers "opscore/backend/internal/execution_record/interfaces/api/handlers"
+	"opscore/backend/internal/execution_record/infrastructure/storage"
 )
 
 // Base path for cloning repositories
@@ -105,11 +106,11 @@ func provideEncryptor() (*encryption.Encryptor, error) {
 }
 
 // InitializeAPI initializes all dependencies for the API handlers, using Postgres.
-func InitializeAPI(db *pgxpool.Pool) (*repohandlers.RepositoryHandler, *dochandlers.DocumentHandler, *dochandlers.VariableHandler, *exechandlers.ExecutionRecordHandler, error) {
+func InitializeAPI(db *pgxpool.Pool) (*repohandlers.RepositoryHandler, *dochandlers.DocumentHandler, *dochandlers.VariableHandler, *exechandlers.ExecutionRecordHandler, *exechandlers.AttachmentHandler, error) {
 	// Create encryptor
 	encryptor, err := provideEncryptor()
 	if err != nil {
-		return nil, nil, nil, nil, err
+		return nil, nil, nil, nil, nil, err
 	}
 
 	// Create repository (persistence layer)
@@ -118,7 +119,7 @@ func InitializeAPI(db *pgxpool.Pool) (*repohandlers.RepositoryHandler, *dochandl
 	// Create git manager
 	gitManager, err := provideGitManager()
 	if err != nil {
-		return nil, nil, nil, nil, err
+		return nil, nil, nil, nil, nil, err
 	}
 
 	// Create use case
@@ -158,5 +159,24 @@ func InitializeAPI(db *pgxpool.Pool) (*repohandlers.RepositoryHandler, *dochandl
 	// Create execution record handler
 	executionRecordHandler := exechandlers.NewExecutionRecordHandler(executionRecordUseCase)
 
-	return repositoryHandler, documentHandler, variableHandler, executionRecordHandler, nil
+	// Create attachment repository (in-memory for now)
+	attachmentRepository := NewInMemoryAttachmentRepository()
+
+	// Create storage manager (local storage for now)
+	storageBasePath := os.Getenv("ATTACHMENT_STORAGE_PATH")
+	if storageBasePath == "" {
+		storageBasePath = "./data/attachments"
+	}
+	storageManager, err := storage.NewLocalStorageManager(storageBasePath)
+	if err != nil {
+		return nil, nil, nil, nil, nil, err
+	}
+
+	// Create attachment use case
+	attachmentUseCase := execusecase.NewAttachmentUsecase(attachmentRepository, executionRecordRepository, storageManager)
+
+	// Create attachment handler
+	attachmentHandler := exechandlers.NewAttachmentHandler(attachmentUseCase)
+
+	return repositoryHandler, documentHandler, variableHandler, executionRecordHandler, attachmentHandler, nil
 }

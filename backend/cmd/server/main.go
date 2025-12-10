@@ -48,7 +48,7 @@ func main() {
 	// --- End Database Connection ---
 
 	// Initialize dependencies using Wire, passing the db pool
-	repoHandler, docHandler, varHandler, execHandler, err := InitializeAPI(dbpool) // Pass dbpool and handle error
+	repoHandler, docHandler, varHandler, execHandler, attachHandler, err := InitializeAPI(dbpool) // Pass dbpool and handle error
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to initialize API dependencies: %v\n", err)
 		os.Exit(1)
@@ -114,6 +114,15 @@ func main() {
 		v1.POST("/execution-records/:id/steps", execHandler.AddStep)
 		v1.PUT("/execution-records/:id/steps/:stepNumber/notes", execHandler.UpdateStepNotes)
 		v1.DELETE("/execution-records/:id", execHandler.DeleteExecutionRecord)
+
+		// Attachment routes
+		v1.POST("/execution-records/:id/attachments", attachHandler.UploadAttachment)
+		v1.GET("/attachments/:id", attachHandler.GetAttachment)
+		v1.GET("/attachments/:id/download", attachHandler.DownloadAttachment)
+		v1.GET("/attachments/:id/url", attachHandler.GetAttachmentURL)
+		v1.GET("/execution-records/:id/attachments", attachHandler.ListAttachments)
+		v1.GET("/execution-records/:id/steps/:stepId/attachments", attachHandler.ListStepAttachments)
+		v1.DELETE("/attachments/:id", attachHandler.DeleteAttachment)
 	}
 
 	// Static file serving (Frontend)

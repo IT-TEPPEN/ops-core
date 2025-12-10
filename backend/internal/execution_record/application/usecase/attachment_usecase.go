@@ -263,6 +263,41 @@ func (uc *AttachmentUsecase) DeleteAttachment(
 	return uc.attachmentRepo.Delete(ctx, id)
 }
 
+// GetAttachmentURL generates a presigned URL for accessing an attachment.
+// For local storage, returns empty string as files are served directly by the API.
+func (uc *AttachmentUsecase) GetAttachmentURL(
+	ctx context.Context,
+	attachmentID string,
+	expirationMinutes int,
+) (string, error) {
+	id, err := value_object.NewAttachmentID(attachmentID)
+	if err != nil {
+		return "", &apperror.ValidationError{
+			Field:   "attachmentID",
+			Message: "invalid attachment ID format",
+		}
+	}
+
+	attachment, err := uc.attachmentRepo.FindByID(ctx, id)
+	if err != nil {
+		return "", err
+	}
+	if attachment == nil {
+		return "", &apperror.NotFoundError{
+			ResourceType: "Attachment",
+			ResourceID:   attachmentID,
+		}
+	}
+
+	// Generate presigned URL
+	url, err := uc.storageManager.GeneratePresignedURL(ctx, attachment.StoragePath(), expirationMinutes)
+	if err != nil {
+		return "", fmt.Errorf("failed to generate presigned URL: %w", err)
+	}
+
+	return url, nil
+}
+
 // Helper function to convert entity to DTO response
 func toAttachmentResponse(attachment entity.Attachment) *dto.AttachmentResponse {
 	return &dto.AttachmentResponse{
