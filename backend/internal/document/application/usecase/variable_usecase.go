@@ -166,19 +166,24 @@ func (uc *variableUseCase) SubstituteVariables(ctx context.Context, content stri
 	result := content
 
 	// Replace each variable in the content
+	// Precompile regexes for all variable names
+	regexMap := make(map[string]*regexp.Regexp, len(values))
 	for _, val := range values {
-		// Create regex to match {{variable_name}}
 		pattern := fmt.Sprintf(`\{\{%s\}\}`, regexp.QuoteMeta(val.Name))
 		re, err := regexp.Compile(pattern)
 		if err != nil {
 			return "", fmt.Errorf("failed to compile regex for variable %s: %w", val.Name, err)
 		}
+		regexMap[val.Name] = re
+	}
 
-		// Convert value to string
-		strValue := fmt.Sprintf("%v", val.Value)
-
-		// Replace all occurrences
-		result = re.ReplaceAllString(result, strValue)
+	// Replace each variable in the content using precompiled regexes
+	for _, val := range values {
+		strValue := ""
+		if val.Value != nil {
+			strValue = fmt.Sprintf("%v", val.Value)
+		}
+		result = regexMap[val.Name].ReplaceAllString(result, strValue)
 	}
 
 	return result, nil
