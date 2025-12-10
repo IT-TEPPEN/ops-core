@@ -15,6 +15,9 @@ import (
 
 	docusecase "opscore/backend/internal/document/application/usecase"
 	dochandlers "opscore/backend/internal/document/interfaces/api/handlers"
+
+	execusecase "opscore/backend/internal/execution_record/application/usecase"
+	exechandlers "opscore/backend/internal/execution_record/interfaces/api/handlers"
 )
 
 // Base path for cloning repositories
@@ -102,11 +105,11 @@ func provideEncryptor() (*encryption.Encryptor, error) {
 }
 
 // InitializeAPI initializes all dependencies for the API handlers, using Postgres.
-func InitializeAPI(db *pgxpool.Pool) (*repohandlers.RepositoryHandler, *dochandlers.DocumentHandler, *dochandlers.VariableHandler, error) {
+func InitializeAPI(db *pgxpool.Pool) (*repohandlers.RepositoryHandler, *dochandlers.DocumentHandler, *dochandlers.VariableHandler, *exechandlers.ExecutionRecordHandler, error) {
 	// Create encryptor
 	encryptor, err := provideEncryptor()
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, nil, err
 	}
 
 	// Create repository (persistence layer)
@@ -115,7 +118,7 @@ func InitializeAPI(db *pgxpool.Pool) (*repohandlers.RepositoryHandler, *dochandl
 	// Create git manager
 	gitManager, err := provideGitManager()
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, nil, err
 	}
 
 	// Create use case
@@ -146,5 +149,14 @@ func InitializeAPI(db *pgxpool.Pool) (*repohandlers.RepositoryHandler, *dochandl
 	// Create variable handler
 	variableHandler := dochandlers.NewVariableHandler(variableUseCase, docLogger)
 
-	return repositoryHandler, documentHandler, variableHandler, nil
+	// Create execution record repository (in-memory for now)
+	executionRecordRepository := NewInMemoryExecutionRecordRepository()
+
+	// Create execution record use case
+	executionRecordUseCase := execusecase.NewExecutionRecordUsecase(executionRecordRepository)
+
+	// Create execution record handler
+	executionRecordHandler := exechandlers.NewExecutionRecordHandler(executionRecordUseCase)
+
+	return repositoryHandler, documentHandler, variableHandler, executionRecordHandler, nil
 }

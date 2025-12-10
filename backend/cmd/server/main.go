@@ -48,7 +48,7 @@ func main() {
 	// --- End Database Connection ---
 
 	// Initialize dependencies using Wire, passing the db pool
-	repoHandler, docHandler, varHandler, err := InitializeAPI(dbpool) // Pass dbpool and handle error
+	repoHandler, docHandler, varHandler, execHandler, err := InitializeAPI(dbpool) // Pass dbpool and handle error
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to initialize API dependencies: %v\n", err)
 		os.Exit(1)
@@ -101,6 +101,19 @@ func main() {
 		// Variable routes
 		v1.GET("/documents/:docId/variables", varHandler.GetVariableDefinitions)
 		v1.POST("/documents/:docId/validate-variables", varHandler.ValidateVariableValues)
+
+		// Execution record routes
+		v1.POST("/execution-records", execHandler.CreateExecutionRecord)
+		v1.GET("/execution-records", execHandler.SearchExecutionRecords)
+		v1.GET("/execution-records/:id", execHandler.GetExecutionRecord)
+		v1.PUT("/execution-records/:id/title", execHandler.UpdateTitle)
+		v1.PUT("/execution-records/:id/notes", execHandler.UpdateNotes)
+		v1.PUT("/execution-records/:id/access-scope", execHandler.UpdateAccessScope)
+		v1.POST("/execution-records/:id/complete", execHandler.Complete)
+		v1.POST("/execution-records/:id/fail", execHandler.MarkAsFailed)
+		v1.POST("/execution-records/:id/steps", execHandler.AddStep)
+		v1.PUT("/execution-records/:id/steps/:stepNumber/notes", execHandler.UpdateStepNotes)
+		v1.DELETE("/execution-records/:id", execHandler.DeleteExecutionRecord)
 	}
 
 	// Static file serving (Frontend)

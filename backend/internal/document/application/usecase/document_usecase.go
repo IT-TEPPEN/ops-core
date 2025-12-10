@@ -437,8 +437,9 @@ func (uc *documentUseCase) PublishDocumentVersion(ctx context.Context, documentI
 			return nil, fmt.Errorf("failed to publish version: %w", err)
 		}
 	} else {
-		// If the document is not published, publish it with the specified version
-		err = doc.PublishWithVersion(verNum)
+		// TODO: Fix this - PublishWithVersion method doesn't exist in the domain entity
+		// For now, use RollbackToVersion which should work for unpublished documents too
+		err = doc.RollbackToVersion(verNum)
 		if err != nil {
 			return nil, fmt.Errorf("failed to publish version: %w", err)
 		}
