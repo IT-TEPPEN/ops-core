@@ -141,24 +141,65 @@ export interface RecentDocument {
 /** Execution record */
 export interface ExecutionRecord {
   id: string;
-  documentId: string;
-  executedBy: string;
-  executedAt: string;
+  document_id: string;
+  document_version_id: string;
+  executor_id: string;
+  title: string;
+  variable_values: VariableValue[];
+  notes: string;
   status: ExecutionStatus;
-  notes?: string;
+  access_scope: AccessScope;
+  steps: ExecutionStep[];
+  started_at: string;
+  completed_at?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Variable value */
+export interface VariableValue {
+  name: string;
+  value: any;
+}
+
+/** Execution step */
+export interface ExecutionStep {
+  id: string;
+  execution_record_id: string;
+  step_number: number;
+  description: string;
+  notes: string;
+  executed_at: string;
 }
 
 /** Execution status */
-export type ExecutionStatus = "pending" | "in_progress" | "completed" | "failed";
+export type ExecutionStatus = "in_progress" | "completed" | "failed";
 
 /** Evidence entry */
 export interface Evidence {
   id: string;
-  executionRecordId: string;
+  execution_record_id: string;
   type: EvidenceType;
   content: string;
-  createdAt: string;
+  created_at: string;
 }
 
 /** Evidence types */
 export type EvidenceType = "screenshot" | "log" | "output" | "note";
+
+/** Create execution record request */
+export interface CreateExecutionRecordRequest {
+  document_id: string;
+  document_version_id: string;
+  title: string;
+  variable_values: VariableValue[];
+}
+
+/** Search execution record request */
+export interface SearchExecutionRecordRequest {
+  executor_id?: string;
+  document_id?: string;
+  status?: ExecutionStatus;
+  started_from?: string;
+  started_to?: string;
+}
