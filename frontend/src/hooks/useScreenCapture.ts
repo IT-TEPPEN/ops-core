@@ -21,11 +21,15 @@ export function useScreenCapture() {
       video.srcObject = stream;
       video.autoplay = true;
 
-      // Wait for video to be ready
+      // Wait for video to be ready (avoid race condition)
       await new Promise<void>((resolve) => {
-        video.onloadedmetadata = () => {
+        if (video.readyState >= 1) { // HAVE_METADATA
           resolve();
-        };
+        } else {
+          video.addEventListener("loadedmetadata", () => {
+            resolve();
+          }, { once: true });
+        }
       });
 
       // Create canvas to capture frame
