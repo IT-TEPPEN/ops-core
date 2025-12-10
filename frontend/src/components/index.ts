@@ -30,6 +30,9 @@ export type { DateInputProps } from "./Form/DateInput";
 export { FormField } from "./Form/FormField";
 export type { FormFieldProps } from "./Form/FormField";
 
+export { VariableForm } from "./Form/VariableForm";
+export type { VariableFormProps } from "./Form/VariableForm";
+
 // Display components
 export { DataTable } from "./Display/DataTable";
 export type { DataTableProps } from "./Display/DataTable";

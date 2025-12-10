@@ -48,7 +48,7 @@ func main() {
 	// --- End Database Connection ---
 
 	// Initialize dependencies using Wire, passing the db pool
-	repoHandler, docHandler, err := InitializeAPI(dbpool) // Pass dbpool and handle error
+	repoHandler, docHandler, varHandler, err := InitializeAPI(dbpool) // Pass dbpool and handle error
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to initialize API dependencies: %v\n", err)
 		os.Exit(1)
@@ -97,6 +97,10 @@ func main() {
 		v1.GET("/documents/:docId/versions/:version", docHandler.GetDocumentVersion)
 		v1.POST("/documents/:docId/versions/:version/publish", docHandler.PublishDocumentVersion)
 		v1.POST("/documents/:docId/versions/:version/rollback", docHandler.RollbackDocumentVersion)
+
+		// Variable routes
+		v1.GET("/documents/:docId/variables", varHandler.GetVariableDefinitions)
+		v1.POST("/documents/:docId/validate-variables", varHandler.ValidateVariableValues)
 	}
 
 	// Static file serving (Frontend)
