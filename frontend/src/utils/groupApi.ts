@@ -2,7 +2,7 @@
  * Group API utilities
  */
 
-import { get, post, put, del } from "./api";
+import { get, post, put, del, apiRequest } from "./api";
 import type { Group } from "../types/domain";
 
 /** Create group request */
@@ -97,10 +97,16 @@ export async function addMember(
  */
 export async function removeMember(
   groupId: string,
-  _req: RemoveMemberRequest,
+  req: RemoveMemberRequest,
   signal?: AbortSignal
 ): Promise<Group> {
-  return del<Group>(`/groups/${groupId}/members`, signal);
+  // Note: DELETE with body - using apiRequest directly
+  const response = await apiRequest<Group>(`/groups/${groupId}/members`, {
+    method: "DELETE",
+    body: req,
+    signal,
+  });
+  return response.data;
 }
 
 /**

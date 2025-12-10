@@ -87,8 +87,13 @@ const GroupDetailPage: React.FC = () => {
       const updated = await addMember(groupId, { user_id: userId });
       setGroup(updated);
       setShowMemberSelector(false);
-      // Refetch to update member list
-      await fetchGroup();
+      
+      // Update member list with newly added user
+      const allUsers = await listUsers();
+      const groupMembers = allUsers.filter((user) =>
+        updated.member_ids.includes(user.id)
+      );
+      setMembers(groupMembers);
     } catch (err) {
       throw err; // Let the selector handle the error
     }
@@ -102,8 +107,9 @@ const GroupDetailPage: React.FC = () => {
     try {
       const updated = await removeMember(groupId, { user_id: userId });
       setGroup(updated);
-      // Refetch to update member list
-      await fetchGroup();
+      
+      // Update member list by filtering out removed user
+      setMembers(members.filter((member) => member.id !== userId));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to remove member");
     }
