@@ -34,6 +34,8 @@ type ValidateVariableValuesResponse struct {
 }
 
 // ValidationErrorDTO represents a validation error for a variable
+// Example error message for a required field: "{Label} is required"
+// where {Label} is the variable's label field (e.g., "Server Name is required")
 type ValidationErrorDTO struct {
 	Name    string `json:"name"`
 	Message string `json:"message"`
