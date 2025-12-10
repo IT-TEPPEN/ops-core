@@ -32,7 +32,7 @@ function ExecutionRecordPage() {
     useState<ExecutionRecord | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [variableValues, setVariableValues] = useState<Record<string, any>>({});
+  const [variableValues, setVariableValues] = useState<Record<string, string | number | boolean>>({});
   const [processedContent, setProcessedContent] = useState<string>("");
   const [executionTitle, setExecutionTitle] = useState<string>("");
   const [executionNotes, setExecutionNotes] = useState<string>("");
@@ -93,7 +93,7 @@ function ExecutionRecordPage() {
         setExecutionNotes(record.notes);
 
         // Populate variable values from record
-        const values: Record<string, any> = {};
+        const values: Record<string, string | number | boolean> = {};
         record.variable_values.forEach((vv) => {
           values[vv.name] = vv.value;
         });
@@ -110,9 +110,23 @@ function ExecutionRecordPage() {
   // Initialize variable values when document is loaded
   useEffect(() => {
     if (document?.current_version?.variables && !recordId) {
-      const initialValues: Record<string, any> = {};
+      const initialValues: Record<string, string | number | boolean> = {};
       document.current_version.variables.forEach((v: VariableDefinition) => {
-        initialValues[v.name] = v.default_value ?? "";
+        // Use type-specific defaults
+        if (v.default_value !== undefined && v.default_value !== null) {
+          initialValues[v.name] = v.default_value;
+        } else {
+          switch (v.type) {
+            case "number":
+              initialValues[v.name] = 0;
+              break;
+            case "boolean":
+              initialValues[v.name] = false;
+              break;
+            default:
+              initialValues[v.name] = "";
+          }
+        }
       });
       setVariableValues(initialValues);
     }
@@ -129,7 +143,7 @@ function ExecutionRecordPage() {
     }
   }, [document, variableValues]);
 
-  const handleVariableChange = (name: string, value: any) => {
+  const handleVariableChange = (name: string, value: string | number | boolean) => {
     setVariableValues((prev) => ({
       ...prev,
       [name]: value,

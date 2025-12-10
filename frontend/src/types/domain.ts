@@ -159,7 +159,7 @@ export interface ExecutionRecord {
 /** Variable value */
 export interface VariableValue {
   name: string;
-  value: any;
+  value: string | number | boolean;
 }
 
 /** Execution step */

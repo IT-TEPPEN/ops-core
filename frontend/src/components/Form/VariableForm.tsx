@@ -3,8 +3,8 @@ import { VariableDefinition } from "../../types/domain";
 
 export interface VariableFormProps {
   variables: VariableDefinition[];
-  values: { [key: string]: any };
-  onChange: (name: string, value: any) => void;
+  values: { [key: string]: string | number | boolean };
+  onChange: (name: string, value: string | number | boolean) => void;
   onValidate?: () => Promise<boolean>;
 }
 
