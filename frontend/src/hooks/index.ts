@@ -10,3 +10,5 @@ export type { UsePaginationOptions, UsePaginationResult } from "./usePagination"
 export { useDebounce, useDebouncedCallback, useDebouncedState } from "./useDebounce";
 
 export { useLocalStorage, useSessionStorage } from "./useLocalStorage";
+
+export { useScreenCapture } from "./useScreenCapture";

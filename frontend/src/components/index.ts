@@ -36,7 +36,18 @@ export type { VariableFormProps } from "./Form/VariableForm";
 export { ExecutionStepPanel } from "./Form/ExecutionStepPanel";
 export type { ExecutionStepPanelProps } from "./Form/ExecutionStepPanel";
 
+export { ScreenCaptureButton } from "./Form/ScreenCaptureButton";
+export type { ScreenCaptureButtonProps } from "./Form/ScreenCaptureButton";
+
 // Display components
+export { AttachmentList } from "./Display/AttachmentList";
+export type { AttachmentListProps } from "./Display/AttachmentList";
+
+export { AttachmentUploader } from "./Display/AttachmentUploader";
+export type { AttachmentUploaderProps, AttachmentResponse } from "./Display/AttachmentUploader";
+
+export { AttachmentViewer } from "./Display/AttachmentViewer";
+export type { AttachmentViewerProps } from "./Display/AttachmentViewer";
 export { DataTable } from "./Display/DataTable";
 export type { DataTableProps } from "./Display/DataTable";
 
