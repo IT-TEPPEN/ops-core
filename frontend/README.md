@@ -1,11 +1,105 @@
-# React + TypeScript + Vite
+# OpsCore Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+OpsCoreフロントエンドは、React + TypeScript + Viteで実装された、運用手順書管理システムのWebインターフェースです。
 
-Currently, two official plugins are available:
+## 技術スタック
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **フレームワーク**: React 18
+- **言語**: TypeScript
+- **ビルドツール**: Vite
+- **ルーティング**: React Router
+- **テスト**: Vitest + React Testing Library
+- **リンター**: ESLint
+
+## アプリケーション構成
+
+### ページ構成
+
+本アプリケーションは以下のページで構成されています：
+
+#### 1. リポジトリ管理
+- **リポジトリ一覧ページ** (`/repositories`)
+  - 登録済みGitリポジトリの一覧表示
+  - リポジトリの追加・編集・削除
+
+#### 2. ドキュメント管理
+- **ドキュメント一覧ページ** (`/documents`)
+  - 公開ドキュメントの一覧表示
+  - ドキュメントの公開・非公開設定
+  - バージョン管理とロールバック
+- **ドキュメント閲覧ページ** (`/documents/:id`)
+  - Markdownコンテンツの表示
+  - 変数入力フォーム（左ペイン）
+  - 作業証跡記録パネル（右ペイン）
+
+#### 3. 作業証跡管理
+- **作業証跡一覧ページ** (`/execution-records`)
+  - 過去の作業証跡の検索・フィルタリング
+  - ステータス別の表示（進行中/完了/失敗）
+- **作業証跡詳細ページ** (`/execution-records/:id`)
+  - 作業証跡の詳細表示
+  - 各ステップのメモと画面キャプチャ
+  - 使用した変数値の確認
+
+#### 4. ユーザー・グループ管理（管理者のみ）
+- **ユーザー管理ページ** (`/users`)
+  - ユーザーの一覧・追加・編集・削除
+- **グループ管理ページ** (`/groups`)
+  - グループの一覧・追加・編集・削除
+  - メンバーの追加・削除
+
+### 主要コンポーネント
+
+#### 変数入力フォーム (`VariableForm`)
+手順書に定義された変数を入力するためのフォームコンポーネント。
+
+**機能:**
+- 型別の入力フィールド（string/number/boolean/date）
+- 必須項目のバリデーション
+- デフォルト値の自動入力
+- リアルタイムプレビュー
+
+#### 作業証跡パネル (`ExecutionRecordPanel`)
+作業証跡を記録するための右サイドパネルコンポーネント。
+
+**機能:**
+- 作業ステップの追加
+- ステップごとのメモ入力
+- 画面キャプチャのアップロード
+- 作業ステータスの変更（進行中/完了/失敗）
+- 作業証跡の共有設定
+
+#### Markdownビューアー (`MarkdownViewer`)
+Markdownコンテンツを表示するコンポーネント。
+
+**機能:**
+- Markdownのレンダリング
+- シンタックスハイライト
+- 変数置換後のコンテンツ表示
+
+## 開発
+
+### セットアップ
+
+```bash
+# 依存関係のインストール
+npm install
+
+# 開発サーバーの起動
+npm run dev
+
+# ブラウザで http://localhost:5173 を開く
+```
+
+### ビルド
+
+```bash
+# プロダクションビルド
+npm run build
+
+# ビルド結果のプレビュー
+npm run preview
+```
 
 ## Testing
 

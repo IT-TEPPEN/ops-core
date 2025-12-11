@@ -10,7 +10,7 @@ OpsCoreは、GitHubやGitLabなどの外部リポジトリに保存された運�
 
 本プロジェクトは段階的に機能を実装していきます。
 
-### Phase 1: 基本的なMarkdown閲覧機能（現在実装中）
+### Phase 1: 基本的なMarkdown閲覧機能（✅ 実装完了）
 
 Phase 1では、外部リポジトリからMarkdownファイルを取得・表示する基本機能を提供します。
 
@@ -22,37 +22,61 @@ Phase 1では、外部リポジトリからMarkdownファイルを取得・表�
    - **アクセストークンの暗号化（AES-256-GCM）**
    - リポジトリ情報の永続化（PostgreSQL）
 
-2. **ファイル管理**
+2. **ドキュメント管理**
    - リポジトリからのMarkdownファイル一覧取得
-   - 表示対象ファイルの選択・管理
-   - 選択したファイルの保存
+   - ドキュメントの公開・非公開設定
+   - ドキュメントのバージョン管理（コミットハッシュと連番管理）
+   - 公開範囲の設定（public/private）
+   - 自動更新設定（リポジトリ更新時の自動反映）
 
-3. **Markdown表示**
+3. **変数入力機能**
+   - 手順書への変数定義（Frontmatter形式）
+   - 変数の型指定（string/number/boolean/date）
+   - 必須/任意の設定とデフォルト値
+   - 変数値の入力UIと置換表示
+
+4. **Markdown表示**
    - 選択された複数のMarkdownファイルを統合して表示
    - ブログ形式での閲覧UI
+   - 変数置換後のコンテンツ表示
 
-4. **バックエンドアーキテクチャ**
+5. **バックエンドアーキテクチャ**
    - Onion Architecture（ドメイン駆動設計）
+   - コンテキスト分割（Git Repository, Document, Execution Record, User, View統計）
    - Repository パターンによるデータアクセス
    - 依存性注入（Wire）
+   - カスタムエラー設計とエラーハンドリング
    - ロギング（zap）
    - データベースマイグレーション（golang-migrate）
 
-5. **フロントエンド**
+6. **フロントエンド**
    - React + TypeScript
    - リポジトリ管理画面
-   - ファイル選択画面
+   - ドキュメント管理画面
+   - 変数入力フォーム
    - Markdown閲覧画面
 
-#### Phase 1の残タスク
-
-- テストカバレッジの向上
-- エラーハンドリングとユーザーフィードバックの改善
-- ADRと実装の整合性確保
-
-### Phase 2: 作業証跡と検索機能（計画中）
+### Phase 2: 作業証跡と検索機能（🚧 実装中）
 
 Phase 2では、運用業務の記録と効率化を支援する機能を追加します。
+
+#### 実装済み機能
+
+1. **作業証跡管理**
+   - 手順書実行セッションの記録
+   - 各ステップへのメモと画面キャプチャ添付
+   - 作業ステータス管理（in_progress/completed/failed）
+   - 作業証跡の共有機能
+   - ローカルファイルシステム/S3/MinIOへの添付ファイル保存
+
+2. **ユーザー・グループ管理**
+   - ユーザー管理（admin/userロール）
+   - グループ管理とメンバーシップ
+   - アクセス制御とアクセス範囲の設定
+
+3. **閲覧履歴・統計**
+   - ドキュメント閲覧履歴の記録
+   - 閲覧統計情報（総閲覧数、ユニークユーザー数、最終閲覧日時）
 
 #### 計画中の機能
 
@@ -61,20 +85,11 @@ Phase 2では、運用業務の記録と効率化を支援する機能を追加�
    - ロールベースアクセス制御（RBAC）
    - リポジトリごとのアクセス権限管理
 
-2. **作業証跡管理**
-   - 手順書の閲覧履歴記録
-   - 作業実施ログの保存
-   - 作業完了/未完了のステータス管理
-   - 作業担当者の記録
-
-3. **検索・フィルタリング**
+2. **検索・フィルタリング**
    - 手順書のタイトル・タグによる検索
    - カテゴリ別フィルタリング
    - 最近閲覧した手順書の表示
-
-4. **バージョン管理対応**
-   - 特定のブランチ・タグからのファイル取得（`ref`パラメータ：Gitのリファレンス（ブランチ名、タグ名、またはコミットSHAなど）を指定して、取得対象のリビジョンを決定するためのパラメータ）
-   - リリースバージョンごとの手順書表示
+   - 作業証跡の検索・フィルタリング
 
 ### Phase 3: AI連携と自動化（将来構想）
 
@@ -114,9 +129,33 @@ Phase 3では、生成AIを活用した高度な運用支援機能を提供し�
 - フレームワーク: React
 - ビルドツール: Vite
 
+## ドキュメント
+
+詳細なドキュメントは以下を参照してください：
+
+- **開発ガイド**
+  - [開発ガイドライン（CONTRIBUTING.md）](docs/development/CONTRIBUTING.md)
+  - [テストガイド](docs/development/TESTING.md)
+  - [API開発ガイド](docs/development/API.md)
+- **ユーザーマニュアル**
+  - [ユーザーガイド](docs/user-guide/README.md)
+  - [ドキュメント管理](docs/user-guide/document-management.md)
+  - [作業証跡記録](docs/user-guide/execution-record.md)
+  - [変数入力機能](docs/user-guide/variable-input.md)
+  - [グループ管理](docs/user-guide/group-management.md)
+- **アーキテクチャ**
+  - [システム概要](docs/architecture/system-overview.md)
+  - [DBスキーマ図](docs/architecture/database-schema.md)
+  - [API処理フロー](docs/architecture/api-flow.md)
+  - [バックエンドアーキテクチャ](backend/README.md)
+- **運用ガイド**
+  - [デプロイ手順](docs/deployment/README.md)
+  - [監視・運用](docs/operations/MONITORING.md)
+  - [バックアップ・リストア](docs/operations/BACKUP.md)
+
 ## セットアップ
 
-開発環境のセットアップ方法や貢献ガイドラインについては、今後`CONTRIBUTING.md`に記載予定です。
+開発環境のセットアップ方法や貢献ガイドラインについては、[CONTRIBUTING.md](docs/development/CONTRIBUTING.md)を参照してください。
 
 ### 必要な環境
 
