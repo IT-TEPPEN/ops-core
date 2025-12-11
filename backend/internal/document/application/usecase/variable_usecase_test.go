@@ -21,7 +21,7 @@ func TestVariableUseCase_GetVariableDefinitions(t *testing.T) {
 		docID := doc.ID().String()
 
 		// Mock FindByID to return the document
-		mockRepo.On("FindByID", mock.Anything, mock.AnythingOfType("value_object.DocumentID")).Return(&doc, nil)
+		mockRepo.On("FindByID", mock.Anything, mock.AnythingOfType("value_object.DocumentID")).Return(doc, nil)
 
 		uc := NewVariableUseCase(mockRepo)
 		result, err := uc.GetVariableDefinitions(context.Background(), docID)
@@ -71,7 +71,7 @@ func TestVariableUseCase_ValidateVariableValues(t *testing.T) {
 		docID := doc.ID().String()
 
 		// Mock FindByID to return the document
-		mockRepo.On("FindByID", mock.Anything, mock.AnythingOfType("value_object.DocumentID")).Return(&doc, nil)
+		mockRepo.On("FindByID", mock.Anything, mock.AnythingOfType("value_object.DocumentID")).Return(doc, nil)
 
 		uc := NewVariableUseCase(mockRepo)
 
@@ -95,7 +95,7 @@ func TestVariableUseCase_ValidateVariableValues(t *testing.T) {
 		docID := doc.ID().String()
 
 		// Mock FindByID to return the document
-		mockRepo.On("FindByID", mock.Anything, mock.AnythingOfType("value_object.DocumentID")).Return(&doc, nil)
+		mockRepo.On("FindByID", mock.Anything, mock.AnythingOfType("value_object.DocumentID")).Return(doc, nil)
 
 		uc := NewVariableUseCase(mockRepo)
 

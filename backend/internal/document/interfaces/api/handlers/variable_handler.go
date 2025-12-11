@@ -135,14 +135,15 @@ func (h *VariableHandler) ValidateVariableValues(c *gin.Context) {
 			// Extract field errors if available
 			validationErrors := []schema.ValidationErrorDTO{}
 			if httpErr.Details != nil {
-				// Type assert to interface{} first, then to the specific type
-				var detailsInterface interface{} = httpErr.Details
-				if fieldErrors, ok := detailsInterface.([]map[string]string); ok {
-					for _, fieldErr := range fieldErrors {
-						validationErrors = append(validationErrors, schema.ValidationErrorDTO{
-							Name:    fieldErr["field"],
-							Message: fieldErr["message"],
-						})
+				// Extract validation_errors from Details
+				if validationErrsInterface, ok := httpErr.Details["validation_errors"]; ok {
+					if fieldErrors, ok := validationErrsInterface.([]map[string]interface{}); ok {
+						for _, fieldErr := range fieldErrors {
+							validationErrors = append(validationErrors, schema.ValidationErrorDTO{
+								Name:    fieldErr["field"].(string),
+								Message: fieldErr["message"].(string),
+							})
+						}
 					}
 				}
 			}

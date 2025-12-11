@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"opscore/backend/internal/document/application/dto"
+	apperror "opscore/backend/internal/document/application/error"
 	"opscore/backend/internal/document/application/usecase"
 	"opscore/backend/internal/document/interfaces/api/schema"
 
@@ -168,6 +169,7 @@ func TestVariableHandler_ValidateVariableValues(t *testing.T) {
 
 		// Mock logger calls
 		mockLogger.On("Info", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Maybe()
+		mockLogger.On("Error", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Maybe()
 
 		// Mock validation error
 		validationErr := apperror.NewValidationFailedError([]apperror.FieldError{
