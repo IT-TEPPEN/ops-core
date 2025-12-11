@@ -39,6 +39,10 @@ export type { ExecutionStepPanelProps } from "./Form/ExecutionStepPanel";
 export { ScreenCaptureButton } from "./Form/ScreenCaptureButton";
 export type { ScreenCaptureButtonProps } from "./Form/ScreenCaptureButton";
 
+export { GroupForm } from "./Form/GroupForm";
+
+export { GroupMemberSelector } from "./Form/GroupMemberSelector";
+
 // Display components
 export { AttachmentList } from "./Display/AttachmentList";
 export type { AttachmentListProps } from "./Display/AttachmentList";
@@ -80,6 +84,12 @@ export type { StatisticsChartProps } from "./Display/StatisticsChart";
 
 export { ExecutionRecordList } from "./Display/ExecutionRecordList";
 export type { ExecutionRecordListProps } from "./Display/ExecutionRecordList";
+
+export { GroupList } from "./Display/GroupList";
+
+export { GroupMemberList } from "./Display/GroupMemberList";
+
+export { UserGroupBadge } from "./Display/UserGroupBadge";
 
 // Navigation components
 export { Tabs } from "./Navigation/Tabs";

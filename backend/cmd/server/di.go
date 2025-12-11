@@ -19,6 +19,10 @@ import (
 	execusecase "opscore/backend/internal/execution_record/application/usecase"
 	exechandlers "opscore/backend/internal/execution_record/interfaces/api/handlers"
 	"opscore/backend/internal/execution_record/infrastructure/storage"
+
+	userusecase "opscore/backend/internal/user/application/usecase"
+	userhandlers "opscore/backend/internal/user/interfaces/api/handlers"
+	userpersistence "opscore/backend/internal/user/infrastructure/persistence"
 )
 
 // Base path for cloning repositories
@@ -89,6 +93,11 @@ func provideDocHandlerLogger() dochandlers.Logger {
 	return &SlogLoggerAdapter{logger: provideAppLogger()}
 }
 
+// provideUserHandlerLogger adapts slog.Logger to the user handlers.Logger interface.
+func provideUserHandlerLogger() userhandlers.Logger {
+	return &SlogLoggerAdapter{logger: provideAppLogger()}
+}
+
 // provideEncryptor creates an Encryptor from the environment variable.
 func provideEncryptor() (*encryption.Encryptor, error) {
 	keyStr := os.Getenv("ENCRYPTION_KEY")
@@ -106,11 +115,11 @@ func provideEncryptor() (*encryption.Encryptor, error) {
 }
 
 // InitializeAPI initializes all dependencies for the API handlers, using Postgres.
-func InitializeAPI(db *pgxpool.Pool) (*repohandlers.RepositoryHandler, *dochandlers.DocumentHandler, *dochandlers.VariableHandler, *exechandlers.ExecutionRecordHandler, *exechandlers.AttachmentHandler, error) {
+func InitializeAPI(db *pgxpool.Pool) (*repohandlers.RepositoryHandler, *dochandlers.DocumentHandler, *dochandlers.VariableHandler, *exechandlers.ExecutionRecordHandler, *exechandlers.AttachmentHandler, *userhandlers.UserHandler, *userhandlers.GroupHandler, error) {
 	// Create encryptor
 	encryptor, err := provideEncryptor()
 	if err != nil {
-		return nil, nil, nil, nil, nil, err
+		return nil, nil, nil, nil, nil, nil, nil, err
 	}
 
 	// Create repository (persistence layer)
@@ -119,7 +128,7 @@ func InitializeAPI(db *pgxpool.Pool) (*repohandlers.RepositoryHandler, *dochandl
 	// Create git manager
 	gitManager, err := provideGitManager()
 	if err != nil {
-		return nil, nil, nil, nil, nil, err
+		return nil, nil, nil, nil, nil, nil, nil, err
 	}
 
 	// Create use case
@@ -169,7 +178,7 @@ func InitializeAPI(db *pgxpool.Pool) (*repohandlers.RepositoryHandler, *dochandl
 	}
 	storageManager, err := storage.NewLocalStorageManager(storageBasePath)
 	if err != nil {
-		return nil, nil, nil, nil, nil, err
+		return nil, nil, nil, nil, nil, nil, nil, err
 	}
 
 	// Create attachment use case
@@ -178,5 +187,26 @@ func InitializeAPI(db *pgxpool.Pool) (*repohandlers.RepositoryHandler, *dochandl
 	// Create attachment handler
 	attachmentHandler := exechandlers.NewAttachmentHandler(attachmentUseCase)
 
-	return repositoryHandler, documentHandler, variableHandler, executionRecordHandler, attachmentHandler, nil
+	// Create user repository
+	userRepository := userpersistence.NewUserRepositoryImpl(db)
+
+	// Create group repository
+	groupRepository := userpersistence.NewGroupRepositoryImpl(db)
+
+	// Create user use case
+	userUseCase := userusecase.NewUserUseCase(userRepository, groupRepository)
+
+	// Create group use case
+	groupUseCase := userusecase.NewGroupUseCase(groupRepository, userRepository)
+
+	// Create user logger
+	userLogger := provideUserHandlerLogger()
+
+	// Create user handler
+	userHandler := userhandlers.NewUserHandler(userUseCase, userLogger)
+
+	// Create group handler
+	groupHandler := userhandlers.NewGroupHandler(groupUseCase, userLogger)
+
+	return repositoryHandler, documentHandler, variableHandler, executionRecordHandler, attachmentHandler, userHandler, groupHandler, nil
 }

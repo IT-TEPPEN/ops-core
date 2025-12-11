@@ -93,10 +93,23 @@ export interface User {
   name: string;
   email: string;
   role: UserRole;
+  group_ids: string[];
+  created_at: string;
+  updated_at: string;
 }
 
 /** User roles */
 export type UserRole = "admin" | "editor" | "viewer";
+
+/** Group entity */
+export interface Group {
+  id: string;
+  name: string;
+  description: string;
+  member_ids: string[];
+  created_at: string;
+  updated_at: string;
+}
 
 /** View History entity */
 export interface ViewHistory {
