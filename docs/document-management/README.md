@@ -728,6 +728,18 @@ graph TB
 
 ## 参照資料
 
+### ADR（Architecture Decision Records）
 - [ADR 0001: External Repository Markdown Structure](../../adr/0001-external-repository-markdown-structure.md)
 - [ADR 0013: Document Variable Definition and Substitution](../../adr/0013-document-variable-definition.md)
 - [ADR 0014: Execution Record and Evidence Management](../../adr/0014-execution-record-and-evidence-management.md)
+- [ADR 0016: Document Domain Model Design](../../adr/0016-document-domain-model-design.md)
+- [ADR 0017: Application Data Validation](../../adr/0017-application-data-validation.md)
+
+### 関連ドキュメント
+- [システム概要](../architecture/system-overview.md)
+- [データベーススキーマ](../architecture/database-schema.md)
+- [バックエンドアーキテクチャ](../../backend/README.md)
+- [ユーザーガイド](../user-guide/README.md)
+  - [ドキュメント管理ガイド](../user-guide/document-management.md)
+  - [変数入力機能ガイド](../user-guide/variable-input.md)
+  - [作業証跡記録ガイド](../user-guide/execution-record.md)
