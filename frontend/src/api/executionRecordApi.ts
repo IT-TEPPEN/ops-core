@@ -2,7 +2,7 @@
  * Execution Record API utilities
  */
 
-import { get, post, put, del } from "./api";
+import { get, post, put, del } from "./client";
 import type {
   ExecutionRecord,
   CreateExecutionRecordRequest,

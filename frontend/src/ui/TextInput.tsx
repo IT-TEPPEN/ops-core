@@ -1,56 +1,46 @@
 /**
- * Number input component
+ * Text input component
  */
 
-import type { BaseInputProps } from "../../types/ui";
+import type { BaseInputProps } from "../types/ui";
 
-export interface NumberInputProps extends BaseInputProps {
+export interface TextInputProps extends BaseInputProps {
   /** Input value */
-  value: number | string;
+  value: string;
   /** Change handler */
-  onChange: (value: number | string) => void;
+  onChange: (value: string) => void;
+  /** Input type */
+  type?: "text" | "email" | "password" | "url" | "tel" | "search";
   /** Placeholder text */
   placeholder?: string;
   /** Blur handler */
   onBlur?: () => void;
-  /** Minimum value */
-  min?: number;
-  /** Maximum value */
-  max?: number;
-  /** Step value */
-  step?: number;
+  /** Maximum length */
+  maxLength?: number;
+  /** Auto-complete attribute */
+  autoComplete?: string;
 }
 
 /**
- * A styled number input component
+ * A styled text input component
  */
-export function NumberInput({
+export function TextInput({
   id,
   name,
   label,
   value,
   onChange,
+  type = "text",
   placeholder,
   error,
   required = false,
   disabled = false,
   className = "",
   onBlur,
-  min,
-  max,
-  step,
-}: NumberInputProps) {
+  maxLength,
+  autoComplete,
+}: TextInputProps) {
   const inputId = id || name;
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const rawValue = e.target.value;
-    if (rawValue === "") {
-      onChange("");
-    } else {
-      const numValue = parseFloat(rawValue);
-      onChange(isNaN(numValue) ? rawValue : numValue);
-    }
-  };
 
   return (
     <div className={className}>
@@ -66,16 +56,15 @@ export function NumberInput({
       <input
         id={inputId}
         name={name}
-        type="number"
+        type={type}
         value={value}
-        onChange={handleChange}
+        onChange={(e) => onChange(e.target.value)}
         onBlur={onBlur}
         placeholder={placeholder}
         disabled={disabled}
         required={required}
-        min={min}
-        max={max}
-        step={step}
+        maxLength={maxLength}
+        autoComplete={autoComplete}
         className={`
           w-full px-3 py-2 rounded-md shadow-sm
           border ${error ? "border-red-500" : "border-gray-300 dark:border-gray-600"}

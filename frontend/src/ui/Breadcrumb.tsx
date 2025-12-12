@@ -3,7 +3,7 @@
  */
 
 import { Link } from "react-router-dom";
-import type { BreadcrumbItem } from "../../types/ui";
+import type { BreadcrumbItem } from "../types/ui";
 
 export interface BreadcrumbProps {
   /** Breadcrumb items */

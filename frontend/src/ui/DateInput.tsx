@@ -1,39 +1,39 @@
 /**
- * Select input component
+ * Date input component
  */
 
-import type { BaseInputProps, SelectOption } from "../../types/ui";
+import type { BaseInputProps } from "../types/ui";
 
-export interface SelectInputProps extends BaseInputProps {
-  /** Selected value */
+export interface DateInputProps extends BaseInputProps {
+  /** Input value (ISO date string) */
   value: string;
   /** Change handler */
   onChange: (value: string) => void;
-  /** Available options */
-  options: SelectOption[];
-  /** Placeholder text for empty selection */
-  placeholder?: string;
   /** Blur handler */
   onBlur?: () => void;
+  /** Minimum date */
+  min?: string;
+  /** Maximum date */
+  max?: string;
 }
 
 /**
- * A styled select input component
+ * A styled date input component
  */
-export function SelectInput({
+export function DateInput({
   id,
   name,
   label,
   value,
   onChange,
-  options,
-  placeholder,
   error,
   required = false,
   disabled = false,
   className = "",
   onBlur,
-}: SelectInputProps) {
+  min,
+  max,
+}: DateInputProps) {
   const inputId = id || name;
 
   return (
@@ -47,14 +47,17 @@ export function SelectInput({
           {required && <span className="text-red-500 ml-1">*</span>}
         </label>
       )}
-      <select
+      <input
         id={inputId}
         name={name}
+        type="date"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onBlur={onBlur}
         disabled={disabled}
         required={required}
+        min={min}
+        max={max}
         className={`
           w-full px-3 py-2 rounded-md shadow-sm
           border ${error ? "border-red-500" : "border-gray-300 dark:border-gray-600"}
@@ -66,22 +69,7 @@ export function SelectInput({
         `}
         aria-invalid={!!error}
         aria-describedby={error ? `${inputId}-error` : undefined}
-      >
-        {placeholder && (
-          <option value="" disabled>
-            {placeholder}
-          </option>
-        )}
-        {options.map((option) => (
-          <option
-            key={option.value}
-            value={option.value}
-            disabled={option.disabled}
-          >
-            {option.label}
-          </option>
-        ))}
-      </select>
+      />
       {error && (
         <p id={`${inputId}-error`} className="mt-1 text-sm text-red-500">
           {error}

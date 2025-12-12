@@ -2,7 +2,7 @@
  * Status indicator component
  */
 
-import type { StatusType, Size } from "../../types/ui";
+import type { StatusType, Size } from "../types/ui";
 
 export interface StatusIndicatorProps {
   /** Status type */

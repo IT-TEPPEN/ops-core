@@ -5,30 +5,31 @@ export type { ThreePaneLayoutProps } from "./Layout/ThreePaneLayout";
 export { SidebarLayout } from "./Layout/SidebarLayout";
 export type { SidebarLayoutProps } from "./Layout/SidebarLayout";
 
-export { PageHeader } from "./Layout/PageHeader";
-export type { PageHeaderProps } from "./Layout/PageHeader";
+// UI components moved to src/ui
+export { PageHeader } from "../ui/PageHeader";
+export type { PageHeaderProps } from "../ui/PageHeader";
 
-export { Breadcrumb } from "./Layout/Breadcrumb";
-export type { BreadcrumbProps } from "./Layout/Breadcrumb";
+export { Breadcrumb } from "../ui/Breadcrumb";
+export type { BreadcrumbProps } from "../ui/Breadcrumb";
 
-// Form components
-export { TextInput } from "./Form/TextInput";
-export type { TextInputProps } from "./Form/TextInput";
+// Form components - UI components moved to src/ui
+export { TextInput } from "../ui/TextInput";
+export type { TextInputProps } from "../ui/TextInput";
 
-export { NumberInput } from "./Form/NumberInput";
-export type { NumberInputProps } from "./Form/NumberInput";
+export { NumberInput } from "../ui/NumberInput";
+export type { NumberInputProps } from "../ui/NumberInput";
 
-export { SelectInput } from "./Form/SelectInput";
-export type { SelectInputProps } from "./Form/SelectInput";
+export { SelectInput } from "../ui/SelectInput";
+export type { SelectInputProps } from "../ui/SelectInput";
 
-export { CheckboxInput } from "./Form/CheckboxInput";
-export type { CheckboxInputProps } from "./Form/CheckboxInput";
+export { CheckboxInput } from "../ui/CheckboxInput";
+export type { CheckboxInputProps } from "../ui/CheckboxInput";
 
-export { DateInput } from "./Form/DateInput";
-export type { DateInputProps } from "./Form/DateInput";
+export { DateInput } from "../ui/DateInput";
+export type { DateInputProps } from "../ui/DateInput";
 
-export { FormField } from "./Form/FormField";
-export type { FormFieldProps } from "./Form/FormField";
+export { FormField } from "../ui/FormField";
+export type { FormFieldProps } from "../ui/FormField";
 
 export { VariableForm } from "./Form/VariableForm";
 export type { VariableFormProps } from "./Form/VariableForm";
@@ -55,17 +56,18 @@ export type { AttachmentViewerProps } from "./Display/AttachmentViewer";
 export { DataTable } from "./Display/DataTable";
 export type { DataTableProps } from "./Display/DataTable";
 
-export { Card } from "./Display/Card";
-export type { CardProps } from "./Display/Card";
+// Display components - UI components moved to src/ui
+export { Card } from "../ui/Card";
+export type { CardProps } from "../ui/Card";
 
-export { Badge } from "./Display/Badge";
-export type { BadgeProps } from "./Display/Badge";
+export { Badge } from "../ui/Badge";
+export type { BadgeProps } from "../ui/Badge";
 
-export { Tag } from "./Display/Tag";
-export type { TagProps } from "./Display/Tag";
+export { Tag } from "../ui/Tag";
+export type { TagProps } from "../ui/Tag";
 
-export { StatusIndicator } from "./Display/StatusIndicator";
-export type { StatusIndicatorProps } from "./Display/StatusIndicator";
+export { StatusIndicator } from "../ui/StatusIndicator";
+export type { StatusIndicatorProps } from "../ui/StatusIndicator";
 
 export { ViewHistoryList } from "./Display/ViewHistoryList";
 export type { ViewHistoryListProps } from "./Display/ViewHistoryList";

@@ -2,7 +2,7 @@
  * Group API utilities
  */
 
-import { get, post, put, del, apiRequest } from "./api";
+import { get, post, put, del, apiRequest } from "./client";
 import type { Group } from "../types/domain";
 
 /** Create group request */
