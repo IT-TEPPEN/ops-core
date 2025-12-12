@@ -1,5 +1,499 @@
 basePath: /api/v1
 definitions:
+  opscore_backend_internal_document_interfaces_api_schema.CreateDocumentRequest:
+    properties:
+      access_scope:
+        example: public
+        type: string
+      commit_hash:
+        example: abc1234567890
+        type: string
+      content:
+        example: |-
+          # Database Backup Procedure
+
+          This document describes...
+        type: string
+      doc_type:
+        example: procedure
+        type: string
+      file_path:
+        example: docs/backup-procedure.md
+        type: string
+      is_auto_update:
+        example: true
+        type: boolean
+      owner:
+        example: database-team
+        type: string
+      repository_id:
+        example: a1b2c3d4-e5f6-7890-1234-567890abcdef
+        type: string
+      tags:
+        example:
+        - '["database"'
+        - '"backup"]'
+        items:
+          type: string
+        type: array
+      title:
+        example: Database Backup Procedure
+        type: string
+      variables:
+        items:
+          $ref: '#/definitions/opscore_backend_internal_document_interfaces_api_schema.VariableDefinitionRequest'
+        type: array
+    required:
+    - access_scope
+    - commit_hash
+    - content
+    - doc_type
+    - file_path
+    - owner
+    - repository_id
+    - title
+    type: object
+  opscore_backend_internal_document_interfaces_api_schema.DocumentListItemResponse:
+    properties:
+      created_at:
+        example: "2025-04-22T10:00:00Z"
+        type: string
+      doc_type:
+        example: procedure
+        type: string
+      id:
+        example: a1b2c3d4-e5f6-7890-1234-567890abcdef
+        type: string
+      is_published:
+        example: true
+        type: boolean
+      owner:
+        example: database-team
+        type: string
+      repository_id:
+        example: a1b2c3d4-e5f6-7890-1234-567890abcdef
+        type: string
+      tags:
+        example:
+        - '["database"'
+        - '"backup"]'
+        items:
+          type: string
+        type: array
+      title:
+        example: Database Backup Procedure
+        type: string
+      updated_at:
+        example: "2025-04-22T12:00:00Z"
+        type: string
+      version_count:
+        example: 3
+        type: integer
+    type: object
+  opscore_backend_internal_document_interfaces_api_schema.DocumentResponse:
+    properties:
+      access_scope:
+        example: public
+        type: string
+      created_at:
+        example: "2025-04-22T10:00:00Z"
+        type: string
+      current_version:
+        $ref: '#/definitions/opscore_backend_internal_document_interfaces_api_schema.DocumentVersionResponse'
+      id:
+        example: a1b2c3d4-e5f6-7890-1234-567890abcdef
+        type: string
+      is_auto_update:
+        example: true
+        type: boolean
+      is_published:
+        example: true
+        type: boolean
+      owner:
+        example: database-team
+        type: string
+      repository_id:
+        example: a1b2c3d4-e5f6-7890-1234-567890abcdef
+        type: string
+      updated_at:
+        example: "2025-04-22T12:00:00Z"
+        type: string
+      version_count:
+        example: 3
+        type: integer
+    type: object
+  opscore_backend_internal_document_interfaces_api_schema.DocumentVersionResponse:
+    properties:
+      commit_hash:
+        example: abc1234567890
+        type: string
+      content:
+        example: |-
+          # Database Backup Procedure
+
+          This document describes...
+        type: string
+      doc_type:
+        example: procedure
+        type: string
+      document_id:
+        example: a1b2c3d4-e5f6-7890-1234-567890abcdef
+        type: string
+      file_path:
+        example: docs/backup-procedure.md
+        type: string
+      id:
+        example: v1b2c3d4-e5f6-7890-1234-567890abcdef
+        type: string
+      is_current:
+        example: true
+        type: boolean
+      published_at:
+        example: "2025-04-22T10:00:00Z"
+        type: string
+      tags:
+        example:
+        - '["database"'
+        - '"backup"]'
+        items:
+          type: string
+        type: array
+      title:
+        example: Database Backup Procedure
+        type: string
+      unpublished_at:
+        example: "null"
+        type: string
+      variables:
+        items:
+          $ref: '#/definitions/opscore_backend_internal_document_interfaces_api_schema.VariableDefinitionResponse'
+        type: array
+      version_number:
+        example: 1
+        type: integer
+    type: object
+  opscore_backend_internal_document_interfaces_api_schema.ErrorResponse:
+    properties:
+      code:
+        example: VALIDATION_FAILED
+        type: string
+      details:
+        additionalProperties: true
+        type: object
+      message:
+        example: Validation failed
+        type: string
+    type: object
+  opscore_backend_internal_document_interfaces_api_schema.GetVariableDefinitionsResponse:
+    properties:
+      documentId:
+        type: string
+      variables:
+        items:
+          $ref: '#/definitions/opscore_backend_internal_document_interfaces_api_schema.VariableDefinitionDTO'
+        type: array
+    type: object
+  opscore_backend_internal_document_interfaces_api_schema.ListDocumentsResponse:
+    properties:
+      documents:
+        items:
+          $ref: '#/definitions/opscore_backend_internal_document_interfaces_api_schema.DocumentListItemResponse'
+        type: array
+    type: object
+  opscore_backend_internal_document_interfaces_api_schema.UpdateDocumentMetadataRequest:
+    properties:
+      access_scope:
+        example: private
+        type: string
+      is_auto_update:
+        example: false
+        type: boolean
+      owner:
+        example: new-team
+        type: string
+    type: object
+  opscore_backend_internal_document_interfaces_api_schema.UpdateDocumentRequest:
+    properties:
+      commit_hash:
+        example: def4567890123
+        type: string
+      content:
+        example: |-
+          # Database Backup Procedure v2
+
+          Updated procedure...
+        type: string
+      doc_type:
+        example: procedure
+        type: string
+      file_path:
+        example: docs/backup-procedure.md
+        type: string
+      tags:
+        example:
+        - '["database"'
+        - '"backup"'
+        - '"v2"]'
+        items:
+          type: string
+        type: array
+      title:
+        example: Database Backup Procedure v2
+        type: string
+      variables:
+        items:
+          $ref: '#/definitions/opscore_backend_internal_document_interfaces_api_schema.VariableDefinitionRequest'
+        type: array
+    required:
+    - commit_hash
+    - content
+    - doc_type
+    - file_path
+    - title
+    type: object
+  opscore_backend_internal_document_interfaces_api_schema.ValidateVariableValuesRequest:
+    properties:
+      values:
+        items:
+          $ref: '#/definitions/opscore_backend_internal_document_interfaces_api_schema.VariableValueDTO'
+        type: array
+    type: object
+  opscore_backend_internal_document_interfaces_api_schema.ValidateVariableValuesResponse:
+    properties:
+      errors:
+        items:
+          $ref: '#/definitions/opscore_backend_internal_document_interfaces_api_schema.ValidationErrorDTO'
+        type: array
+      valid:
+        type: boolean
+    type: object
+  opscore_backend_internal_document_interfaces_api_schema.ValidationErrorDTO:
+    properties:
+      message:
+        type: string
+      name:
+        type: string
+    type: object
+  opscore_backend_internal_document_interfaces_api_schema.VariableDefinitionDTO:
+    properties:
+      defaultValue: {}
+      description:
+        type: string
+      label:
+        type: string
+      name:
+        type: string
+      required:
+        type: boolean
+      type:
+        description: '"string", "number", "boolean", "date"'
+        type: string
+    type: object
+  opscore_backend_internal_document_interfaces_api_schema.VariableDefinitionRequest:
+    properties:
+      default_value: {}
+      description:
+        example: The target server name
+        type: string
+      label:
+        example: Server Name
+        type: string
+      name:
+        example: server_name
+        type: string
+      required:
+        example: true
+        type: boolean
+      type:
+        example: string
+        type: string
+    required:
+    - label
+    - name
+    - type
+    type: object
+  opscore_backend_internal_document_interfaces_api_schema.VariableDefinitionResponse:
+    properties:
+      default_value: {}
+      description:
+        example: The target server name
+        type: string
+      label:
+        example: Server Name
+        type: string
+      name:
+        example: server_name
+        type: string
+      required:
+        example: true
+        type: boolean
+      type:
+        example: string
+        type: string
+    type: object
+  opscore_backend_internal_document_interfaces_api_schema.VariableValueDTO:
+    properties:
+      name:
+        type: string
+      value: {}
+    type: object
+  opscore_backend_internal_document_interfaces_api_schema.VersionHistoryResponse:
+    properties:
+      document_id:
+        example: a1b2c3d4-e5f6-7890-1234-567890abcdef
+        type: string
+      versions:
+        items:
+          $ref: '#/definitions/opscore_backend_internal_document_interfaces_api_schema.DocumentVersionResponse'
+        type: array
+    type: object
+  opscore_backend_internal_execution_record_interfaces_api_schema.AddStepRequest:
+    properties:
+      description:
+        type: string
+      step_number:
+        minimum: 1
+        type: integer
+    required:
+    - description
+    - step_number
+    type: object
+  opscore_backend_internal_execution_record_interfaces_api_schema.AttachmentResponse:
+    properties:
+      execution_record_id:
+        type: string
+      execution_step_id:
+        type: string
+      file_name:
+        type: string
+      file_size:
+        type: integer
+      id:
+        type: string
+      mime_type:
+        type: string
+      storage_type:
+        type: string
+      uploaded_at:
+        type: string
+      uploaded_by:
+        type: string
+    type: object
+  opscore_backend_internal_execution_record_interfaces_api_schema.CreateExecutionRecordRequest:
+    properties:
+      document_id:
+        type: string
+      document_version_id:
+        type: string
+      title:
+        type: string
+      variable_values:
+        items:
+          $ref: '#/definitions/opscore_backend_internal_execution_record_interfaces_api_schema.VariableValueRequestSchema'
+        type: array
+    required:
+    - document_id
+    - document_version_id
+    - title
+    type: object
+  opscore_backend_internal_execution_record_interfaces_api_schema.ExecutionRecordResponse:
+    properties:
+      access_scope:
+        type: string
+      completed_at:
+        type: string
+      created_at:
+        type: string
+      document_id:
+        type: string
+      document_version_id:
+        type: string
+      executor_id:
+        type: string
+      id:
+        type: string
+      notes:
+        type: string
+      started_at:
+        type: string
+      status:
+        type: string
+      steps:
+        items:
+          $ref: '#/definitions/opscore_backend_internal_execution_record_interfaces_api_schema.ExecutionStepResponseSchema'
+        type: array
+      title:
+        type: string
+      updated_at:
+        type: string
+      variable_values:
+        items:
+          $ref: '#/definitions/opscore_backend_internal_execution_record_interfaces_api_schema.VariableValueResponseSchema'
+        type: array
+    type: object
+  opscore_backend_internal_execution_record_interfaces_api_schema.ExecutionStepResponseSchema:
+    properties:
+      description:
+        type: string
+      executed_at:
+        type: string
+      execution_record_id:
+        type: string
+      id:
+        type: string
+      notes:
+        type: string
+      step_number:
+        type: integer
+    type: object
+  opscore_backend_internal_execution_record_interfaces_api_schema.ListAttachmentsResponse:
+    properties:
+      attachments:
+        items:
+          $ref: '#/definitions/opscore_backend_internal_execution_record_interfaces_api_schema.AttachmentResponse'
+        type: array
+    type: object
+  opscore_backend_internal_execution_record_interfaces_api_schema.UpdateAccessScopeRequest:
+    properties:
+      access_scope:
+        enum:
+        - public
+        - private
+        type: string
+    required:
+    - access_scope
+    type: object
+  opscore_backend_internal_execution_record_interfaces_api_schema.UpdateNotesRequest:
+    properties:
+      notes:
+        type: string
+    type: object
+  opscore_backend_internal_execution_record_interfaces_api_schema.UpdateStepNotesRequest:
+    properties:
+      notes:
+        type: string
+    type: object
+  opscore_backend_internal_execution_record_interfaces_api_schema.UpdateTitleRequest:
+    properties:
+      title:
+        type: string
+    required:
+    - title
+    type: object
+  opscore_backend_internal_execution_record_interfaces_api_schema.VariableValueRequestSchema:
+    properties:
+      name:
+        type: string
+      value: {}
+    required:
+    - name
+    type: object
+  opscore_backend_internal_execution_record_interfaces_api_schema.VariableValueResponseSchema:
+    properties:
+      name:
+        type: string
+      value: {}
+    type: object
   opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse:
     properties:
       code:
@@ -106,6 +600,313 @@ definitions:
     required:
     - accessToken
     type: object
+  opscore_backend_internal_user_interfaces_api_schema.AddMemberRequest:
+    properties:
+      userId:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+    required:
+    - userId
+    type: object
+  opscore_backend_internal_user_interfaces_api_schema.ChangeRoleRequest:
+    properties:
+      role:
+        example: admin
+        type: string
+    required:
+    - role
+    type: object
+  opscore_backend_internal_user_interfaces_api_schema.CreateGroupRequest:
+    properties:
+      description:
+        example: Engineering team group
+        type: string
+      name:
+        example: Engineering
+        type: string
+    required:
+    - name
+    type: object
+  opscore_backend_internal_user_interfaces_api_schema.CreateUserRequest:
+    properties:
+      email:
+        example: john.doe@example.com
+        type: string
+      name:
+        example: John Doe
+        type: string
+      role:
+        example: user
+        type: string
+    required:
+    - email
+    - name
+    - role
+    type: object
+  opscore_backend_internal_user_interfaces_api_schema.ErrorResponse:
+    properties:
+      code:
+        example: INVALID_REQUEST
+        type: string
+      message:
+        example: Invalid request body
+        type: string
+    type: object
+  opscore_backend_internal_user_interfaces_api_schema.GroupResponse:
+    properties:
+      createdAt:
+        example: "2025-04-22T10:00:00Z"
+        type: string
+      description:
+        example: Engineering team group
+        type: string
+      id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      memberIds:
+        example:
+        - 550e8400-e29b-41d4-a716-446655440001
+        - 550e8400-e29b-41d4-a716-446655440002
+        items:
+          type: string
+        type: array
+      name:
+        example: Engineering
+        type: string
+      updatedAt:
+        example: "2025-04-22T10:00:00Z"
+        type: string
+    type: object
+  opscore_backend_internal_user_interfaces_api_schema.JoinGroupRequest:
+    properties:
+      groupId:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+    required:
+    - groupId
+    type: object
+  opscore_backend_internal_user_interfaces_api_schema.LeaveGroupRequest:
+    properties:
+      groupId:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+    required:
+    - groupId
+    type: object
+  opscore_backend_internal_user_interfaces_api_schema.ListGroupsResponse:
+    properties:
+      groups:
+        items:
+          $ref: '#/definitions/opscore_backend_internal_user_interfaces_api_schema.GroupResponse'
+        type: array
+    type: object
+  opscore_backend_internal_user_interfaces_api_schema.ListUsersResponse:
+    properties:
+      users:
+        items:
+          $ref: '#/definitions/opscore_backend_internal_user_interfaces_api_schema.UserResponse'
+        type: array
+    type: object
+  opscore_backend_internal_user_interfaces_api_schema.RemoveMemberRequest:
+    properties:
+      userId:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+    required:
+    - userId
+    type: object
+  opscore_backend_internal_user_interfaces_api_schema.UpdateGroupRequest:
+    properties:
+      description:
+        example: Engineering team group
+        type: string
+      name:
+        example: Engineering
+        type: string
+    required:
+    - name
+    type: object
+  opscore_backend_internal_user_interfaces_api_schema.UpdateUserRequest:
+    properties:
+      email:
+        example: john.doe@example.com
+        type: string
+      name:
+        example: John Doe
+        type: string
+    required:
+    - email
+    - name
+    type: object
+  opscore_backend_internal_user_interfaces_api_schema.UserResponse:
+    properties:
+      createdAt:
+        example: "2025-04-22T10:00:00Z"
+        type: string
+      email:
+        example: john.doe@example.com
+        type: string
+      groupIds:
+        example:
+        - 550e8400-e29b-41d4-a716-446655440001
+        - 550e8400-e29b-41d4-a716-446655440002
+        items:
+          type: string
+        type: array
+      id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      name:
+        example: John Doe
+        type: string
+      role:
+        example: user
+        type: string
+      updatedAt:
+        example: "2025-04-22T10:00:00Z"
+        type: string
+    type: object
+  opscore_backend_internal_view_history_interfaces_api_schema.ErrorResponse:
+    properties:
+      code:
+        example: INVALID_REQUEST
+        type: string
+      details:
+        type: string
+      message:
+        example: Invalid request format
+        type: string
+    type: object
+  opscore_backend_internal_view_history_interfaces_api_schema.RecordViewRequest:
+    properties:
+      user_id:
+        example: user-123
+        type: string
+    required:
+    - user_id
+    type: object
+  opscore_backend_internal_view_history_interfaces_api_schema.ViewHistoryListResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/opscore_backend_internal_view_history_interfaces_api_schema.ViewHistoryResponse'
+        type: array
+      limit:
+        example: 50
+        type: integer
+      offset:
+        example: 0
+        type: integer
+      total_count:
+        example: 100
+        type: integer
+    type: object
+  opscore_backend_internal_view_history_interfaces_api_schema.ViewHistoryResponse:
+    properties:
+      document_id:
+        example: b2c3d4e5-f6a7-8901-2345-678901bcdefg
+        type: string
+      id:
+        example: a1b2c3d4-e5f6-7890-1234-567890abcdef
+        type: string
+      user_id:
+        example: user-123
+        type: string
+      view_duration:
+        example: 120
+        type: integer
+      viewed_at:
+        example: "2024-01-15T10:30:00Z"
+        type: string
+    type: object
+  opscore_backend_internal_view_statistics_interfaces_api_schema.DocumentStatisticsResponse:
+    properties:
+      average_view_duration:
+        example: 120
+        type: integer
+      document_id:
+        example: a1b2c3d4-e5f6-7890-1234-567890abcdef
+        type: string
+      last_viewed_at:
+        example: "2024-01-15T10:30:00Z"
+        type: string
+      total_views:
+        example: 1234
+        type: integer
+      unique_viewers:
+        example: 567
+        type: integer
+    type: object
+  opscore_backend_internal_view_statistics_interfaces_api_schema.ErrorResponse:
+    properties:
+      code:
+        example: INVALID_REQUEST
+        type: string
+      details:
+        type: string
+      message:
+        example: Invalid request format
+        type: string
+    type: object
+  opscore_backend_internal_view_statistics_interfaces_api_schema.PopularDocumentResponse:
+    properties:
+      document_id:
+        example: a1b2c3d4-e5f6-7890-1234-567890abcdef
+        type: string
+      last_viewed_at:
+        example: "2024-01-15T10:30:00Z"
+        type: string
+      total_views:
+        example: 1234
+        type: integer
+      unique_viewers:
+        example: 567
+        type: integer
+    type: object
+  opscore_backend_internal_view_statistics_interfaces_api_schema.PopularDocumentsResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/opscore_backend_internal_view_statistics_interfaces_api_schema.PopularDocumentResponse'
+        type: array
+      limit:
+        example: 10
+        type: integer
+    type: object
+  opscore_backend_internal_view_statistics_interfaces_api_schema.RecentDocumentResponse:
+    properties:
+      document_id:
+        example: a1b2c3d4-e5f6-7890-1234-567890abcdef
+        type: string
+      last_viewed_at:
+        example: "2024-01-15T10:30:00Z"
+        type: string
+      total_views:
+        example: 234
+        type: integer
+    type: object
+  opscore_backend_internal_view_statistics_interfaces_api_schema.RecentDocumentsResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/opscore_backend_internal_view_statistics_interfaces_api_schema.RecentDocumentResponse'
+        type: array
+      limit:
+        example: 10
+        type: integer
+    type: object
+  opscore_backend_internal_view_statistics_interfaces_api_schema.UserStatisticsResponse:
+    properties:
+      total_views:
+        example: 345
+        type: integer
+      unique_documents:
+        example: 78
+        type: integer
+      user_id:
+        example: user-123
+        type: string
+    type: object
 host: localhost:8080
 info:
   contact: {}
@@ -113,6 +914,1572 @@ info:
   title: OpsCore Backend API
   version: "1.0"
 paths:
+  /api/documents/{id}/statistics:
+    get:
+      description: Retrieves view statistics for a specific document
+      parameters:
+      - description: Document ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Statistics retrieved successfully
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_view_statistics_interfaces_api_schema.DocumentStatisticsResponse'
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_view_statistics_interfaces_api_schema.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_view_statistics_interfaces_api_schema.ErrorResponse'
+      summary: Get document statistics
+      tags:
+      - statistics
+  /api/documents/{id}/view-history:
+    get:
+      description: Retrieves the view history for a specific document
+      parameters:
+      - description: Document ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - default: 50
+        description: Limit
+        in: query
+        maximum: 100
+        minimum: 1
+        name: limit
+        type: integer
+      - default: 0
+        description: Offset
+        in: query
+        minimum: 0
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: View history retrieved successfully
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_view_history_interfaces_api_schema.ViewHistoryListResponse'
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_view_history_interfaces_api_schema.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_view_history_interfaces_api_schema.ErrorResponse'
+      summary: Get document's view history
+      tags:
+      - view-history
+  /api/documents/{id}/views:
+    post:
+      consumes:
+      - application/json
+      description: Records a view of a document by a user
+      parameters:
+      - description: Document ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: User ID
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/opscore_backend_internal_view_history_interfaces_api_schema.RecordViewRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: View recorded successfully
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_view_history_interfaces_api_schema.ViewHistoryResponse'
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_view_history_interfaces_api_schema.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_view_history_interfaces_api_schema.ErrorResponse'
+      summary: Record a document view
+      tags:
+      - view-history
+  /api/statistics/popular-documents:
+    get:
+      description: Retrieves the most popular documents based on view count
+      parameters:
+      - default: 10
+        description: Limit
+        in: query
+        maximum: 100
+        minimum: 1
+        name: limit
+        type: integer
+      - default: 30
+        description: Days to look back
+        in: query
+        minimum: 1
+        name: days
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Popular documents retrieved successfully
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_view_statistics_interfaces_api_schema.PopularDocumentsResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_view_statistics_interfaces_api_schema.ErrorResponse'
+      summary: Get popular documents
+      tags:
+      - statistics
+  /api/statistics/recent-documents:
+    get:
+      description: Retrieves the most recently viewed documents
+      parameters:
+      - default: 10
+        description: Limit
+        in: query
+        maximum: 100
+        minimum: 1
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Recent documents retrieved successfully
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_view_statistics_interfaces_api_schema.RecentDocumentsResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_view_statistics_interfaces_api_schema.ErrorResponse'
+      summary: Get recently viewed documents
+      tags:
+      - statistics
+  /api/users/{id}/statistics:
+    get:
+      description: Retrieves view statistics for a specific user
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Statistics retrieved successfully
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_view_statistics_interfaces_api_schema.UserStatisticsResponse'
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_view_statistics_interfaces_api_schema.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_view_statistics_interfaces_api_schema.ErrorResponse'
+      summary: Get user statistics
+      tags:
+      - statistics
+  /api/users/{id}/view-history:
+    get:
+      description: Retrieves the view history for a specific user
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - default: 50
+        description: Limit
+        in: query
+        maximum: 100
+        minimum: 1
+        name: limit
+        type: integer
+      - default: 0
+        description: Offset
+        in: query
+        minimum: 0
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: View history retrieved successfully
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_view_history_interfaces_api_schema.ViewHistoryListResponse'
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_view_history_interfaces_api_schema.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_view_history_interfaces_api_schema.ErrorResponse'
+      summary: Get user's view history
+      tags:
+      - view-history
+  /attachments/{id}:
+    delete:
+      description: Delete a specific attachment by ID
+      parameters:
+      - description: Attachment ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: Attachment deleted successfully
+        "400":
+          description: Invalid attachment ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Attachment not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Delete an attachment
+      tags:
+      - attachments
+    get:
+      description: Retrieves metadata information about a specific attachment
+      parameters:
+      - description: Attachment ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved attachment metadata
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_execution_record_interfaces_api_schema.AttachmentResponse'
+        "400":
+          description: Invalid attachment ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Attachment not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get attachment metadata
+      tags:
+      - attachments
+  /attachments/{id}/download:
+    get:
+      description: Download the actual file content of an attachment
+      parameters:
+      - description: Attachment ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: Attachment file content
+          schema:
+            type: file
+        "400":
+          description: Invalid attachment ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Attachment not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Download an attachment file
+      tags:
+      - attachments
+  /attachments/{id}/url:
+    get:
+      description: Get a presigned URL for downloading an attachment (for S3 storage)
+        or download endpoint (for local storage)
+      parameters:
+      - description: Attachment ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Presigned URL or download endpoint
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid attachment ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Attachment not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get signed URL for attachment
+      tags:
+      - attachments
+  /documents:
+    get:
+      description: Retrieves a list of all published documents
+      parameters:
+      - description: Filter by repository ID
+        in: query
+        name: repository_id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved documents
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_document_interfaces_api_schema.ListDocumentsResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_document_interfaces_api_schema.ErrorResponse'
+      summary: List all documents
+      tags:
+      - documents
+    post:
+      consumes:
+      - application/json
+      description: Create a new document with an initial version
+      parameters:
+      - description: Document information
+        in: body
+        name: document
+        required: true
+        schema:
+          $ref: '#/definitions/opscore_backend_internal_document_interfaces_api_schema.CreateDocumentRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Document created successfully
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_document_interfaces_api_schema.DocumentResponse'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_document_interfaces_api_schema.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_document_interfaces_api_schema.ErrorResponse'
+      summary: Create a new document
+      tags:
+      - documents
+  /documents/{docId}:
+    get:
+      description: Retrieves detailed information about a specific document by ID
+      parameters:
+      - description: Document ID
+        in: path
+        name: docId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved document details
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_document_interfaces_api_schema.DocumentResponse'
+        "400":
+          description: Invalid document ID format
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_document_interfaces_api_schema.ErrorResponse'
+        "404":
+          description: Document not found
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_document_interfaces_api_schema.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_document_interfaces_api_schema.ErrorResponse'
+      summary: Get document details
+      tags:
+      - documents
+    put:
+      consumes:
+      - application/json
+      description: Update an existing document by creating a new version
+      parameters:
+      - description: Document ID
+        in: path
+        name: docId
+        required: true
+        type: string
+      - description: Document update information
+        in: body
+        name: document
+        required: true
+        schema:
+          $ref: '#/definitions/opscore_backend_internal_document_interfaces_api_schema.UpdateDocumentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Document updated successfully
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_document_interfaces_api_schema.DocumentResponse'
+        "400":
+          description: Invalid request body or document ID
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_document_interfaces_api_schema.ErrorResponse'
+        "404":
+          description: Document not found
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_document_interfaces_api_schema.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_document_interfaces_api_schema.ErrorResponse'
+      summary: Update a document
+      tags:
+      - documents
+  /documents/{docId}/metadata:
+    patch:
+      consumes:
+      - application/json
+      description: Updates document metadata such as owner, access scope, and auto-update
+        setting
+      parameters:
+      - description: Document ID
+        in: path
+        name: docId
+        required: true
+        type: string
+      - description: Metadata update information
+        in: body
+        name: metadata
+        required: true
+        schema:
+          $ref: '#/definitions/opscore_backend_internal_document_interfaces_api_schema.UpdateDocumentMetadataRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Metadata updated successfully
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_document_interfaces_api_schema.DocumentResponse'
+        "400":
+          description: Invalid request body or document ID
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_document_interfaces_api_schema.ErrorResponse'
+        "404":
+          description: Document not found
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_document_interfaces_api_schema.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_document_interfaces_api_schema.ErrorResponse'
+      summary: Update document metadata
+      tags:
+      - documents
+  /documents/{docId}/validate-variables:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Validates the provided variable values against the document's variable definitions.
+
+        **Note on Response Status Codes:**
+        This endpoint returns HTTP 200 OK for both successful validations and validation failures.
+        The response body's "valid" field indicates whether validation passed or failed.
+        This design allows distinguishing between:
+        - Validation failures (HTTP 200 with valid:false) - client provided invalid data
+        - System errors (HTTP 4xx/5xx) - server-side issues or malformed requests
+      parameters:
+      - description: Document ID
+        in: path
+        name: docId
+        required: true
+        type: string
+      - description: Variable values to validate
+        in: body
+        name: values
+        required: true
+        schema:
+          $ref: '#/definitions/opscore_backend_internal_document_interfaces_api_schema.ValidateVariableValuesRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Validation result (valid:true or valid:false with errors)
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_document_interfaces_api_schema.ValidateVariableValuesResponse'
+        "400":
+          description: Invalid request body or document ID
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_document_interfaces_api_schema.ErrorResponse'
+        "404":
+          description: Document not found
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_document_interfaces_api_schema.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_document_interfaces_api_schema.ErrorResponse'
+      summary: Validate variable values for a document
+      tags:
+      - variables
+  /documents/{docId}/variables:
+    get:
+      description: Retrieves all variable definitions from the current version of
+        a document
+      parameters:
+      - description: Document ID
+        in: path
+        name: docId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved variable definitions
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_document_interfaces_api_schema.GetVariableDefinitionsResponse'
+        "400":
+          description: Invalid document ID format
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_document_interfaces_api_schema.ErrorResponse'
+        "404":
+          description: Document not found
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_document_interfaces_api_schema.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_document_interfaces_api_schema.ErrorResponse'
+      summary: Get variable definitions for a document
+      tags:
+      - variables
+  /documents/{docId}/versions:
+    get:
+      description: Retrieves all versions for a specific document
+      parameters:
+      - description: Document ID
+        in: path
+        name: docId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved version history
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_document_interfaces_api_schema.VersionHistoryResponse'
+        "400":
+          description: Invalid document ID format
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_document_interfaces_api_schema.ErrorResponse'
+        "404":
+          description: Document not found
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_document_interfaces_api_schema.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_document_interfaces_api_schema.ErrorResponse'
+      summary: Get document version history
+      tags:
+      - documents
+  /documents/{docId}/versions/{version}:
+    get:
+      description: Retrieves details of a specific version of a document
+      parameters:
+      - description: Document ID
+        in: path
+        name: docId
+        required: true
+        type: string
+      - description: Version number
+        in: path
+        name: version
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved version details
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_document_interfaces_api_schema.DocumentVersionResponse'
+        "400":
+          description: Invalid document ID or version number
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_document_interfaces_api_schema.ErrorResponse'
+        "404":
+          description: Document or version not found
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_document_interfaces_api_schema.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_document_interfaces_api_schema.ErrorResponse'
+      summary: Get a specific document version
+      tags:
+      - documents
+  /documents/{docId}/versions/{version}/publish:
+    post:
+      consumes:
+      - application/json
+      description: Publishes a specific version of a document, making it the current
+        version
+      parameters:
+      - description: Document ID
+        in: path
+        name: docId
+        required: true
+        type: string
+      - description: Version number
+        in: path
+        name: version
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Version published successfully
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_document_interfaces_api_schema.DocumentResponse'
+        "400":
+          description: Invalid document ID or version number
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_document_interfaces_api_schema.ErrorResponse'
+        "404":
+          description: Document or version not found
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_document_interfaces_api_schema.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_document_interfaces_api_schema.ErrorResponse'
+      summary: Publish a specific document version
+      tags:
+      - documents
+  /documents/{docId}/versions/{version}/rollback:
+    post:
+      consumes:
+      - application/json
+      description: Rolls back the document to a previous version
+      parameters:
+      - description: Document ID
+        in: path
+        name: docId
+        required: true
+        type: string
+      - description: Version number
+        in: path
+        name: version
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Rollback successful
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_document_interfaces_api_schema.DocumentResponse'
+        "400":
+          description: Invalid document ID or version number
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_document_interfaces_api_schema.ErrorResponse'
+        "404":
+          description: Document or version not found
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_document_interfaces_api_schema.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_document_interfaces_api_schema.ErrorResponse'
+      summary: Rollback to a previous document version
+      tags:
+      - documents
+  /execution-records:
+    get:
+      description: Search and filter execution records by various criteria
+      parameters:
+      - description: Executor User ID
+        in: query
+        name: executor_id
+        type: string
+      - description: Document ID
+        in: query
+        name: document_id
+        type: string
+      - description: Status
+        in: query
+        name: status
+        type: string
+      - description: Started From
+        in: query
+        name: started_from
+        type: string
+      - description: Started To
+        in: query
+        name: started_to
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of execution records
+          schema:
+            additionalProperties:
+              items:
+                $ref: '#/definitions/opscore_backend_internal_execution_record_interfaces_api_schema.ExecutionRecordResponse'
+              type: array
+            type: object
+        "400":
+          description: Invalid query parameters
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Search execution records
+      tags:
+      - execution-records
+    post:
+      consumes:
+      - application/json
+      description: Create a new execution record (work record) for tracking procedure
+        execution
+      parameters:
+      - description: Execution record information
+        in: body
+        name: execution-record
+        required: true
+        schema:
+          $ref: '#/definitions/opscore_backend_internal_execution_record_interfaces_api_schema.CreateExecutionRecordRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Execution record created successfully
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_execution_record_interfaces_api_schema.ExecutionRecordResponse'
+        "400":
+          description: Invalid request body
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: User not authenticated
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Create a new execution record
+      tags:
+      - execution-records
+  /execution-records/{id}:
+    delete:
+      description: Delete a specific execution record by ID
+      parameters:
+      - description: Execution Record ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: Execution record deleted successfully
+        "400":
+          description: Invalid record ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Execution record not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Delete an execution record
+      tags:
+      - execution-records
+    get:
+      description: Retrieves detailed information about a specific execution record
+        by ID
+      parameters:
+      - description: Execution Record ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved execution record details
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_execution_record_interfaces_api_schema.ExecutionRecordResponse'
+        "400":
+          description: Invalid execution record ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Execution record not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get execution record details
+      tags:
+      - execution-records
+  /execution-records/{id}/access-scope:
+    put:
+      consumes:
+      - application/json
+      description: Update the access scope of an execution record (public or private)
+      parameters:
+      - description: Execution Record ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Access scope
+        in: body
+        name: access_scope
+        required: true
+        schema:
+          $ref: '#/definitions/opscore_backend_internal_execution_record_interfaces_api_schema.UpdateAccessScopeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Access scope updated successfully
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_execution_record_interfaces_api_schema.ExecutionRecordResponse'
+        "400":
+          description: Invalid request body or record ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Execution record not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Update execution record access scope
+      tags:
+      - execution-records
+  /execution-records/{id}/attachments:
+    get:
+      description: Retrieves all attachments associated with an execution record
+      parameters:
+      - description: Execution Record ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of attachments
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_execution_record_interfaces_api_schema.ListAttachmentsResponse'
+        "400":
+          description: Invalid record ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: List attachments for an execution record
+      tags:
+      - attachments
+    post:
+      consumes:
+      - multipart/form-data
+      description: Upload a file attachment to an execution record step
+      parameters:
+      - description: Execution Record ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Execution Step ID
+        in: formData
+        name: execution_step_id
+        required: true
+        type: string
+      - description: File to upload
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Attachment uploaded successfully
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_execution_record_interfaces_api_schema.AttachmentResponse'
+        "400":
+          description: Invalid request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: User not authenticated
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Upload an attachment
+      tags:
+      - attachments
+  /execution-records/{id}/complete:
+    post:
+      description: Mark an execution record as completed
+      parameters:
+      - description: Execution Record ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Execution record completed successfully
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_execution_record_interfaces_api_schema.ExecutionRecordResponse'
+        "400":
+          description: Invalid record ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Execution record not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Complete an execution record
+      tags:
+      - execution-records
+  /execution-records/{id}/fail:
+    post:
+      description: Mark an execution record as failed
+      parameters:
+      - description: Execution Record ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Execution record marked as failed successfully
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_execution_record_interfaces_api_schema.ExecutionRecordResponse'
+        "400":
+          description: Invalid record ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Execution record not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Mark execution record as failed
+      tags:
+      - execution-records
+  /execution-records/{id}/notes:
+    put:
+      consumes:
+      - application/json
+      description: Update the overall notes of an execution record
+      parameters:
+      - description: Execution Record ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Execution record notes
+        in: body
+        name: notes
+        required: true
+        schema:
+          $ref: '#/definitions/opscore_backend_internal_execution_record_interfaces_api_schema.UpdateNotesRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Notes updated successfully
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_execution_record_interfaces_api_schema.ExecutionRecordResponse'
+        "400":
+          description: Invalid request body or record ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Execution record not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Update execution record notes
+      tags:
+      - execution-records
+  /execution-records/{id}/steps:
+    post:
+      consumes:
+      - application/json
+      description: Add a new step to an existing execution record
+      parameters:
+      - description: Execution Record ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Step information
+        in: body
+        name: step
+        required: true
+        schema:
+          $ref: '#/definitions/opscore_backend_internal_execution_record_interfaces_api_schema.AddStepRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Step added successfully
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_execution_record_interfaces_api_schema.ExecutionRecordResponse'
+        "400":
+          description: Invalid request body or record ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Execution record not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Add a step to execution record
+      tags:
+      - execution-records
+  /execution-records/{id}/steps/{stepId}/attachments:
+    get:
+      description: Retrieves all attachments associated with a specific execution
+        step
+      parameters:
+      - description: Execution Record ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Execution Step ID
+        in: path
+        name: stepId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of attachments
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_execution_record_interfaces_api_schema.ListAttachmentsResponse'
+        "400":
+          description: Invalid step ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: List attachments for an execution step
+      tags:
+      - attachments
+  /execution-records/{id}/steps/{stepNumber}/notes:
+    put:
+      consumes:
+      - application/json
+      description: Update the notes of a specific step in an execution record
+      parameters:
+      - description: Execution Record ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Step Number
+        in: path
+        name: stepNumber
+        required: true
+        type: integer
+      - description: Step notes
+        in: body
+        name: notes
+        required: true
+        schema:
+          $ref: '#/definitions/opscore_backend_internal_execution_record_interfaces_api_schema.UpdateStepNotesRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Step notes updated successfully
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_execution_record_interfaces_api_schema.ExecutionRecordResponse'
+        "400":
+          description: Invalid request body or step number
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Execution record or step not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Update step notes
+      tags:
+      - execution-records
+  /execution-records/{id}/title:
+    put:
+      consumes:
+      - application/json
+      description: Update the title of an execution record
+      parameters:
+      - description: Execution Record ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Execution record title
+        in: body
+        name: title
+        required: true
+        schema:
+          $ref: '#/definitions/opscore_backend_internal_execution_record_interfaces_api_schema.UpdateTitleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Title updated successfully
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_execution_record_interfaces_api_schema.ExecutionRecordResponse'
+        "400":
+          description: Invalid request body or record ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Execution record not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Update execution record title
+      tags:
+      - execution-records
+  /groups:
+    get:
+      description: Retrieves a list of all groups in the system
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved groups
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_user_interfaces_api_schema.ListGroupsResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse'
+      summary: List all groups
+      tags:
+      - groups
+    post:
+      consumes:
+      - application/json
+      description: Add a new group to the system
+      parameters:
+      - description: Group information
+        in: body
+        name: group
+        required: true
+        schema:
+          $ref: '#/definitions/opscore_backend_internal_user_interfaces_api_schema.CreateGroupRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Group created successfully
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_user_interfaces_api_schema.GroupResponse'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse'
+      summary: Create a new group
+      tags:
+      - groups
+  /groups/{groupId}:
+    delete:
+      description: Removes a group from the system
+      parameters:
+      - description: Group ID
+        in: path
+        name: groupId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Group deleted successfully
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid group ID
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse'
+        "404":
+          description: Group not found
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse'
+      summary: Delete a group
+      tags:
+      - groups
+    get:
+      description: Retrieves detailed information about a specific group by ID
+      parameters:
+      - description: Group ID
+        in: path
+        name: groupId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved group details
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_user_interfaces_api_schema.GroupResponse'
+        "400":
+          description: Invalid group ID format
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse'
+        "404":
+          description: Group not found
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse'
+      summary: Get group details
+      tags:
+      - groups
+    put:
+      consumes:
+      - application/json
+      description: Updates the information of a specific group
+      parameters:
+      - description: Group ID
+        in: path
+        name: groupId
+        required: true
+        type: string
+      - description: Group information
+        in: body
+        name: group
+        required: true
+        schema:
+          $ref: '#/definitions/opscore_backend_internal_user_interfaces_api_schema.UpdateGroupRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Group updated successfully
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_user_interfaces_api_schema.GroupResponse'
+        "400":
+          description: Invalid request body or group ID
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse'
+        "404":
+          description: Group not found
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse'
+      summary: Update group details
+      tags:
+      - groups
+  /groups/{groupId}/members:
+    delete:
+      consumes:
+      - application/json
+      description: Removes a user from a specific group
+      parameters:
+      - description: Group ID
+        in: path
+        name: groupId
+        required: true
+        type: string
+      - description: Member information
+        in: body
+        name: member
+        required: true
+        schema:
+          $ref: '#/definitions/opscore_backend_internal_user_interfaces_api_schema.RemoveMemberRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Member removed successfully
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_user_interfaces_api_schema.GroupResponse'
+        "400":
+          description: Invalid request body or group ID
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse'
+        "404":
+          description: Group or user not found
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse'
+        "409":
+          description: User is not a member of the group
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse'
+      summary: Remove member from group
+      tags:
+      - groups
+    post:
+      consumes:
+      - application/json
+      description: Adds a user to a specific group
+      parameters:
+      - description: Group ID
+        in: path
+        name: groupId
+        required: true
+        type: string
+      - description: Member information
+        in: body
+        name: member
+        required: true
+        schema:
+          $ref: '#/definitions/opscore_backend_internal_user_interfaces_api_schema.AddMemberRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Member added successfully
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_user_interfaces_api_schema.GroupResponse'
+        "400":
+          description: Invalid request body or group ID
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse'
+        "404":
+          description: Group or user not found
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse'
+        "409":
+          description: User is already a member of the group
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse'
+      summary: Add member to group
+      tags:
+      - groups
   /repositories:
     get:
       description: Retrieves a list of all repositories registered in OpsCore
@@ -338,4 +2705,313 @@ paths:
       summary: Update repository access token
       tags:
       - repositories
+  /users:
+    get:
+      description: Retrieves a list of all users in the system
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved users
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_user_interfaces_api_schema.ListUsersResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse'
+      summary: List all users
+      tags:
+      - users
+    post:
+      consumes:
+      - application/json
+      description: Add a new user to the system
+      parameters:
+      - description: User information
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/opscore_backend_internal_user_interfaces_api_schema.CreateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: User created successfully
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_user_interfaces_api_schema.UserResponse'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse'
+        "409":
+          description: User with this email already exists
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse'
+      summary: Create a new user
+      tags:
+      - users
+  /users/{userId}:
+    delete:
+      description: Removes a user from the system
+      parameters:
+      - description: User ID
+        in: path
+        name: userId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User deleted successfully
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid user ID
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse'
+      summary: Delete a user
+      tags:
+      - users
+    get:
+      description: Retrieves detailed information about a specific user by ID
+      parameters:
+      - description: User ID
+        in: path
+        name: userId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved user details
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_user_interfaces_api_schema.UserResponse'
+        "400":
+          description: Invalid user ID format
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse'
+      summary: Get user details
+      tags:
+      - users
+    put:
+      consumes:
+      - application/json
+      description: Updates the profile information of a specific user
+      parameters:
+      - description: User ID
+        in: path
+        name: userId
+        required: true
+        type: string
+      - description: User information
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/opscore_backend_internal_user_interfaces_api_schema.UpdateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User updated successfully
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_user_interfaces_api_schema.UserResponse'
+        "400":
+          description: Invalid request body or user ID
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse'
+        "409":
+          description: Email already in use
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse'
+      summary: Update user details
+      tags:
+      - users
+  /users/{userId}/groups:
+    delete:
+      consumes:
+      - application/json
+      description: Removes a user from a specific group
+      parameters:
+      - description: User ID
+        in: path
+        name: userId
+        required: true
+        type: string
+      - description: Group information
+        in: body
+        name: group
+        required: true
+        schema:
+          $ref: '#/definitions/opscore_backend_internal_user_interfaces_api_schema.LeaveGroupRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User removed from group successfully
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_user_interfaces_api_schema.UserResponse'
+        "400":
+          description: Invalid request body or user ID
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse'
+        "404":
+          description: User or group not found
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse'
+        "409":
+          description: User is not a member of the group
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse'
+      summary: Remove user from group
+      tags:
+      - users
+    get:
+      description: Retrieves all groups that a specific user is a member of
+      parameters:
+      - description: User ID
+        in: path
+        name: userId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved user groups
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_user_interfaces_api_schema.ListGroupsResponse'
+        "400":
+          description: Invalid user ID format
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse'
+      summary: Get groups for a user
+      tags:
+      - groups
+    post:
+      consumes:
+      - application/json
+      description: Adds a user to a specific group
+      parameters:
+      - description: User ID
+        in: path
+        name: userId
+        required: true
+        type: string
+      - description: Group information
+        in: body
+        name: group
+        required: true
+        schema:
+          $ref: '#/definitions/opscore_backend_internal_user_interfaces_api_schema.JoinGroupRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User added to group successfully
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_user_interfaces_api_schema.UserResponse'
+        "400":
+          description: Invalid request body or user ID
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse'
+        "404":
+          description: User or group not found
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse'
+        "409":
+          description: User is already a member of the group
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse'
+      summary: Add user to group
+      tags:
+      - users
+  /users/{userId}/role:
+    put:
+      consumes:
+      - application/json
+      description: Changes the role of a specific user
+      parameters:
+      - description: User ID
+        in: path
+        name: userId
+        required: true
+        type: string
+      - description: Role information
+        in: body
+        name: role
+        required: true
+        schema:
+          $ref: '#/definitions/opscore_backend_internal_user_interfaces_api_schema.ChangeRoleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Role changed successfully
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_user_interfaces_api_schema.UserResponse'
+        "400":
+          description: Invalid request body or user ID
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse'
+      summary: Change user role
+      tags:
+      - users
 swagger: "2.0"

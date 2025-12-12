@@ -42,7 +42,7 @@ type VariableDefinitionRequest struct {
 	Description  string      `json:"description" example:"The target server name"`
 	Type         string      `json:"type" binding:"required" example:"string"`
 	Required     bool        `json:"required" example:"true"`
-	DefaultValue interface{} `json:"default_value" example:"prod-db-01"`
+	DefaultValue interface{} `json:"default_value"`
 }
 
 // VariableDefinitionResponse represents a variable definition in API responses
@@ -52,7 +52,7 @@ type VariableDefinitionResponse struct {
 	Description  string      `json:"description" example:"The target server name"`
 	Type         string      `json:"type" example:"string"`
 	Required     bool        `json:"required" example:"true"`
-	DefaultValue interface{} `json:"default_value" example:"prod-db-01"`
+	DefaultValue interface{} `json:"default_value"`
 }
 
 // DocumentResponse represents the API response for a document
