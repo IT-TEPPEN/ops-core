@@ -61,7 +61,7 @@ npm run dev
 2. **ブランチ作成**: `git checkout -b feature/issue-number-description`
 3. **開発**: コードを実装し、テストを追加
 4. **テスト**: `go test ./...` または `npm test` で検証
-5. **コミット**: [規約](docs/development/CONTRIBUTING.md#コミットメッセージ)に従ってコミット
+5. **コミット**: 下記のコミットメッセージ規約に従ってコミット
 6. **プッシュ**: `git push origin feature/issue-number-description`
 7. **PR作成**: developブランチへのプルリクエストを作成
 8. **レビュー**: レビュアーからのフィードバックに対応
@@ -113,18 +113,23 @@ npm run test:coverage
 
 詳細は[テストガイド](docs/development/TESTING.md)を参照してください。
 
-## 📖 ドキュメント
-
-- [開発ガイドライン（完全版）](docs/development/CONTRIBUTING.md)
-- [テストガイド](docs/development/TESTING.md)
-- [API開発ガイド](docs/development/API.md)
-- [ユーザーマニュアル](docs/user-guide/README.md)
-- [システム概要](docs/architecture/system-overview.md)
-- [ADR一覧](adr/)
-
 ## 🔒 セキュリティ
 
 セキュリティ上の問題を発見した場合は、公開Issueではなく、メンテナーに直接連絡してください。
+
+## 📖 その他のドキュメント
+
+開発に役立つその他のドキュメント：
+
+- **開発ガイド**
+  - [テストガイド](docs/development/TESTING.md)
+  - [API開発ガイド](docs/development/API.md)
+- **アーキテクチャ**
+  - [システム概要](docs/architecture/system-overview.md)
+  - [バックエンドアーキテクチャ](backend/README.md)
+  - [ADR一覧](adr/)
+- **ユーザーガイド**
+  - [ユーザーマニュアル](docs/user-guide/README.md)
 
 ## 💬 質問・サポート
 
