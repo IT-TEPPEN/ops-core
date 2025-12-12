@@ -4,7 +4,7 @@
 
 import { useState, useCallback, useRef, useEffect } from "react";
 import type { ApiError, ApiState } from "../types/api";
-import { ApiRequestError } from "../api/client";
+import { ApiRequestError } from "../api";
 
 export interface UseApiOptions<T> {
   /** Initial data value */

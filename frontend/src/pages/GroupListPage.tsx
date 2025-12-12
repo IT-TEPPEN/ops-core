@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import type { Group } from "../types/domain";
-import { listGroups, createGroup } from "../api/groupApi";
+import { listGroups, createGroup } from "../api";
 import GroupList from "../components/Display/GroupList";
 import GroupForm from "../components/Form/GroupForm";
 

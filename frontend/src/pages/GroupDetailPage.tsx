@@ -7,8 +7,8 @@ import {
   deleteGroup,
   addMember,
   removeMember,
-} from "../api/groupApi";
-import { listUsers } from "../api/userApi";
+  listUsers,
+} from "../api";
 import GroupForm from "../components/Form/GroupForm";
 import GroupMemberList from "../components/Display/GroupMemberList";
 import GroupMemberSelector from "../components/Form/GroupMemberSelector";
