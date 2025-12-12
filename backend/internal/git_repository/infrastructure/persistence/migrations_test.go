@@ -17,6 +17,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const (
+	// rollbackOneStep is the number of migration steps to rollback in tests
+	rollbackOneStep = -1
+)
+
 // checkTableExists is a helper function to check if a table exists in the database
 func checkTableExists(t *testing.T, ctx context.Context, conn *pgxpool.Pool, tableName string) bool {
 	var exists bool
@@ -167,15 +172,13 @@ func TestMigrations(t *testing.T) {
 
 	// Test migration down
 	t.Run("Migration Down", func(t *testing.T) {
-		const rollbackSteps = -1 // Rollback one migration
-
 		sourceURL := fmt.Sprintf("file://%s", migrationsPath)
 		m, err := migrate.New(sourceURL, testDSN)
 		require.NoError(t, err, "Failed to create migrate instance")
 		defer m.Close()
 
 		// Rollback one migration
-		err = m.Steps(rollbackSteps)
+		err = m.Steps(rollbackOneStep)
 		require.NoError(t, err, "Migration down failed")
 
 		// Verify version decreased

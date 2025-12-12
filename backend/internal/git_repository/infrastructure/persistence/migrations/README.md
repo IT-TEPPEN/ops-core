@@ -248,9 +248,9 @@ repositories ─┐
               │              ├─> execution_records ─┐
               │              │                      ├─> execution_steps
               │              │                      └─> attachments
-              │              └─> view_history
+              │              ├─> view_history
+              │              └─> view_statistics
               └─> managed_files
-                                view_statistics
 
 users ─┐
        ├─> user_groups ─── groups
