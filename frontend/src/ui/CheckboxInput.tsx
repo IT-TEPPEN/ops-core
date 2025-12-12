@@ -2,7 +2,7 @@
  * Checkbox input component
  */
 
-import type { BaseInputProps } from "../../types/ui";
+import type { BaseInputProps } from "../types/ui";
 
 export interface CheckboxInputProps extends Omit<BaseInputProps, "error"> {
   /** Whether the checkbox is checked */

@@ -3,7 +3,7 @@
  */
 
 import type { ReactNode } from "react";
-import type { Variant, Size } from "../../types/ui";
+import type { Variant, Size } from "../types/ui";
 
 export interface BadgeProps {
   /** Badge content */
