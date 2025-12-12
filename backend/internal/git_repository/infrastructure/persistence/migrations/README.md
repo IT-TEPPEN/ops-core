@@ -136,7 +136,9 @@ view_statistics (document_id, total_views, unique_users,
 
 ### Using the Migration Tool
 
-The migration tool is located at `backend/cmd/migrate/main.go`.
+The migration tool is located at `backend/cmd/migrate/main.go` (from the project root).
+
+Run the following commands from the `backend` directory:
 
 ```bash
 # Apply all pending migrations

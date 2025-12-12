@@ -57,7 +57,10 @@ func TestMigrations(t *testing.T) {
 	require.NoError(t, err, "Failed to connect to PostgreSQL master database")
 	defer masterConn.Close()
 
-	// Create test database (using pgx.Identifier for safe quoting)
+	// Create test database
+	// Note: pgx.Identifier{}.Sanitize() properly quotes and escapes identifiers,
+	// preventing SQL injection by treating the name as a literal identifier.
+	// Example: "test; DROP TABLE users--" becomes "test; DROP TABLE users--" (quoted)
 	createSQL := fmt.Sprintf("CREATE DATABASE %s", pgx.Identifier{testDBName}.Sanitize())
 	_, err = masterConn.Exec(context.Background(), createSQL)
 	require.NoError(t, err, "Failed to create test database")
