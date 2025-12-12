@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strconv"
 
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
@@ -82,7 +83,17 @@ func main() {
 	case "down":
 		steps := 1
 		if len(os.Args) > 2 {
-			fmt.Sscanf(os.Args[2], "%d", &steps)
+			var err error
+			steps, err = strconv.Atoi(os.Args[2])
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Invalid step count: %s\n", os.Args[2])
+				printUsage()
+				os.Exit(1)
+			}
+			if steps < 1 {
+				fmt.Fprintf(os.Stderr, "Step count must be positive\n")
+				os.Exit(1)
+			}
 		}
 		if err := m.Steps(-steps); err != nil && !errors.Is(err, migrate.ErrNoChange) {
 			fmt.Fprintf(os.Stderr, "Migration down failed: %v\n", err)
@@ -117,8 +128,12 @@ func main() {
 			printUsage()
 			os.Exit(1)
 		}
-		var version int
-		fmt.Sscanf(os.Args[2], "%d", &version)
+		version, err := strconv.Atoi(os.Args[2])
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Invalid version number: %s\n", os.Args[2])
+			printUsage()
+			os.Exit(1)
+		}
 		if err := m.Force(version); err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to force version: %v\n", err)
 			os.Exit(1)

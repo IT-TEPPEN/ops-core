@@ -11,6 +11,7 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -51,15 +52,17 @@ func TestMigrations(t *testing.T) {
 	require.NoError(t, err, "Failed to connect to PostgreSQL master database")
 	defer masterConn.Close()
 
-	// Create test database
-	_, err = masterConn.Exec(context.Background(), fmt.Sprintf("CREATE DATABASE %s", testDBName))
+	// Create test database (using pgx.Identifier for safe quoting)
+	createSQL := fmt.Sprintf("CREATE DATABASE %s", pgx.Identifier{testDBName}.Sanitize())
+	_, err = masterConn.Exec(context.Background(), createSQL)
 	require.NoError(t, err, "Failed to create test database")
 
 	// Cleanup function
 	defer func() {
 		cleanupConn, err := pgxpool.New(context.Background(), masterDSN)
 		if err == nil {
-			_, _ = cleanupConn.Exec(context.Background(), fmt.Sprintf("DROP DATABASE IF EXISTS %s WITH (FORCE)", testDBName))
+			dropSQL := fmt.Sprintf("DROP DATABASE IF EXISTS %s WITH (FORCE)", pgx.Identifier{testDBName}.Sanitize())
+			_, _ = cleanupConn.Exec(context.Background(), dropSQL)
 			cleanupConn.Close()
 		}
 	}()
@@ -236,13 +239,16 @@ func TestMigrationConstraints(t *testing.T) {
 	require.NoError(t, err)
 	defer masterConn.Close()
 
-	_, err = masterConn.Exec(context.Background(), fmt.Sprintf("CREATE DATABASE %s", testDBName))
+	// Create test database (using pgx.Identifier for safe quoting)
+	createSQL := fmt.Sprintf("CREATE DATABASE %s", pgx.Identifier{testDBName}.Sanitize())
+	_, err = masterConn.Exec(context.Background(), createSQL)
 	require.NoError(t, err)
 
 	defer func() {
 		cleanupConn, err := pgxpool.New(context.Background(), masterDSN)
 		if err == nil {
-			_, _ = cleanupConn.Exec(context.Background(), fmt.Sprintf("DROP DATABASE IF EXISTS %s WITH (FORCE)", testDBName))
+			dropSQL := fmt.Sprintf("DROP DATABASE IF EXISTS %s WITH (FORCE)", pgx.Identifier{testDBName}.Sanitize())
+			_, _ = cleanupConn.Exec(context.Background(), dropSQL)
 			cleanupConn.Close()
 		}
 	}()
