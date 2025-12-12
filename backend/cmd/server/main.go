@@ -48,7 +48,7 @@ func main() {
 	// --- End Database Connection ---
 
 	// Initialize dependencies using Wire, passing the db pool
-	repoHandler, docHandler, varHandler, execHandler, attachHandler, userHandler, groupHandler, err := InitializeAPI(dbpool) // Pass dbpool and handle error
+	repoHandler, docHandler, varHandler, execHandler, attachHandler, userHandler, groupHandler, viewHistoryHandler, viewStatsHandler, err := InitializeAPI(dbpool) // Pass dbpool and handle error
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to initialize API dependencies: %v\n", err)
 		os.Exit(1)
@@ -140,6 +140,17 @@ func main() {
 		v1.POST("/groups/:groupId/members", groupHandler.AddMember)
 		v1.DELETE("/groups/:groupId/members", groupHandler.RemoveMember)
 		v1.GET("/users/:userId/groups", groupHandler.GetUserGroups)
+
+		// View history routes
+		v1.POST("/documents/:id/views", viewHistoryHandler.RecordView)
+		v1.GET("/users/:id/view-history", viewHistoryHandler.GetUserViewHistory)
+		v1.GET("/documents/:id/view-history", viewHistoryHandler.GetDocumentViewHistory)
+
+		// View statistics routes
+		v1.GET("/documents/:id/statistics", viewStatsHandler.GetDocumentStatistics)
+		v1.GET("/users/:id/statistics", viewStatsHandler.GetUserStatistics)
+		v1.GET("/statistics/popular-documents", viewStatsHandler.GetPopularDocuments)
+		v1.GET("/statistics/recent-documents", viewStatsHandler.GetRecentlyViewedDocuments)
 	}
 
 	// Static file serving (Frontend)
