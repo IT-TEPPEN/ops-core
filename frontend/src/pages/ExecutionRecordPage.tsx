@@ -19,7 +19,7 @@ import {
   updateStepNotes,
   completeExecutionRecord,
   failExecutionRecord,
-} from "../utils/executionRecordApi";
+} from "../api/executionRecordApi";
 
 function ExecutionRecordPage() {
   const { docId, recordId } = useParams<{

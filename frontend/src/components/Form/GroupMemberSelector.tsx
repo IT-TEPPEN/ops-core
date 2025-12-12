@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import type { User } from "../../types/domain";
-import { listUsers } from "../../utils/userApi";
+import { listUsers } from "../../api/userApi";
 
 interface GroupMemberSelectorProps {
   existingMemberIds: string[];

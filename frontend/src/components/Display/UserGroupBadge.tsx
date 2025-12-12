@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import type { Group } from "../../types/domain";
-import { getUserGroups } from "../../utils/groupApi";
+import { getUserGroups } from "../../api/groupApi";
 
 interface UserGroupBadgeProps {
   userId: string;
