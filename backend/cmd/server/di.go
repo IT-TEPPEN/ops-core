@@ -23,6 +23,12 @@ import (
 	userusecase "opscore/backend/internal/user/application/usecase"
 	userhandlers "opscore/backend/internal/user/interfaces/api/handlers"
 	userpersistence "opscore/backend/internal/user/infrastructure/persistence"
+
+	viewhistoryusecase "opscore/backend/internal/view_history/application/usecase"
+	viewhistoryhandlers "opscore/backend/internal/view_history/interfaces/api/handlers"
+
+	viewstatsusecase "opscore/backend/internal/view_statistics/application/usecase"
+	viewstatshandlers "opscore/backend/internal/view_statistics/interfaces/api/handlers"
 )
 
 // Base path for cloning repositories
@@ -98,6 +104,16 @@ func provideUserHandlerLogger() userhandlers.Logger {
 	return &SlogLoggerAdapter{logger: provideAppLogger()}
 }
 
+// provideViewHistoryHandlerLogger adapts slog.Logger to the view history handlers.Logger interface.
+func provideViewHistoryHandlerLogger() viewhistoryhandlers.Logger {
+	return &SlogLoggerAdapter{logger: provideAppLogger()}
+}
+
+// provideViewStatsHandlerLogger adapts slog.Logger to the view statistics handlers.Logger interface.
+func provideViewStatsHandlerLogger() viewstatshandlers.Logger {
+	return &SlogLoggerAdapter{logger: provideAppLogger()}
+}
+
 // provideEncryptor creates an Encryptor from the environment variable.
 func provideEncryptor() (*encryption.Encryptor, error) {
 	keyStr := os.Getenv("ENCRYPTION_KEY")
@@ -115,7 +131,7 @@ func provideEncryptor() (*encryption.Encryptor, error) {
 }
 
 // InitializeAPI initializes all dependencies for the API handlers, using Postgres.
-func InitializeAPI(db *pgxpool.Pool) (*repohandlers.RepositoryHandler, *dochandlers.DocumentHandler, *dochandlers.VariableHandler, *exechandlers.ExecutionRecordHandler, *exechandlers.AttachmentHandler, *userhandlers.UserHandler, *userhandlers.GroupHandler, error) {
+func InitializeAPI(db *pgxpool.Pool) (*repohandlers.RepositoryHandler, *dochandlers.DocumentHandler, *dochandlers.VariableHandler, *exechandlers.ExecutionRecordHandler, *exechandlers.AttachmentHandler, *userhandlers.UserHandler, *userhandlers.GroupHandler, *viewhistoryhandlers.ViewHistoryHandler, *viewstatshandlers.ViewStatisticsHandler, error) {
 	// Create encryptor
 	encryptor, err := provideEncryptor()
 	if err != nil {
@@ -208,5 +224,29 @@ func InitializeAPI(db *pgxpool.Pool) (*repohandlers.RepositoryHandler, *dochandl
 	// Create group handler
 	groupHandler := userhandlers.NewGroupHandler(groupUseCase, userLogger)
 
-	return repositoryHandler, documentHandler, variableHandler, executionRecordHandler, attachmentHandler, userHandler, groupHandler, nil
+	// Create view history repository (in-memory for now)
+	viewHistoryRepository := NewInMemoryViewHistoryRepository()
+
+	// Create view history use case
+	viewHistoryUseCase := viewhistoryusecase.NewViewHistoryUseCase(viewHistoryRepository)
+
+	// Create view history logger
+	viewHistoryLogger := provideViewHistoryHandlerLogger()
+
+	// Create view history handler
+	viewHistoryHandler := viewhistoryhandlers.NewViewHistoryHandler(viewHistoryUseCase, viewHistoryLogger)
+
+	// Create view statistics repository (in-memory for now)
+	viewStatsRepository := NewInMemoryViewStatisticsRepository()
+
+	// Create view statistics use case
+	viewStatsUseCase := viewstatsusecase.NewViewStatisticsUseCase(viewStatsRepository)
+
+	// Create view statistics logger
+	viewStatsLogger := provideViewStatsHandlerLogger()
+
+	// Create view statistics handler
+	viewStatsHandler := viewstatshandlers.NewViewStatisticsHandler(viewStatsUseCase, viewStatsLogger)
+
+	return repositoryHandler, documentHandler, variableHandler, executionRecordHandler, attachmentHandler, userHandler, groupHandler, viewHistoryHandler, viewStatsHandler, nil
 }

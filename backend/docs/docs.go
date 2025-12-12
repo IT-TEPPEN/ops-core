@@ -15,6 +15,2340 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/api/documents/{id}/statistics": {
+            "get": {
+                "description": "Retrieves view statistics for a specific document",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "statistics"
+                ],
+                "summary": "Get document statistics",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Document ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Statistics retrieved successfully",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_view_statistics_interfaces_api_schema.DocumentStatisticsResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_view_statistics_interfaces_api_schema.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_view_statistics_interfaces_api_schema.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/documents/{id}/view-history": {
+            "get": {
+                "description": "Retrieves the view history for a specific document",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "view-history"
+                ],
+                "summary": "Get document's view history",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Document ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "maximum": 100,
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 50,
+                        "description": "Limit",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "minimum": 0,
+                        "type": "integer",
+                        "default": 0,
+                        "description": "Offset",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "View history retrieved successfully",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_view_history_interfaces_api_schema.ViewHistoryListResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_view_history_interfaces_api_schema.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_view_history_interfaces_api_schema.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/documents/{id}/views": {
+            "post": {
+                "description": "Records a view of a document by a user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "view-history"
+                ],
+                "summary": "Record a document view",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Document ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "User ID",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_view_history_interfaces_api_schema.RecordViewRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "View recorded successfully",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_view_history_interfaces_api_schema.ViewHistoryResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_view_history_interfaces_api_schema.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_view_history_interfaces_api_schema.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/statistics/popular-documents": {
+            "get": {
+                "description": "Retrieves the most popular documents based on view count",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "statistics"
+                ],
+                "summary": "Get popular documents",
+                "parameters": [
+                    {
+                        "maximum": 100,
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 10,
+                        "description": "Limit",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 30,
+                        "description": "Days to look back",
+                        "name": "days",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Popular documents retrieved successfully",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_view_statistics_interfaces_api_schema.PopularDocumentsResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_view_statistics_interfaces_api_schema.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/statistics/recent-documents": {
+            "get": {
+                "description": "Retrieves the most recently viewed documents",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "statistics"
+                ],
+                "summary": "Get recently viewed documents",
+                "parameters": [
+                    {
+                        "maximum": 100,
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 10,
+                        "description": "Limit",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Recent documents retrieved successfully",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_view_statistics_interfaces_api_schema.RecentDocumentsResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_view_statistics_interfaces_api_schema.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/users/{id}/statistics": {
+            "get": {
+                "description": "Retrieves view statistics for a specific user",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "statistics"
+                ],
+                "summary": "Get user statistics",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Statistics retrieved successfully",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_view_statistics_interfaces_api_schema.UserStatisticsResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_view_statistics_interfaces_api_schema.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_view_statistics_interfaces_api_schema.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/users/{id}/view-history": {
+            "get": {
+                "description": "Retrieves the view history for a specific user",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "view-history"
+                ],
+                "summary": "Get user's view history",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "maximum": 100,
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 50,
+                        "description": "Limit",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "minimum": 0,
+                        "type": "integer",
+                        "default": 0,
+                        "description": "Offset",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "View history retrieved successfully",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_view_history_interfaces_api_schema.ViewHistoryListResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_view_history_interfaces_api_schema.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_view_history_interfaces_api_schema.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/attachments/{id}": {
+            "get": {
+                "description": "Retrieves metadata information about a specific attachment",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "attachments"
+                ],
+                "summary": "Get attachment metadata",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Attachment ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved attachment metadata",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_execution_record_interfaces_api_schema.AttachmentResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid attachment ID",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Attachment not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Delete a specific attachment by ID",
+                "tags": [
+                    "attachments"
+                ],
+                "summary": "Delete an attachment",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Attachment ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Attachment deleted successfully"
+                    },
+                    "400": {
+                        "description": "Invalid attachment ID",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Attachment not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/attachments/{id}/download": {
+            "get": {
+                "description": "Download the actual file content of an attachment",
+                "produces": [
+                    "application/octet-stream"
+                ],
+                "tags": [
+                    "attachments"
+                ],
+                "summary": "Download an attachment file",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Attachment ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Attachment file content",
+                        "schema": {
+                            "type": "file"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid attachment ID",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Attachment not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/attachments/{id}/url": {
+            "get": {
+                "description": "Get a presigned URL for downloading an attachment (for S3 storage) or download endpoint (for local storage)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "attachments"
+                ],
+                "summary": "Get signed URL for attachment",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Attachment ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Presigned URL or download endpoint",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid attachment ID",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Attachment not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/documents": {
+            "get": {
+                "description": "Retrieves a list of all published documents",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "documents"
+                ],
+                "summary": "List all documents",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Filter by repository ID",
+                        "name": "repository_id",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved documents",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_document_interfaces_api_schema.ListDocumentsResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_document_interfaces_api_schema.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Create a new document with an initial version",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "documents"
+                ],
+                "summary": "Create a new document",
+                "parameters": [
+                    {
+                        "description": "Document information",
+                        "name": "document",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_document_interfaces_api_schema.CreateDocumentRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Document created successfully",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_document_interfaces_api_schema.DocumentResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_document_interfaces_api_schema.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_document_interfaces_api_schema.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/documents/{docId}": {
+            "get": {
+                "description": "Retrieves detailed information about a specific document by ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "documents"
+                ],
+                "summary": "Get document details",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Document ID",
+                        "name": "docId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved document details",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_document_interfaces_api_schema.DocumentResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid document ID format",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_document_interfaces_api_schema.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Document not found",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_document_interfaces_api_schema.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_document_interfaces_api_schema.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Update an existing document by creating a new version",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "documents"
+                ],
+                "summary": "Update a document",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Document ID",
+                        "name": "docId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Document update information",
+                        "name": "document",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_document_interfaces_api_schema.UpdateDocumentRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Document updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_document_interfaces_api_schema.DocumentResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body or document ID",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_document_interfaces_api_schema.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Document not found",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_document_interfaces_api_schema.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_document_interfaces_api_schema.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/documents/{docId}/metadata": {
+            "patch": {
+                "description": "Updates document metadata such as owner, access scope, and auto-update setting",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "documents"
+                ],
+                "summary": "Update document metadata",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Document ID",
+                        "name": "docId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Metadata update information",
+                        "name": "metadata",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_document_interfaces_api_schema.UpdateDocumentMetadataRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Metadata updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_document_interfaces_api_schema.DocumentResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body or document ID",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_document_interfaces_api_schema.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Document not found",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_document_interfaces_api_schema.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_document_interfaces_api_schema.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/documents/{docId}/validate-variables": {
+            "post": {
+                "description": "Validates the provided variable values against the document's variable definitions.\n\n**Note on Response Status Codes:**\nThis endpoint returns HTTP 200 OK for both successful validations and validation failures.\nThe response body's \"valid\" field indicates whether validation passed or failed.\nThis design allows distinguishing between:\n- Validation failures (HTTP 200 with valid:false) - client provided invalid data\n- System errors (HTTP 4xx/5xx) - server-side issues or malformed requests",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "variables"
+                ],
+                "summary": "Validate variable values for a document",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Document ID",
+                        "name": "docId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Variable values to validate",
+                        "name": "values",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_document_interfaces_api_schema.ValidateVariableValuesRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Validation result (valid:true or valid:false with errors)",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_document_interfaces_api_schema.ValidateVariableValuesResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body or document ID",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_document_interfaces_api_schema.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Document not found",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_document_interfaces_api_schema.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_document_interfaces_api_schema.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/documents/{docId}/variables": {
+            "get": {
+                "description": "Retrieves all variable definitions from the current version of a document",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "variables"
+                ],
+                "summary": "Get variable definitions for a document",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Document ID",
+                        "name": "docId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved variable definitions",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_document_interfaces_api_schema.GetVariableDefinitionsResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid document ID format",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_document_interfaces_api_schema.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Document not found",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_document_interfaces_api_schema.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_document_interfaces_api_schema.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/documents/{docId}/versions": {
+            "get": {
+                "description": "Retrieves all versions for a specific document",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "documents"
+                ],
+                "summary": "Get document version history",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Document ID",
+                        "name": "docId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved version history",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_document_interfaces_api_schema.VersionHistoryResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid document ID format",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_document_interfaces_api_schema.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Document not found",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_document_interfaces_api_schema.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_document_interfaces_api_schema.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/documents/{docId}/versions/{version}": {
+            "get": {
+                "description": "Retrieves details of a specific version of a document",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "documents"
+                ],
+                "summary": "Get a specific document version",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Document ID",
+                        "name": "docId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Version number",
+                        "name": "version",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved version details",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_document_interfaces_api_schema.DocumentVersionResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid document ID or version number",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_document_interfaces_api_schema.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Document or version not found",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_document_interfaces_api_schema.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_document_interfaces_api_schema.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/documents/{docId}/versions/{version}/publish": {
+            "post": {
+                "description": "Publishes a specific version of a document, making it the current version",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "documents"
+                ],
+                "summary": "Publish a specific document version",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Document ID",
+                        "name": "docId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Version number",
+                        "name": "version",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Version published successfully",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_document_interfaces_api_schema.DocumentResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid document ID or version number",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_document_interfaces_api_schema.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Document or version not found",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_document_interfaces_api_schema.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_document_interfaces_api_schema.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/documents/{docId}/versions/{version}/rollback": {
+            "post": {
+                "description": "Rolls back the document to a previous version",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "documents"
+                ],
+                "summary": "Rollback to a previous document version",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Document ID",
+                        "name": "docId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Version number",
+                        "name": "version",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Rollback successful",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_document_interfaces_api_schema.DocumentResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid document ID or version number",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_document_interfaces_api_schema.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Document or version not found",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_document_interfaces_api_schema.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_document_interfaces_api_schema.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/execution-records": {
+            "get": {
+                "description": "Search and filter execution records by various criteria",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "execution-records"
+                ],
+                "summary": "Search execution records",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Executor User ID",
+                        "name": "executor_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Document ID",
+                        "name": "document_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Status",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Started From",
+                        "name": "started_from",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Started To",
+                        "name": "started_to",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of execution records",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/definitions/opscore_backend_internal_execution_record_interfaces_api_schema.ExecutionRecordResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid query parameters",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Create a new execution record (work record) for tracking procedure execution",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "execution-records"
+                ],
+                "summary": "Create a new execution record",
+                "parameters": [
+                    {
+                        "description": "Execution record information",
+                        "name": "execution-record",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_execution_record_interfaces_api_schema.CreateExecutionRecordRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Execution record created successfully",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_execution_record_interfaces_api_schema.ExecutionRecordResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "User not authenticated",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/execution-records/{id}": {
+            "get": {
+                "description": "Retrieves detailed information about a specific execution record by ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "execution-records"
+                ],
+                "summary": "Get execution record details",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Execution Record ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved execution record details",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_execution_record_interfaces_api_schema.ExecutionRecordResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid execution record ID",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Execution record not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Delete a specific execution record by ID",
+                "tags": [
+                    "execution-records"
+                ],
+                "summary": "Delete an execution record",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Execution Record ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Execution record deleted successfully"
+                    },
+                    "400": {
+                        "description": "Invalid record ID",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Execution record not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/execution-records/{id}/access-scope": {
+            "put": {
+                "description": "Update the access scope of an execution record (public or private)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "execution-records"
+                ],
+                "summary": "Update execution record access scope",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Execution Record ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Access scope",
+                        "name": "access_scope",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_execution_record_interfaces_api_schema.UpdateAccessScopeRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Access scope updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_execution_record_interfaces_api_schema.ExecutionRecordResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body or record ID",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Execution record not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/execution-records/{id}/attachments": {
+            "get": {
+                "description": "Retrieves all attachments associated with an execution record",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "attachments"
+                ],
+                "summary": "List attachments for an execution record",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Execution Record ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of attachments",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_execution_record_interfaces_api_schema.ListAttachmentsResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid record ID",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Upload a file attachment to an execution record step",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "attachments"
+                ],
+                "summary": "Upload an attachment",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Execution Record ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Execution Step ID",
+                        "name": "execution_step_id",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "file",
+                        "description": "File to upload",
+                        "name": "file",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Attachment uploaded successfully",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_execution_record_interfaces_api_schema.AttachmentResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "User not authenticated",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/execution-records/{id}/complete": {
+            "post": {
+                "description": "Mark an execution record as completed",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "execution-records"
+                ],
+                "summary": "Complete an execution record",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Execution Record ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Execution record completed successfully",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_execution_record_interfaces_api_schema.ExecutionRecordResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid record ID",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Execution record not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/execution-records/{id}/fail": {
+            "post": {
+                "description": "Mark an execution record as failed",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "execution-records"
+                ],
+                "summary": "Mark execution record as failed",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Execution Record ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Execution record marked as failed successfully",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_execution_record_interfaces_api_schema.ExecutionRecordResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid record ID",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Execution record not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/execution-records/{id}/notes": {
+            "put": {
+                "description": "Update the overall notes of an execution record",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "execution-records"
+                ],
+                "summary": "Update execution record notes",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Execution Record ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Execution record notes",
+                        "name": "notes",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_execution_record_interfaces_api_schema.UpdateNotesRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Notes updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_execution_record_interfaces_api_schema.ExecutionRecordResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body or record ID",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Execution record not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/execution-records/{id}/steps": {
+            "post": {
+                "description": "Add a new step to an existing execution record",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "execution-records"
+                ],
+                "summary": "Add a step to execution record",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Execution Record ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Step information",
+                        "name": "step",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_execution_record_interfaces_api_schema.AddStepRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Step added successfully",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_execution_record_interfaces_api_schema.ExecutionRecordResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body or record ID",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Execution record not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/execution-records/{id}/steps/{stepId}/attachments": {
+            "get": {
+                "description": "Retrieves all attachments associated with a specific execution step",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "attachments"
+                ],
+                "summary": "List attachments for an execution step",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Execution Record ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Execution Step ID",
+                        "name": "stepId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of attachments",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_execution_record_interfaces_api_schema.ListAttachmentsResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid step ID",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/execution-records/{id}/steps/{stepNumber}/notes": {
+            "put": {
+                "description": "Update the notes of a specific step in an execution record",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "execution-records"
+                ],
+                "summary": "Update step notes",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Execution Record ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Step Number",
+                        "name": "stepNumber",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Step notes",
+                        "name": "notes",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_execution_record_interfaces_api_schema.UpdateStepNotesRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Step notes updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_execution_record_interfaces_api_schema.ExecutionRecordResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body or step number",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Execution record or step not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/execution-records/{id}/title": {
+            "put": {
+                "description": "Update the title of an execution record",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "execution-records"
+                ],
+                "summary": "Update execution record title",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Execution Record ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Execution record title",
+                        "name": "title",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_execution_record_interfaces_api_schema.UpdateTitleRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Title updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_execution_record_interfaces_api_schema.ExecutionRecordResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body or record ID",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Execution record not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/groups": {
+            "get": {
+                "description": "Retrieves a list of all groups in the system",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "groups"
+                ],
+                "summary": "List all groups",
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved groups",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_user_interfaces_api_schema.ListGroupsResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Add a new group to the system",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "groups"
+                ],
+                "summary": "Create a new group",
+                "parameters": [
+                    {
+                        "description": "Group information",
+                        "name": "group",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_user_interfaces_api_schema.CreateGroupRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Group created successfully",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_user_interfaces_api_schema.GroupResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/groups/{groupId}": {
+            "get": {
+                "description": "Retrieves detailed information about a specific group by ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "groups"
+                ],
+                "summary": "Get group details",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Group ID",
+                        "name": "groupId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved group details",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_user_interfaces_api_schema.GroupResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid group ID format",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Group not found",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Updates the information of a specific group",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "groups"
+                ],
+                "summary": "Update group details",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Group ID",
+                        "name": "groupId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Group information",
+                        "name": "group",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_user_interfaces_api_schema.UpdateGroupRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Group updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_user_interfaces_api_schema.GroupResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body or group ID",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Group not found",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Removes a group from the system",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "groups"
+                ],
+                "summary": "Delete a group",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Group ID",
+                        "name": "groupId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Group deleted successfully",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid group ID",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Group not found",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/groups/{groupId}/members": {
+            "post": {
+                "description": "Adds a user to a specific group",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "groups"
+                ],
+                "summary": "Add member to group",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Group ID",
+                        "name": "groupId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Member information",
+                        "name": "member",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_user_interfaces_api_schema.AddMemberRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Member added successfully",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_user_interfaces_api_schema.GroupResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body or group ID",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Group or user not found",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "User is already a member of the group",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Removes a user from a specific group",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "groups"
+                ],
+                "summary": "Remove member from group",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Group ID",
+                        "name": "groupId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Member information",
+                        "name": "member",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_user_interfaces_api_schema.RemoveMemberRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Member removed successfully",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_user_interfaces_api_schema.GroupResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body or group ID",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Group or user not found",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "User is not a member of the group",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/repositories": {
             "get": {
                 "description": "Retrieves a list of all repositories registered in OpsCore",
@@ -352,9 +2686,1172 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/users": {
+            "get": {
+                "description": "Retrieves a list of all users in the system",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "List all users",
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved users",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_user_interfaces_api_schema.ListUsersResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Add a new user to the system",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Create a new user",
+                "parameters": [
+                    {
+                        "description": "User information",
+                        "name": "user",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_user_interfaces_api_schema.CreateUserRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "User created successfully",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_user_interfaces_api_schema.UserResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "User with this email already exists",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/{userId}": {
+            "get": {
+                "description": "Retrieves detailed information about a specific user by ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Get user details",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "userId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved user details",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_user_interfaces_api_schema.UserResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid user ID format",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Updates the profile information of a specific user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Update user details",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "userId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "User information",
+                        "name": "user",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_user_interfaces_api_schema.UpdateUserRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_user_interfaces_api_schema.UserResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body or user ID",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Email already in use",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Removes a user from the system",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Delete a user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "userId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User deleted successfully",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid user ID",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/{userId}/groups": {
+            "get": {
+                "description": "Retrieves all groups that a specific user is a member of",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "groups"
+                ],
+                "summary": "Get groups for a user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "userId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved user groups",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_user_interfaces_api_schema.ListGroupsResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid user ID format",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Adds a user to a specific group",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Add user to group",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "userId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Group information",
+                        "name": "group",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_user_interfaces_api_schema.JoinGroupRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User added to group successfully",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_user_interfaces_api_schema.UserResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body or user ID",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "User or group not found",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "User is already a member of the group",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Removes a user from a specific group",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Remove user from group",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "userId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Group information",
+                        "name": "group",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_user_interfaces_api_schema.LeaveGroupRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User removed from group successfully",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_user_interfaces_api_schema.UserResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body or user ID",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "User or group not found",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "User is not a member of the group",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/{userId}/role": {
+            "put": {
+                "description": "Changes the role of a specific user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Change user role",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "userId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Role information",
+                        "name": "role",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_user_interfaces_api_schema.ChangeRoleRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Role changed successfully",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_user_interfaces_api_schema.UserResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body or user ID",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_user_interfaces_api_schema.ErrorResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
+        "opscore_backend_internal_document_interfaces_api_schema.CreateDocumentRequest": {
+            "type": "object",
+            "required": [
+                "access_scope",
+                "commit_hash",
+                "content",
+                "doc_type",
+                "file_path",
+                "owner",
+                "repository_id",
+                "title"
+            ],
+            "properties": {
+                "access_scope": {
+                    "type": "string",
+                    "example": "public"
+                },
+                "commit_hash": {
+                    "type": "string",
+                    "example": "abc1234567890"
+                },
+                "content": {
+                    "type": "string",
+                    "example": "# Database Backup Procedure\n\nThis document describes..."
+                },
+                "doc_type": {
+                    "type": "string",
+                    "example": "procedure"
+                },
+                "file_path": {
+                    "type": "string",
+                    "example": "docs/backup-procedure.md"
+                },
+                "is_auto_update": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "owner": {
+                    "type": "string",
+                    "example": "database-team"
+                },
+                "repository_id": {
+                    "type": "string",
+                    "example": "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "[\"database\"",
+                        "\"backup\"]"
+                    ]
+                },
+                "title": {
+                    "type": "string",
+                    "example": "Database Backup Procedure"
+                },
+                "variables": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/opscore_backend_internal_document_interfaces_api_schema.VariableDefinitionRequest"
+                    }
+                }
+            }
+        },
+        "opscore_backend_internal_document_interfaces_api_schema.DocumentListItemResponse": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string",
+                    "example": "2025-04-22T10:00:00Z"
+                },
+                "doc_type": {
+                    "type": "string",
+                    "example": "procedure"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+                },
+                "is_published": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "owner": {
+                    "type": "string",
+                    "example": "database-team"
+                },
+                "repository_id": {
+                    "type": "string",
+                    "example": "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "[\"database\"",
+                        "\"backup\"]"
+                    ]
+                },
+                "title": {
+                    "type": "string",
+                    "example": "Database Backup Procedure"
+                },
+                "updated_at": {
+                    "type": "string",
+                    "example": "2025-04-22T12:00:00Z"
+                },
+                "version_count": {
+                    "type": "integer",
+                    "example": 3
+                }
+            }
+        },
+        "opscore_backend_internal_document_interfaces_api_schema.DocumentResponse": {
+            "type": "object",
+            "properties": {
+                "access_scope": {
+                    "type": "string",
+                    "example": "public"
+                },
+                "created_at": {
+                    "type": "string",
+                    "example": "2025-04-22T10:00:00Z"
+                },
+                "current_version": {
+                    "$ref": "#/definitions/opscore_backend_internal_document_interfaces_api_schema.DocumentVersionResponse"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+                },
+                "is_auto_update": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "is_published": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "owner": {
+                    "type": "string",
+                    "example": "database-team"
+                },
+                "repository_id": {
+                    "type": "string",
+                    "example": "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+                },
+                "updated_at": {
+                    "type": "string",
+                    "example": "2025-04-22T12:00:00Z"
+                },
+                "version_count": {
+                    "type": "integer",
+                    "example": 3
+                }
+            }
+        },
+        "opscore_backend_internal_document_interfaces_api_schema.DocumentVersionResponse": {
+            "type": "object",
+            "properties": {
+                "commit_hash": {
+                    "type": "string",
+                    "example": "abc1234567890"
+                },
+                "content": {
+                    "type": "string",
+                    "example": "# Database Backup Procedure\n\nThis document describes..."
+                },
+                "doc_type": {
+                    "type": "string",
+                    "example": "procedure"
+                },
+                "document_id": {
+                    "type": "string",
+                    "example": "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+                },
+                "file_path": {
+                    "type": "string",
+                    "example": "docs/backup-procedure.md"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "v1b2c3d4-e5f6-7890-1234-567890abcdef"
+                },
+                "is_current": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "published_at": {
+                    "type": "string",
+                    "example": "2025-04-22T10:00:00Z"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "[\"database\"",
+                        "\"backup\"]"
+                    ]
+                },
+                "title": {
+                    "type": "string",
+                    "example": "Database Backup Procedure"
+                },
+                "unpublished_at": {
+                    "type": "string",
+                    "example": "null"
+                },
+                "variables": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/opscore_backend_internal_document_interfaces_api_schema.VariableDefinitionResponse"
+                    }
+                },
+                "version_number": {
+                    "type": "integer",
+                    "example": 1
+                }
+            }
+        },
+        "opscore_backend_internal_document_interfaces_api_schema.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string",
+                    "example": "VALIDATION_FAILED"
+                },
+                "details": {
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Validation failed"
+                }
+            }
+        },
+        "opscore_backend_internal_document_interfaces_api_schema.GetVariableDefinitionsResponse": {
+            "type": "object",
+            "properties": {
+                "documentId": {
+                    "type": "string"
+                },
+                "variables": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/opscore_backend_internal_document_interfaces_api_schema.VariableDefinitionDTO"
+                    }
+                }
+            }
+        },
+        "opscore_backend_internal_document_interfaces_api_schema.ListDocumentsResponse": {
+            "type": "object",
+            "properties": {
+                "documents": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/opscore_backend_internal_document_interfaces_api_schema.DocumentListItemResponse"
+                    }
+                }
+            }
+        },
+        "opscore_backend_internal_document_interfaces_api_schema.UpdateDocumentMetadataRequest": {
+            "type": "object",
+            "properties": {
+                "access_scope": {
+                    "type": "string",
+                    "example": "private"
+                },
+                "is_auto_update": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "owner": {
+                    "type": "string",
+                    "example": "new-team"
+                }
+            }
+        },
+        "opscore_backend_internal_document_interfaces_api_schema.UpdateDocumentRequest": {
+            "type": "object",
+            "required": [
+                "commit_hash",
+                "content",
+                "doc_type",
+                "file_path",
+                "title"
+            ],
+            "properties": {
+                "commit_hash": {
+                    "type": "string",
+                    "example": "def4567890123"
+                },
+                "content": {
+                    "type": "string",
+                    "example": "# Database Backup Procedure v2\n\nUpdated procedure..."
+                },
+                "doc_type": {
+                    "type": "string",
+                    "example": "procedure"
+                },
+                "file_path": {
+                    "type": "string",
+                    "example": "docs/backup-procedure.md"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "[\"database\"",
+                        "\"backup\"",
+                        "\"v2\"]"
+                    ]
+                },
+                "title": {
+                    "type": "string",
+                    "example": "Database Backup Procedure v2"
+                },
+                "variables": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/opscore_backend_internal_document_interfaces_api_schema.VariableDefinitionRequest"
+                    }
+                }
+            }
+        },
+        "opscore_backend_internal_document_interfaces_api_schema.ValidateVariableValuesRequest": {
+            "type": "object",
+            "properties": {
+                "values": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/opscore_backend_internal_document_interfaces_api_schema.VariableValueDTO"
+                    }
+                }
+            }
+        },
+        "opscore_backend_internal_document_interfaces_api_schema.ValidateVariableValuesResponse": {
+            "type": "object",
+            "properties": {
+                "errors": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/opscore_backend_internal_document_interfaces_api_schema.ValidationErrorDTO"
+                    }
+                },
+                "valid": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "opscore_backend_internal_document_interfaces_api_schema.ValidationErrorDTO": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "opscore_backend_internal_document_interfaces_api_schema.VariableDefinitionDTO": {
+            "type": "object",
+            "properties": {
+                "defaultValue": {},
+                "description": {
+                    "type": "string"
+                },
+                "label": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "required": {
+                    "type": "boolean"
+                },
+                "type": {
+                    "description": "\"string\", \"number\", \"boolean\", \"date\"",
+                    "type": "string"
+                }
+            }
+        },
+        "opscore_backend_internal_document_interfaces_api_schema.VariableDefinitionRequest": {
+            "type": "object",
+            "required": [
+                "label",
+                "name",
+                "type"
+            ],
+            "properties": {
+                "default_value": {},
+                "description": {
+                    "type": "string",
+                    "example": "The target server name"
+                },
+                "label": {
+                    "type": "string",
+                    "example": "Server Name"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "server_name"
+                },
+                "required": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "type": {
+                    "type": "string",
+                    "example": "string"
+                }
+            }
+        },
+        "opscore_backend_internal_document_interfaces_api_schema.VariableDefinitionResponse": {
+            "type": "object",
+            "properties": {
+                "default_value": {},
+                "description": {
+                    "type": "string",
+                    "example": "The target server name"
+                },
+                "label": {
+                    "type": "string",
+                    "example": "Server Name"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "server_name"
+                },
+                "required": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "type": {
+                    "type": "string",
+                    "example": "string"
+                }
+            }
+        },
+        "opscore_backend_internal_document_interfaces_api_schema.VariableValueDTO": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "value": {}
+            }
+        },
+        "opscore_backend_internal_document_interfaces_api_schema.VersionHistoryResponse": {
+            "type": "object",
+            "properties": {
+                "document_id": {
+                    "type": "string",
+                    "example": "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+                },
+                "versions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/opscore_backend_internal_document_interfaces_api_schema.DocumentVersionResponse"
+                    }
+                }
+            }
+        },
+        "opscore_backend_internal_execution_record_interfaces_api_schema.AddStepRequest": {
+            "type": "object",
+            "required": [
+                "description",
+                "step_number"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "step_number": {
+                    "type": "integer",
+                    "minimum": 1
+                }
+            }
+        },
+        "opscore_backend_internal_execution_record_interfaces_api_schema.AttachmentResponse": {
+            "type": "object",
+            "properties": {
+                "execution_record_id": {
+                    "type": "string"
+                },
+                "execution_step_id": {
+                    "type": "string"
+                },
+                "file_name": {
+                    "type": "string"
+                },
+                "file_size": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "mime_type": {
+                    "type": "string"
+                },
+                "storage_type": {
+                    "type": "string"
+                },
+                "uploaded_at": {
+                    "type": "string"
+                },
+                "uploaded_by": {
+                    "type": "string"
+                }
+            }
+        },
+        "opscore_backend_internal_execution_record_interfaces_api_schema.CreateExecutionRecordRequest": {
+            "type": "object",
+            "required": [
+                "document_id",
+                "document_version_id",
+                "title"
+            ],
+            "properties": {
+                "document_id": {
+                    "type": "string"
+                },
+                "document_version_id": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "variable_values": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/opscore_backend_internal_execution_record_interfaces_api_schema.VariableValueRequestSchema"
+                    }
+                }
+            }
+        },
+        "opscore_backend_internal_execution_record_interfaces_api_schema.ExecutionRecordResponse": {
+            "type": "object",
+            "properties": {
+                "access_scope": {
+                    "type": "string"
+                },
+                "completed_at": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "document_id": {
+                    "type": "string"
+                },
+                "document_version_id": {
+                    "type": "string"
+                },
+                "executor_id": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "notes": {
+                    "type": "string"
+                },
+                "started_at": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "steps": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/opscore_backend_internal_execution_record_interfaces_api_schema.ExecutionStepResponseSchema"
+                    }
+                },
+                "title": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "variable_values": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/opscore_backend_internal_execution_record_interfaces_api_schema.VariableValueResponseSchema"
+                    }
+                }
+            }
+        },
+        "opscore_backend_internal_execution_record_interfaces_api_schema.ExecutionStepResponseSchema": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "executed_at": {
+                    "type": "string"
+                },
+                "execution_record_id": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "notes": {
+                    "type": "string"
+                },
+                "step_number": {
+                    "type": "integer"
+                }
+            }
+        },
+        "opscore_backend_internal_execution_record_interfaces_api_schema.ListAttachmentsResponse": {
+            "type": "object",
+            "properties": {
+                "attachments": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/opscore_backend_internal_execution_record_interfaces_api_schema.AttachmentResponse"
+                    }
+                }
+            }
+        },
+        "opscore_backend_internal_execution_record_interfaces_api_schema.UpdateAccessScopeRequest": {
+            "type": "object",
+            "required": [
+                "access_scope"
+            ],
+            "properties": {
+                "access_scope": {
+                    "type": "string",
+                    "enum": [
+                        "public",
+                        "private"
+                    ]
+                }
+            }
+        },
+        "opscore_backend_internal_execution_record_interfaces_api_schema.UpdateNotesRequest": {
+            "type": "object",
+            "properties": {
+                "notes": {
+                    "type": "string"
+                }
+            }
+        },
+        "opscore_backend_internal_execution_record_interfaces_api_schema.UpdateStepNotesRequest": {
+            "type": "object",
+            "properties": {
+                "notes": {
+                    "type": "string"
+                }
+            }
+        },
+        "opscore_backend_internal_execution_record_interfaces_api_schema.UpdateTitleRequest": {
+            "type": "object",
+            "required": [
+                "title"
+            ],
+            "properties": {
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "opscore_backend_internal_execution_record_interfaces_api_schema.VariableValueRequestSchema": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "value": {}
+            }
+        },
+        "opscore_backend_internal_execution_record_interfaces_api_schema.VariableValueResponseSchema": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "value": {}
+            }
+        },
         "opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse": {
             "type": "object",
             "properties": {
@@ -507,6 +4004,448 @@ const docTemplate = `{
                     "example": "ghp_1234567890abcdefghijklmnopqrstuvwxyz"
                 }
             }
+        },
+        "opscore_backend_internal_user_interfaces_api_schema.AddMemberRequest": {
+            "type": "object",
+            "required": [
+                "userId"
+            ],
+            "properties": {
+                "userId": {
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                }
+            }
+        },
+        "opscore_backend_internal_user_interfaces_api_schema.ChangeRoleRequest": {
+            "type": "object",
+            "required": [
+                "role"
+            ],
+            "properties": {
+                "role": {
+                    "type": "string",
+                    "example": "admin"
+                }
+            }
+        },
+        "opscore_backend_internal_user_interfaces_api_schema.CreateGroupRequest": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "example": "Engineering team group"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "Engineering"
+                }
+            }
+        },
+        "opscore_backend_internal_user_interfaces_api_schema.CreateUserRequest": {
+            "type": "object",
+            "required": [
+                "email",
+                "name",
+                "role"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "example": "john.doe@example.com"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "John Doe"
+                },
+                "role": {
+                    "type": "string",
+                    "example": "user"
+                }
+            }
+        },
+        "opscore_backend_internal_user_interfaces_api_schema.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string",
+                    "example": "INVALID_REQUEST"
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Invalid request body"
+                }
+            }
+        },
+        "opscore_backend_internal_user_interfaces_api_schema.GroupResponse": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "type": "string",
+                    "example": "2025-04-22T10:00:00Z"
+                },
+                "description": {
+                    "type": "string",
+                    "example": "Engineering team group"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                },
+                "memberIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "550e8400-e29b-41d4-a716-446655440001",
+                        "550e8400-e29b-41d4-a716-446655440002"
+                    ]
+                },
+                "name": {
+                    "type": "string",
+                    "example": "Engineering"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "example": "2025-04-22T10:00:00Z"
+                }
+            }
+        },
+        "opscore_backend_internal_user_interfaces_api_schema.JoinGroupRequest": {
+            "type": "object",
+            "required": [
+                "groupId"
+            ],
+            "properties": {
+                "groupId": {
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                }
+            }
+        },
+        "opscore_backend_internal_user_interfaces_api_schema.LeaveGroupRequest": {
+            "type": "object",
+            "required": [
+                "groupId"
+            ],
+            "properties": {
+                "groupId": {
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                }
+            }
+        },
+        "opscore_backend_internal_user_interfaces_api_schema.ListGroupsResponse": {
+            "type": "object",
+            "properties": {
+                "groups": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/opscore_backend_internal_user_interfaces_api_schema.GroupResponse"
+                    }
+                }
+            }
+        },
+        "opscore_backend_internal_user_interfaces_api_schema.ListUsersResponse": {
+            "type": "object",
+            "properties": {
+                "users": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/opscore_backend_internal_user_interfaces_api_schema.UserResponse"
+                    }
+                }
+            }
+        },
+        "opscore_backend_internal_user_interfaces_api_schema.RemoveMemberRequest": {
+            "type": "object",
+            "required": [
+                "userId"
+            ],
+            "properties": {
+                "userId": {
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                }
+            }
+        },
+        "opscore_backend_internal_user_interfaces_api_schema.UpdateGroupRequest": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "example": "Engineering team group"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "Engineering"
+                }
+            }
+        },
+        "opscore_backend_internal_user_interfaces_api_schema.UpdateUserRequest": {
+            "type": "object",
+            "required": [
+                "email",
+                "name"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "example": "john.doe@example.com"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "John Doe"
+                }
+            }
+        },
+        "opscore_backend_internal_user_interfaces_api_schema.UserResponse": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "type": "string",
+                    "example": "2025-04-22T10:00:00Z"
+                },
+                "email": {
+                    "type": "string",
+                    "example": "john.doe@example.com"
+                },
+                "groupIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "550e8400-e29b-41d4-a716-446655440001",
+                        "550e8400-e29b-41d4-a716-446655440002"
+                    ]
+                },
+                "id": {
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "John Doe"
+                },
+                "role": {
+                    "type": "string",
+                    "example": "user"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "example": "2025-04-22T10:00:00Z"
+                }
+            }
+        },
+        "opscore_backend_internal_view_history_interfaces_api_schema.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string",
+                    "example": "INVALID_REQUEST"
+                },
+                "details": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Invalid request format"
+                }
+            }
+        },
+        "opscore_backend_internal_view_history_interfaces_api_schema.RecordViewRequest": {
+            "type": "object",
+            "required": [
+                "user_id"
+            ],
+            "properties": {
+                "user_id": {
+                    "type": "string",
+                    "example": "user-123"
+                }
+            }
+        },
+        "opscore_backend_internal_view_history_interfaces_api_schema.ViewHistoryListResponse": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/opscore_backend_internal_view_history_interfaces_api_schema.ViewHistoryResponse"
+                    }
+                },
+                "limit": {
+                    "type": "integer",
+                    "example": 50
+                },
+                "offset": {
+                    "type": "integer",
+                    "example": 0
+                },
+                "total_count": {
+                    "type": "integer",
+                    "example": 100
+                }
+            }
+        },
+        "opscore_backend_internal_view_history_interfaces_api_schema.ViewHistoryResponse": {
+            "type": "object",
+            "properties": {
+                "document_id": {
+                    "type": "string",
+                    "example": "b2c3d4e5-f6a7-8901-2345-678901bcdefg"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+                },
+                "user_id": {
+                    "type": "string",
+                    "example": "user-123"
+                },
+                "view_duration": {
+                    "type": "integer",
+                    "example": 120
+                },
+                "viewed_at": {
+                    "type": "string",
+                    "example": "2024-01-15T10:30:00Z"
+                }
+            }
+        },
+        "opscore_backend_internal_view_statistics_interfaces_api_schema.DocumentStatisticsResponse": {
+            "type": "object",
+            "properties": {
+                "average_view_duration": {
+                    "type": "integer",
+                    "example": 120
+                },
+                "document_id": {
+                    "type": "string",
+                    "example": "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+                },
+                "last_viewed_at": {
+                    "type": "string",
+                    "example": "2024-01-15T10:30:00Z"
+                },
+                "total_views": {
+                    "type": "integer",
+                    "example": 1234
+                },
+                "unique_viewers": {
+                    "type": "integer",
+                    "example": 567
+                }
+            }
+        },
+        "opscore_backend_internal_view_statistics_interfaces_api_schema.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string",
+                    "example": "INVALID_REQUEST"
+                },
+                "details": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Invalid request format"
+                }
+            }
+        },
+        "opscore_backend_internal_view_statistics_interfaces_api_schema.PopularDocumentResponse": {
+            "type": "object",
+            "properties": {
+                "document_id": {
+                    "type": "string",
+                    "example": "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+                },
+                "last_viewed_at": {
+                    "type": "string",
+                    "example": "2024-01-15T10:30:00Z"
+                },
+                "total_views": {
+                    "type": "integer",
+                    "example": 1234
+                },
+                "unique_viewers": {
+                    "type": "integer",
+                    "example": 567
+                }
+            }
+        },
+        "opscore_backend_internal_view_statistics_interfaces_api_schema.PopularDocumentsResponse": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/opscore_backend_internal_view_statistics_interfaces_api_schema.PopularDocumentResponse"
+                    }
+                },
+                "limit": {
+                    "type": "integer",
+                    "example": 10
+                }
+            }
+        },
+        "opscore_backend_internal_view_statistics_interfaces_api_schema.RecentDocumentResponse": {
+            "type": "object",
+            "properties": {
+                "document_id": {
+                    "type": "string",
+                    "example": "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+                },
+                "last_viewed_at": {
+                    "type": "string",
+                    "example": "2024-01-15T10:30:00Z"
+                },
+                "total_views": {
+                    "type": "integer",
+                    "example": 234
+                }
+            }
+        },
+        "opscore_backend_internal_view_statistics_interfaces_api_schema.RecentDocumentsResponse": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/opscore_backend_internal_view_statistics_interfaces_api_schema.RecentDocumentResponse"
+                    }
+                },
+                "limit": {
+                    "type": "integer",
+                    "example": 10
+                }
+            }
+        },
+        "opscore_backend_internal_view_statistics_interfaces_api_schema.UserStatisticsResponse": {
+            "type": "object",
+            "properties": {
+                "total_views": {
+                    "type": "integer",
+                    "example": 345
+                },
+                "unique_documents": {
+                    "type": "integer",
+                    "example": 78
+                },
+                "user_id": {
+                    "type": "string",
+                    "example": "user-123"
+                }
+            }
         }
     }
 }`
@@ -521,6 +4460,8 @@ var SwaggerInfo = &swag.Spec{
 	Description:      "This is the API documentation for the OpsCore backend service.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
+	LeftDelim:        "{{",
+	RightDelim:       "}}",
 }
 
 func init() {

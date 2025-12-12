@@ -32,7 +32,20 @@ func NewAttachmentHandler(uc AttachmentUsecase) *AttachmentHandler {
 	return &AttachmentHandler{usecase: uc}
 }
 
-// UploadAttachment handles POST /execution-records/:id/attachments
+// UploadAttachment godoc
+// @Summary Upload an attachment
+// @Description Upload a file attachment to an execution record step
+// @Tags attachments
+// @Accept multipart/form-data
+// @Produce json
+// @Param id path string true "Execution Record ID" example:"a1b2c3d4-e5f6-7890-1234-567890abcdef"
+// @Param execution_step_id formData string true "Execution Step ID"
+// @Param file formData file true "File to upload"
+// @Success 201 {object} schema.AttachmentResponse "Attachment uploaded successfully"
+// @Failure 400 {object} map[string]string "Invalid request"
+// @Failure 401 {object} map[string]string "User not authenticated"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /execution-records/{id}/attachments [post]
 func (h *AttachmentHandler) UploadAttachment(c *gin.Context) {
 	recordID := c.Param("id")
 	if recordID == "" {
@@ -86,7 +99,17 @@ func (h *AttachmentHandler) UploadAttachment(c *gin.Context) {
 	c.JSON(http.StatusCreated, schema.FromAttachmentDTO(resp))
 }
 
-// GetAttachment handles GET /attachments/:id
+// GetAttachment godoc
+// @Summary Get attachment metadata
+// @Description Retrieves metadata information about a specific attachment
+// @Tags attachments
+// @Produce json
+// @Param id path string true "Attachment ID" example:"a1b2c3d4-e5f6-7890-1234-567890abcdef"
+// @Success 200 {object} schema.AttachmentResponse "Successfully retrieved attachment metadata"
+// @Failure 400 {object} map[string]string "Invalid attachment ID"
+// @Failure 404 {object} map[string]string "Attachment not found"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /attachments/{id} [get]
 func (h *AttachmentHandler) GetAttachment(c *gin.Context) {
 	attachmentID := c.Param("id")
 	if attachmentID == "" {
@@ -103,7 +126,17 @@ func (h *AttachmentHandler) GetAttachment(c *gin.Context) {
 	c.JSON(http.StatusOK, schema.FromAttachmentDTO(resp))
 }
 
-// DownloadAttachment handles GET /attachments/:id/download
+// DownloadAttachment godoc
+// @Summary Download an attachment file
+// @Description Download the actual file content of an attachment
+// @Tags attachments
+// @Produce application/octet-stream
+// @Param id path string true "Attachment ID" example:"a1b2c3d4-e5f6-7890-1234-567890abcdef"
+// @Success 200 {file} binary "Attachment file content"
+// @Failure 400 {object} map[string]string "Invalid attachment ID"
+// @Failure 404 {object} map[string]string "Attachment not found"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /attachments/{id}/download [get]
 func (h *AttachmentHandler) DownloadAttachment(c *gin.Context) {
 	attachmentID := c.Param("id")
 	if attachmentID == "" {
@@ -123,7 +156,16 @@ func (h *AttachmentHandler) DownloadAttachment(c *gin.Context) {
 	c.DataFromReader(http.StatusOK, attachment.FileSize, attachment.MimeType, file, nil)
 }
 
-// ListAttachments handles GET /execution-records/:id/attachments
+// ListAttachments godoc
+// @Summary List attachments for an execution record
+// @Description Retrieves all attachments associated with an execution record
+// @Tags attachments
+// @Produce json
+// @Param id path string true "Execution Record ID" example:"a1b2c3d4-e5f6-7890-1234-567890abcdef"
+// @Success 200 {object} schema.ListAttachmentsResponse "List of attachments"
+// @Failure 400 {object} map[string]string "Invalid record ID"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /execution-records/{id}/attachments [get]
 func (h *AttachmentHandler) ListAttachments(c *gin.Context) {
 	recordID := c.Param("id")
 	if recordID == "" {
@@ -145,7 +187,17 @@ func (h *AttachmentHandler) ListAttachments(c *gin.Context) {
 	c.JSON(http.StatusOK, schema.ListAttachmentsResponse{Attachments: responses})
 }
 
-// ListStepAttachments handles GET /execution-records/:id/steps/:stepId/attachments
+// ListStepAttachments godoc
+// @Summary List attachments for an execution step
+// @Description Retrieves all attachments associated with a specific execution step
+// @Tags attachments
+// @Produce json
+// @Param id path string true "Execution Record ID" example:"a1b2c3d4-e5f6-7890-1234-567890abcdef"
+// @Param stepId path string true "Execution Step ID" example:"s1b2c3d4-e5f6-7890-1234-567890abcdef"
+// @Success 200 {object} schema.ListAttachmentsResponse "List of attachments"
+// @Failure 400 {object} map[string]string "Invalid step ID"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /execution-records/{id}/steps/{stepId}/attachments [get]
 func (h *AttachmentHandler) ListStepAttachments(c *gin.Context) {
 	stepID := c.Param("stepId")
 	if stepID == "" {
@@ -167,7 +219,16 @@ func (h *AttachmentHandler) ListStepAttachments(c *gin.Context) {
 	c.JSON(http.StatusOK, schema.ListAttachmentsResponse{Attachments: responses})
 }
 
-// DeleteAttachment handles DELETE /attachments/:id
+// DeleteAttachment godoc
+// @Summary Delete an attachment
+// @Description Delete a specific attachment by ID
+// @Tags attachments
+// @Param id path string true "Attachment ID" example:"a1b2c3d4-e5f6-7890-1234-567890abcdef"
+// @Success 204 "Attachment deleted successfully"
+// @Failure 400 {object} map[string]string "Invalid attachment ID"
+// @Failure 404 {object} map[string]string "Attachment not found"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /attachments/{id} [delete]
 func (h *AttachmentHandler) DeleteAttachment(c *gin.Context) {
 	attachmentID := c.Param("id")
 	if attachmentID == "" {
@@ -184,7 +245,17 @@ func (h *AttachmentHandler) DeleteAttachment(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
-// GetAttachmentURL handles GET /attachments/:id/url
+// GetAttachmentURL godoc
+// @Summary Get signed URL for attachment
+// @Description Get a presigned URL for downloading an attachment (for S3 storage) or download endpoint (for local storage)
+// @Tags attachments
+// @Produce json
+// @Param id path string true "Attachment ID" example:"a1b2c3d4-e5f6-7890-1234-567890abcdef"
+// @Success 200 {object} map[string]string "Presigned URL or download endpoint"
+// @Failure 400 {object} map[string]string "Invalid attachment ID"
+// @Failure 404 {object} map[string]string "Attachment not found"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /attachments/{id}/url [get]
 func (h *AttachmentHandler) GetAttachmentURL(c *gin.Context) {
 	attachmentID := c.Param("id")
 	if attachmentID == "" {
