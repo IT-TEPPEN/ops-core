@@ -244,7 +244,9 @@ func TestCreateGitAskPassScript(t *testing.T) {
 			// 実行権限があることを確認
 			info, err := os.Stat(scriptPath)
 			assert.NoError(t, err)
-			assert.True(t, info.Mode()&0100 != 0, "Script should be executable")
+			// Check if owner execute bit is set (0100 octal = owner execute permission)
+			const ownerExecute = os.FileMode(0100)
+			assert.True(t, info.Mode()&ownerExecute != 0, "Script should be executable")
 		}
 	})
 
