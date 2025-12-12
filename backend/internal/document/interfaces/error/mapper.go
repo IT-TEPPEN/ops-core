@@ -25,6 +25,8 @@ func MapToHTTPError(err error, requestID string) *HTTPError {
 		httpErr = BadRequest("Validation failed")
 		var validationErr *apperror.ValidationFailedError
 		if errors.As(err, &validationErr) {
+			// Use the error code from ValidationFailedError
+			httpErr.Code = string(validationErr.Code)
 			fieldErrors := make([]map[string]interface{}, len(validationErr.Errors))
 			for i, fieldErr := range validationErr.Errors {
 				fieldErrors[i] = map[string]interface{}{
