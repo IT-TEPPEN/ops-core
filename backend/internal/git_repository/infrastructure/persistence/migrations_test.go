@@ -2,7 +2,6 @@ package persistence
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"path/filepath"
 	"runtime"
@@ -16,6 +15,20 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// checkTableExists is a helper function to check if a table exists in the database
+func checkTableExists(t *testing.T, ctx context.Context, conn *pgxpool.Pool, tableName string) bool {
+	var exists bool
+	err := conn.QueryRow(ctx, `
+		SELECT EXISTS (
+			SELECT FROM information_schema.tables 
+			WHERE table_schema = 'public' 
+			AND table_name = $1
+		)
+	`, tableName).Scan(&exists)
+	require.NoError(t, err, "Failed to check if table %s exists", tableName)
+	return exists
+}
 
 // TestMigrations tests the database migrations
 func TestMigrations(t *testing.T) {
@@ -85,137 +98,25 @@ func TestMigrations(t *testing.T) {
 	t.Run("Schema Verification", func(t *testing.T) {
 		ctx := context.Background()
 
-		// Check repositories table
-		var repoTableExists bool
-		err := testConn.QueryRow(ctx, `
-			SELECT EXISTS (
-				SELECT FROM information_schema.tables 
-				WHERE table_schema = 'public' 
-				AND table_name = 'repositories'
-			)
-		`).Scan(&repoTableExists)
-		require.NoError(t, err)
-		assert.True(t, repoTableExists, "repositories table should exist")
+		// Check all required tables exist
+		tables := []string{
+			"repositories",
+			"users",
+			"groups",
+			"user_groups",
+			"documents",
+			"document_versions",
+			"execution_records",
+			"execution_steps",
+			"attachments",
+			"view_history",
+			"view_statistics",
+		}
 
-		// Check users table
-		var usersTableExists bool
-		err = testConn.QueryRow(ctx, `
-			SELECT EXISTS (
-				SELECT FROM information_schema.tables 
-				WHERE table_schema = 'public' 
-				AND table_name = 'users'
-			)
-		`).Scan(&usersTableExists)
-		require.NoError(t, err)
-		assert.True(t, usersTableExists, "users table should exist")
-
-		// Check groups table
-		var groupsTableExists bool
-		err = testConn.QueryRow(ctx, `
-			SELECT EXISTS (
-				SELECT FROM information_schema.tables 
-				WHERE table_schema = 'public' 
-				AND table_name = 'groups'
-			)
-		`).Scan(&groupsTableExists)
-		require.NoError(t, err)
-		assert.True(t, groupsTableExists, "groups table should exist")
-
-		// Check user_groups table
-		var userGroupsTableExists bool
-		err = testConn.QueryRow(ctx, `
-			SELECT EXISTS (
-				SELECT FROM information_schema.tables 
-				WHERE table_schema = 'public' 
-				AND table_name = 'user_groups'
-			)
-		`).Scan(&userGroupsTableExists)
-		require.NoError(t, err)
-		assert.True(t, userGroupsTableExists, "user_groups table should exist")
-
-		// Check documents table
-		var documentsTableExists bool
-		err = testConn.QueryRow(ctx, `
-			SELECT EXISTS (
-				SELECT FROM information_schema.tables 
-				WHERE table_schema = 'public' 
-				AND table_name = 'documents'
-			)
-		`).Scan(&documentsTableExists)
-		require.NoError(t, err)
-		assert.True(t, documentsTableExists, "documents table should exist")
-
-		// Check document_versions table
-		var docVersionsTableExists bool
-		err = testConn.QueryRow(ctx, `
-			SELECT EXISTS (
-				SELECT FROM information_schema.tables 
-				WHERE table_schema = 'public' 
-				AND table_name = 'document_versions'
-			)
-		`).Scan(&docVersionsTableExists)
-		require.NoError(t, err)
-		assert.True(t, docVersionsTableExists, "document_versions table should exist")
-
-		// Check execution_records table
-		var execRecordsTableExists bool
-		err = testConn.QueryRow(ctx, `
-			SELECT EXISTS (
-				SELECT FROM information_schema.tables 
-				WHERE table_schema = 'public' 
-				AND table_name = 'execution_records'
-			)
-		`).Scan(&execRecordsTableExists)
-		require.NoError(t, err)
-		assert.True(t, execRecordsTableExists, "execution_records table should exist")
-
-		// Check execution_steps table
-		var execStepsTableExists bool
-		err = testConn.QueryRow(ctx, `
-			SELECT EXISTS (
-				SELECT FROM information_schema.tables 
-				WHERE table_schema = 'public' 
-				AND table_name = 'execution_steps'
-			)
-		`).Scan(&execStepsTableExists)
-		require.NoError(t, err)
-		assert.True(t, execStepsTableExists, "execution_steps table should exist")
-
-		// Check attachments table
-		var attachmentsTableExists bool
-		err = testConn.QueryRow(ctx, `
-			SELECT EXISTS (
-				SELECT FROM information_schema.tables 
-				WHERE table_schema = 'public' 
-				AND table_name = 'attachments'
-			)
-		`).Scan(&attachmentsTableExists)
-		require.NoError(t, err)
-		assert.True(t, attachmentsTableExists, "attachments table should exist")
-
-		// Check view_history table
-		var viewHistoryTableExists bool
-		err = testConn.QueryRow(ctx, `
-			SELECT EXISTS (
-				SELECT FROM information_schema.tables 
-				WHERE table_schema = 'public' 
-				AND table_name = 'view_history'
-			)
-		`).Scan(&viewHistoryTableExists)
-		require.NoError(t, err)
-		assert.True(t, viewHistoryTableExists, "view_history table should exist")
-
-		// Check view_statistics table
-		var viewStatsTableExists bool
-		err = testConn.QueryRow(ctx, `
-			SELECT EXISTS (
-				SELECT FROM information_schema.tables 
-				WHERE table_schema = 'public' 
-				AND table_name = 'view_statistics'
-			)
-		`).Scan(&viewStatsTableExists)
-		require.NoError(t, err)
-		assert.True(t, viewStatsTableExists, "view_statistics table should exist")
+		for _, tableName := range tables {
+			exists := checkTableExists(t, ctx, testConn, tableName)
+			assert.True(t, exists, "%s table should exist", tableName)
+		}
 	})
 
 	// Verify indexes
@@ -263,13 +164,15 @@ func TestMigrations(t *testing.T) {
 
 	// Test migration down
 	t.Run("Migration Down", func(t *testing.T) {
+		const rollbackSteps = -1 // Rollback one migration
+
 		sourceURL := fmt.Sprintf("file://%s", migrationsPath)
 		m, err := migrate.New(sourceURL, testDSN)
 		require.NoError(t, err, "Failed to create migrate instance")
 		defer m.Close()
 
 		// Rollback one migration
-		err = m.Steps(-1)
+		err = m.Steps(rollbackSteps)
 		require.NoError(t, err, "Migration down failed")
 
 		// Verify version decreased
@@ -310,7 +213,7 @@ func TestMigrations(t *testing.T) {
 
 		// Try to apply migrations again
 		err = m.Up()
-		assert.True(t, errors.Is(err, migrate.ErrNoChange), "Should return ErrNoChange when no migrations to apply")
+		assert.ErrorIs(t, err, migrate.ErrNoChange, "Should return ErrNoChange when no migrations to apply")
 	})
 }
 
