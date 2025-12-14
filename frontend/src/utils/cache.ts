@@ -16,13 +16,26 @@ export interface CacheOptions {
 /**
  * Cache class for client-side data caching.
  */
+export interface CacheConstructorOptions {
+  prefix?: string;
+  cleanupInterval?: number; // in milliseconds
+}
+
 export class Cache {
   private memoryCache: Map<string, CacheEntry<any>> = new Map();
   private readonly prefix: string;
   private cleanupInterval: number | null = null;
+  private readonly cleanupIntervalMs: number;
 
-  constructor(prefix: string = "opscore_cache_") {
-    this.prefix = prefix;
+  constructor(options: CacheConstructorOptions | string = {}) {
+    // Support both old signature (string prefix) and new options object
+    if (typeof options === "string") {
+      this.prefix = options;
+      this.cleanupIntervalMs = 5 * 60 * 1000; // Default 5 minutes
+    } else {
+      this.prefix = options.prefix || "opscore_cache_";
+      this.cleanupIntervalMs = options.cleanupInterval || 5 * 60 * 1000; // Default 5 minutes
+    }
     this.startCleanup();
   }
 
@@ -40,6 +53,7 @@ export class Cache {
       if (!entry) return null;
 
       if (this.isExpired(entry)) {
+        // Lazy cleanup: remove expired entry on access
         this.memoryCache.delete(fullKey);
         return null;
       }
@@ -52,6 +66,7 @@ export class Cache {
 
         const entry: CacheEntry<T> = JSON.parse(item);
         if (this.isExpired(entry)) {
+          // Lazy cleanup: remove expired entry on access
           localStorage.removeItem(fullKey);
           return null;
         }
@@ -201,10 +216,10 @@ export class Cache {
    * Start background cleanup of expired entries.
    */
   private startCleanup(): void {
-    // Clean up expired entries every 5 minutes
+    // Clean up expired entries at the configured interval
     this.cleanupInterval = window.setInterval(() => {
       this.cleanupExpired();
-    }, 5 * 60 * 1000);
+    }, this.cleanupIntervalMs);
   }
 
   /**
@@ -219,16 +234,19 @@ export class Cache {
 
   /**
    * Remove all expired entries from the cache.
+   * Note: This is primarily for memory cleanup. Most expiration is handled
+   * lazily during get operations to avoid expensive full scans.
    */
   private cleanupExpired(): void {
-    // Clean memory cache
+    // Clean memory cache - this is efficient as we maintain the map
     for (const [key, entry] of this.memoryCache.entries()) {
       if (this.isExpired(entry)) {
         this.memoryCache.delete(key);
       }
     }
 
-    // Clean localStorage
+    // Clean localStorage - only do this periodically as it's expensive
+    // Most localStorage cleanup happens lazily during get operations
     try {
       const keysToRemove: string[] = [];
       for (let i = 0; i < localStorage.length; i++) {
@@ -236,8 +254,13 @@ export class Cache {
         if (key && key.startsWith(this.prefix)) {
           const item = localStorage.getItem(key);
           if (item) {
-            const entry: CacheEntry<any> = JSON.parse(item);
-            if (this.isExpired(entry)) {
+            try {
+              const entry: CacheEntry<any> = JSON.parse(item);
+              if (this.isExpired(entry)) {
+                keysToRemove.push(key);
+              }
+            } catch {
+              // Invalid JSON, remove it
               keysToRemove.push(key);
             }
           }

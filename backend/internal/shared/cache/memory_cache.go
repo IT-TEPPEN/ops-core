@@ -79,15 +79,18 @@ func (mc *MemoryCache) removeExpired() {
 // Get retrieves a value from the cache.
 func (mc *MemoryCache) Get(ctx context.Context, key string) (interface{}, error) {
 	mc.mu.RLock()
-	defer mc.mu.RUnlock()
-
 	entry, exists := mc.entries[key]
+	mc.mu.RUnlock()
+
 	if !exists {
 		return nil, nil
 	}
 
 	if entry.isExpired() {
-		// Entry expired, will be cleaned up later
+		// Remove expired entry immediately to free memory
+		mc.mu.Lock()
+		delete(mc.entries, key)
+		mc.mu.Unlock()
 		return nil, nil
 	}
 

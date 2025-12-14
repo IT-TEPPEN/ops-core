@@ -117,7 +117,8 @@ func NewPageResult(items interface{}, total int64, page *Page) *PageResult {
 		totalPages = 1
 	}
 
-	hasNext := page.Offset+page.Limit < int(total)
+	// Use int64 arithmetic to prevent overflow
+	hasNext := int64(page.Offset)+int64(page.Limit) < total
 	hasPrev := page.Offset > 0
 
 	return &PageResult{

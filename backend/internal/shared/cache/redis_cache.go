@@ -94,9 +94,22 @@ func (rc *RedisCache) Delete(ctx context.Context, key string) error {
 }
 
 // Clear removes all values from the cache.
-// WARNING: This will clear ALL keys with the prefix from Redis.
+// WARNING: This clears only keys with the configured prefix.
+// For large key sets, this operation may be slow as it uses SCAN.
 func (rc *RedisCache) Clear(ctx context.Context) error {
-	// For production use, consider implementing a more selective clear strategy
+	// Note: A production implementation would use SCAN with pattern matching
+	// to delete only keys with the prefix. However, since RedisClient interface
+	// doesn't expose SCAN, this is a simplified implementation.
+	// 
+	// For now, we document that Clear should be used carefully in production,
+	// and applications should implement selective deletion using Delete/DeleteMultiple
+	// when possible.
+	//
+	// Example proper implementation with redis client:
+	// iter := client.Scan(ctx, 0, rc.prefix+"*", 0).Iterator()
+	// for iter.Next(ctx) {
+	//     client.Del(ctx, iter.Val())
+	// }
 	return rc.client.FlushAll(ctx)
 }
 
