@@ -26,8 +26,8 @@ func main() {
 	// Get database URL from environment variable
 	databaseURL := os.Getenv("DATABASE_URL")
 	if databaseURL == "" {
-		databaseURL = "postgres://opscore_user:opscore_password@db:5432/opscore_db?sslmode=disable"
-		fmt.Println("Warning: DATABASE_URL environment variable not set, using default.")
+		fmt.Fprintln(os.Stderr, "Error: DATABASE_URL environment variable not set. Please configure the database connection string.")
+		os.Exit(1)
 	}
 
 	// Verify database connection
