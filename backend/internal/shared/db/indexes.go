@@ -1,5 +1,10 @@
 package db
 
+import (
+	"fmt"
+	"regexp"
+)
+
 // IndexDefinition represents a database index definition.
 type IndexDefinition struct {
 	Name    string
@@ -7,6 +12,20 @@ type IndexDefinition struct {
 	Columns []string
 	Unique  bool
 	Where   string // Optional WHERE clause for partial indexes
+}
+
+// validIdentifierRegex validates SQL identifiers (table names, column names, index names)
+var validIdentifierRegex = regexp.MustCompile(`^[a-zA-Z_][a-zA-Z0-9_]*$`)
+
+// validateSQLIdentifier checks if a string is a valid SQL identifier
+func validateSQLIdentifier(identifier string) error {
+	if identifier == "" {
+		return fmt.Errorf("identifier cannot be empty")
+	}
+	if !validIdentifierRegex.MatchString(identifier) {
+		return fmt.Errorf("invalid SQL identifier: %s (must contain only alphanumeric characters and underscores, and start with a letter or underscore)", identifier)
+	}
+	return nil
 }
 
 // GetIndexDefinitions returns all 32 recommended database indexes for performance optimization.
@@ -228,7 +247,28 @@ func GetIndexDefinitions() []IndexDefinition {
 }
 
 // GenerateCreateIndexSQL generates SQL for creating an index.
-func GenerateCreateIndexSQL(idx IndexDefinition) string {
+// Validates all identifiers to prevent SQL injection.
+func GenerateCreateIndexSQL(idx IndexDefinition) (string, error) {
+	// Validate index name
+	if err := validateSQLIdentifier(idx.Name); err != nil {
+		return "", fmt.Errorf("invalid index name: %w", err)
+	}
+	
+	// Validate table name
+	if err := validateSQLIdentifier(idx.Table); err != nil {
+		return "", fmt.Errorf("invalid table name: %w", err)
+	}
+	
+	// Validate column names
+	if len(idx.Columns) == 0 {
+		return "", fmt.Errorf("index must have at least one column")
+	}
+	for _, col := range idx.Columns {
+		if err := validateSQLIdentifier(col); err != nil {
+			return "", fmt.Errorf("invalid column name: %w", err)
+		}
+	}
+	
 	sql := "CREATE"
 	if idx.Unique {
 		sql += " UNIQUE"
@@ -248,12 +288,16 @@ func GenerateCreateIndexSQL(idx IndexDefinition) string {
 	}
 	
 	sql += ";"
-	return sql
+	return sql, nil
 }
 
 // GenerateDropIndexSQL generates SQL for dropping an index.
-func GenerateDropIndexSQL(indexName string) string {
-	return "DROP INDEX IF EXISTS " + indexName + ";"
+// Validates the index name to prevent SQL injection.
+func GenerateDropIndexSQL(indexName string) (string, error) {
+	if err := validateSQLIdentifier(indexName); err != nil {
+		return "", fmt.Errorf("invalid index name: %w", err)
+	}
+	return "DROP INDEX IF EXISTS " + indexName + ";", nil
 }
 
 // IndexRationale provides documentation for why certain indexes are recommended.

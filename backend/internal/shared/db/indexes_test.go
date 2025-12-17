@@ -90,7 +90,8 @@ func TestGenerateCreateIndexSQL(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := GenerateCreateIndexSQL(tt.index)
+			result, err := GenerateCreateIndexSQL(tt.index)
+			require.NoError(t, err)
 			assert.Equal(t, tt.expected, result)
 		})
 	}
@@ -116,8 +117,79 @@ func TestGenerateDropIndexSQL(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := GenerateDropIndexSQL(tt.indexName)
+			result, err := GenerateDropIndexSQL(tt.indexName)
+			require.NoError(t, err)
 			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+func TestGenerateCreateIndexSQL_InvalidInputs(t *testing.T) {
+	tests := []struct {
+		name  string
+		index IndexDefinition
+	}{
+		{
+			name: "Invalid index name",
+			index: IndexDefinition{
+				Name:    "idx-test; DROP TABLE users;--",
+				Table:   "test_table",
+				Columns: []string{"column1"},
+			},
+		},
+		{
+			name: "Invalid table name",
+			index: IndexDefinition{
+				Name:    "idx_test",
+				Table:   "test_table'; DROP TABLE users;--",
+				Columns: []string{"column1"},
+			},
+		},
+		{
+			name: "Invalid column name",
+			index: IndexDefinition{
+				Name:    "idx_test",
+				Table:   "test_table",
+				Columns: []string{"column1; DROP TABLE users;--"},
+			},
+		},
+		{
+			name: "Empty columns",
+			index: IndexDefinition{
+				Name:    "idx_test",
+				Table:   "test_table",
+				Columns: []string{},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := GenerateCreateIndexSQL(tt.index)
+			assert.Error(t, err, "Should reject invalid input")
+		})
+	}
+}
+
+func TestGenerateDropIndexSQL_InvalidInputs(t *testing.T) {
+	tests := []struct {
+		name      string
+		indexName string
+	}{
+		{
+			name:      "SQL injection attempt",
+			indexName: "idx_test; DROP TABLE users;--",
+		},
+		{
+			name:      "Empty name",
+			indexName: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := GenerateDropIndexSQL(tt.indexName)
+			assert.Error(t, err, "Should reject invalid input")
 		})
 	}
 }
@@ -167,7 +239,8 @@ func TestIndexDefinitions_ValidSQL(t *testing.T) {
 	indexes := GetIndexDefinitions()
 
 	for _, idx := range indexes {
-		sql := GenerateCreateIndexSQL(idx)
+		sql, err := GenerateCreateIndexSQL(idx)
+		require.NoError(t, err, "Should generate valid SQL for index %s", idx.Name)
 
 		// Basic SQL validation
 		assert.True(t, strings.HasPrefix(sql, "CREATE"), "SQL should start with CREATE")

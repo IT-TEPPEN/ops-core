@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"log"
 	"time"
 )
 
@@ -174,11 +176,18 @@ func (rc *RedisCache) SetMultiple(ctx context.Context, items map[string]interfac
 
 	// Set TTL for each key if specified
 	if ttl > 0 {
+		var ttlErrors []string
 		for key := range items {
 			if err := rc.client.Expire(ctx, rc.prefixKey(key), ttl); err != nil {
-				// Continue setting TTL for other keys even if one fails
-				continue
+				// Log the error but continue setting TTL for other keys
+				errMsg := fmt.Sprintf("failed to set TTL for key %s: %v", key, err)
+				ttlErrors = append(ttlErrors, errMsg)
+				log.Printf("Redis cache warning: %s", errMsg)
 			}
+		}
+		// If any TTL failures occurred, log a summary
+		if len(ttlErrors) > 0 {
+			log.Printf("Redis cache: %d TTL failures out of %d keys in SetMultiple", len(ttlErrors), len(items))
 		}
 	}
 

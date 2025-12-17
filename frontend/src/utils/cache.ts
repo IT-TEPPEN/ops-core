@@ -27,6 +27,7 @@ export class Cache {
   private cleanupInterval: number | null = null;
   private readonly cleanupIntervalMs: number;
   private pendingPromises: Map<string, Promise<any>> = new Map();
+  private localStorageKeys: Set<string> = new Set();
 
   constructor(options: CacheConstructorOptions | string = {}) {
     // Support both old signature (string prefix) and new options object
@@ -69,6 +70,7 @@ export class Cache {
         if (this.isExpired(entry)) {
           // Lazy cleanup: remove expired entry on access
           localStorage.removeItem(fullKey);
+          this.localStorageKeys.delete(fullKey);
           return null;
         }
 
@@ -105,6 +107,8 @@ export class Cache {
     } else {
       try {
         localStorage.setItem(fullKey, JSON.stringify(entry));
+        // Track this key for efficient cleanup
+        this.localStorageKeys.add(fullKey);
       } catch (error) {
         console.error("Cache set error:", error);
         // Fall back to memory if localStorage is full or unavailable
@@ -126,6 +130,8 @@ export class Cache {
     } else {
       try {
         localStorage.removeItem(fullKey);
+        // Remove from tracking set
+        this.localStorageKeys.delete(fullKey);
       } catch (error) {
         console.error("Cache delete error:", error);
       }
@@ -143,15 +149,11 @@ export class Cache {
 
     if (storage === "localStorage" || storage === "all") {
       try {
-        // Remove all keys with our prefix
-        const keysToRemove: string[] = [];
-        for (let i = 0; i < localStorage.length; i++) {
-          const key = localStorage.key(i);
-          if (key && key.startsWith(this.prefix)) {
-            keysToRemove.push(key);
-          }
-        }
-        keysToRemove.forEach((key) => localStorage.removeItem(key));
+        // Use tracked keys for efficient removal
+        this.localStorageKeys.forEach((key) => {
+          localStorage.removeItem(key);
+        });
+        this.localStorageKeys.clear();
       } catch (error) {
         console.error("Cache clear error:", error);
       }
@@ -255,8 +257,7 @@ export class Cache {
 
   /**
    * Remove all expired entries from the cache.
-   * Note: This is primarily for memory cleanup. Most expiration is handled
-   * lazily during get operations to avoid expensive full scans.
+   * Uses tracked keys for efficient localStorage cleanup.
    */
   private cleanupExpired(): void {
     // Clean memory cache - this is efficient as we maintain the map
@@ -266,28 +267,33 @@ export class Cache {
       }
     }
 
-    // Clean localStorage - only do this periodically as it's expensive
-    // Most localStorage cleanup happens lazily during get operations
+    // Clean localStorage using tracked keys for efficiency
     try {
       const keysToRemove: string[] = [];
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && key.startsWith(this.prefix)) {
-          const item = localStorage.getItem(key);
-          if (item) {
-            try {
-              const entry: CacheEntry<any> = JSON.parse(item);
-              if (this.isExpired(entry)) {
-                keysToRemove.push(key);
-              }
-            } catch {
-              // Invalid JSON, remove it
+      
+      // Only iterate through our tracked keys instead of all localStorage
+      this.localStorageKeys.forEach((key) => {
+        const item = localStorage.getItem(key);
+        if (item) {
+          try {
+            const entry: CacheEntry<any> = JSON.parse(item);
+            if (this.isExpired(entry)) {
               keysToRemove.push(key);
             }
+          } catch {
+            // Invalid JSON, remove it
+            keysToRemove.push(key);
           }
+        } else {
+          // Key doesn't exist in localStorage anymore, remove from tracking
+          keysToRemove.push(key);
         }
-      }
-      keysToRemove.forEach((key) => localStorage.removeItem(key));
+      });
+      
+      keysToRemove.forEach((key) => {
+        localStorage.removeItem(key);
+        this.localStorageKeys.delete(key);
+      });
     } catch (error) {
       console.error("Cache cleanup error:", error);
     }
