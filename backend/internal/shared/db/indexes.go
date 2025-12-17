@@ -9,7 +9,7 @@ type IndexDefinition struct {
 	Where   string // Optional WHERE clause for partial indexes
 }
 
-// GetIndexDefinitions returns all 27 recommended database indexes for performance optimization.
+// GetIndexDefinitions returns all 32 recommended database indexes for performance optimization.
 func GetIndexDefinitions() []IndexDefinition {
 	return []IndexDefinition{
 		// Document indexes

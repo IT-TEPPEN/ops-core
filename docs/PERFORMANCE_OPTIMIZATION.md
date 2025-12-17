@@ -109,7 +109,22 @@ statsKey := builder.ViewStatisticsKey("doc-123")
 
 ### Index Strategy
 
-Database indexes are defined in `backend/internal/shared/db/indexes.go` and applied via migration `000008_add_performance_indexes.up.sql`.
+Database indexes are defined in `backend/internal/shared/db/indexes.go` and applied via migration `000008_add_performance_indexes.up.sql`. A total of 32 indexes cover frequently queried tables.
+
+### Index Summary
+
+| Table | Index Count | Purpose |
+|-------|-------------|---------|
+| documents | 5 | Filter by repository, owner, publication status |
+| document_versions | 3 | Version lookup and commit tracking |
+| execution_records | 6 | Search by document, user, status, dates |
+| execution_steps | 2 | Step ordering and lookup |
+| attachments | 2 | Link to records and steps |
+| view_history | 4 | User views and aggregation |
+| view_statistics | 4 | Popular and recent documents |
+| users | 2 | Email and username uniqueness |
+| groups | 1 | Group name search |
+| group_members | 3 | Membership queries |
 
 ### Key Indexes
 

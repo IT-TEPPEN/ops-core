@@ -168,6 +168,32 @@ describe("Cache", () => {
       expect(value).toBe("async value");
       expect(cache.get<string>("key1", "memory")).toBe("async value");
     });
+
+    it("should prevent race conditions with concurrent calls", async () => {
+      let callCount = 0;
+      const factory = vi.fn(async () => {
+        callCount++;
+        // Simulate async operation
+        await new Promise((resolve) => setTimeout(resolve, 10));
+        return `value-${callCount}`;
+      });
+
+      // Make 3 concurrent calls for the same key
+      const [result1, result2, result3] = await Promise.all([
+        cache.getOrSet("race-key", factory, { storage: "memory" }),
+        cache.getOrSet("race-key", factory, { storage: "memory" }),
+        cache.getOrSet("race-key", factory, { storage: "memory" }),
+      ]);
+
+      // Factory should only be called once
+      expect(factory).toHaveBeenCalledOnce();
+      expect(callCount).toBe(1);
+
+      // All results should be the same
+      expect(result1).toBe(result2);
+      expect(result2).toBe(result3);
+      expect(result1).toBe("value-1");
+    });
   });
 
   describe("Clear all", () => {

@@ -26,6 +26,7 @@ export class Cache {
   private readonly prefix: string;
   private cleanupInterval: number | null = null;
   private readonly cleanupIntervalMs: number;
+  private pendingPromises: Map<string, Promise<any>> = new Map();
 
   constructor(options: CacheConstructorOptions | string = {}) {
     // Support both old signature (string prefix) and new options object
@@ -185,6 +186,7 @@ export class Cache {
    * Get or set a value with a factory function.
    * If the value exists and is not expired, return it.
    * Otherwise, call the factory function and cache the result.
+   * This method prevents race conditions by ensuring only one factory execution per key.
    * @param key Cache key
    * @param factory Function to generate the value if not cached
    * @param options Cache options
@@ -199,9 +201,28 @@ export class Cache {
       return cached;
     }
 
-    const value = await factory();
-    this.set(key, value, options);
-    return value;
+    const fullKey = this.prefix + key;
+
+    // Check if there's already a pending promise for this key
+    const existingPromise = this.pendingPromises.get(fullKey);
+    if (existingPromise) {
+      return existingPromise;
+    }
+
+    // Create and store the promise
+    const promise = (async () => {
+      try {
+        const value = await factory();
+        this.set(key, value, options);
+        return value;
+      } finally {
+        // Clean up the pending promise
+        this.pendingPromises.delete(fullKey);
+      }
+    })();
+
+    this.pendingPromises.set(fullKey, promise);
+    return promise;
   }
 
   /**
