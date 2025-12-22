@@ -266,7 +266,7 @@ go run ./cmd/migrate down
 swag init -g cmd/server/main.go -o docs
 
 # API仕様書の確認
-# http://localhost:8080/swagger/index.html
+http://localhost:8080/swagger/index.html
 ```
 
 ## 関連ドキュメント
