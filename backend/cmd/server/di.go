@@ -17,12 +17,12 @@ import (
 	dochandlers "opscore/backend/internal/document/interfaces/api/handlers"
 
 	execusecase "opscore/backend/internal/execution_record/application/usecase"
-	exechandlers "opscore/backend/internal/execution_record/interfaces/api/handlers"
 	"opscore/backend/internal/execution_record/infrastructure/storage"
+	exechandlers "opscore/backend/internal/execution_record/interfaces/api/handlers"
 
 	userusecase "opscore/backend/internal/user/application/usecase"
-	userhandlers "opscore/backend/internal/user/interfaces/api/handlers"
 	userpersistence "opscore/backend/internal/user/infrastructure/persistence"
+	userhandlers "opscore/backend/internal/user/interfaces/api/handlers"
 
 	viewhistoryusecase "opscore/backend/internal/view_history/application/usecase"
 	viewhistoryhandlers "opscore/backend/internal/view_history/interfaces/api/handlers"
@@ -135,7 +135,7 @@ func InitializeAPI(db *pgxpool.Pool) (*repohandlers.RepositoryHandler, *dochandl
 	// Create encryptor
 	encryptor, err := provideEncryptor()
 	if err != nil {
-		return nil, nil, nil, nil, nil, nil, nil, err
+		return nil, nil, nil, nil, nil, nil, nil, nil, nil, err
 	}
 
 	// Create repository (persistence layer)
@@ -144,7 +144,7 @@ func InitializeAPI(db *pgxpool.Pool) (*repohandlers.RepositoryHandler, *dochandl
 	// Create git manager
 	gitManager, err := provideGitManager()
 	if err != nil {
-		return nil, nil, nil, nil, nil, nil, nil, err
+		return nil, nil, nil, nil, nil, nil, nil, nil, nil, err
 	}
 
 	// Create use case
@@ -194,7 +194,7 @@ func InitializeAPI(db *pgxpool.Pool) (*repohandlers.RepositoryHandler, *dochandl
 	}
 	storageManager, err := storage.NewLocalStorageManager(storageBasePath)
 	if err != nil {
-		return nil, nil, nil, nil, nil, nil, nil, err
+		return nil, nil, nil, nil, nil, nil, nil, nil, nil, err
 	}
 
 	// Create attachment use case

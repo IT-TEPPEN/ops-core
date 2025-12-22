@@ -39,14 +39,14 @@ func NewViewHistoryHandler(uc usecase.ViewHistoryUseCase, logger Logger) *ViewHi
 // @Tags view-history
 // @Accept json
 // @Produce json
-// @Param id path string true "Document ID" example:"a1b2c3d4-e5f6-7890-1234-567890abcdef"
+// @Param docId path string true "Document ID" example:"a1b2c3d4-e5f6-7890-1234-567890abcdef"
 // @Param request body schema.RecordViewRequest true "User ID"
 // @Success 201 {object} schema.ViewHistoryResponse "View recorded successfully"
 // @Failure 400 {object} schema.ErrorResponse "Invalid request"
 // @Failure 500 {object} schema.ErrorResponse "Internal server error"
-// @Router /api/documents/{id}/views [post]
+// @Router /api/documents/{docId}/views [post]
 func (h *ViewHistoryHandler) RecordView(c *gin.Context) {
-	documentID := c.Param("id")
+	documentID := c.Param("docId")
 	requestID := c.GetString("request_id")
 
 	var req schema.RecordViewRequest
@@ -84,15 +84,15 @@ func (h *ViewHistoryHandler) RecordView(c *gin.Context) {
 // @Description Retrieves the view history for a specific user
 // @Tags view-history
 // @Produce json
-// @Param id path string true "User ID" example:"user-123"
+// @Param userId path string true "User ID" example:"user-123"
 // @Param limit query int false "Limit" default(50) minimum(1) maximum(100)
 // @Param offset query int false "Offset" default(0) minimum(0)
 // @Success 200 {object} schema.ViewHistoryListResponse "View history retrieved successfully"
 // @Failure 400 {object} schema.ErrorResponse "Invalid request"
 // @Failure 500 {object} schema.ErrorResponse "Internal server error"
-// @Router /api/users/{id}/view-history [get]
+// @Router /api/users/{userId}/view-history [get]
 func (h *ViewHistoryHandler) GetUserViewHistory(c *gin.Context) {
-	userID := c.Param("id")
+	userID := c.Param("userId")
 	requestID := c.GetString("request_id")
 
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "50"))
@@ -132,15 +132,15 @@ func (h *ViewHistoryHandler) GetUserViewHistory(c *gin.Context) {
 // @Description Retrieves the view history for a specific document
 // @Tags view-history
 // @Produce json
-// @Param id path string true "Document ID" example:"a1b2c3d4-e5f6-7890-1234-567890abcdef"
+// @Param docId path string true "Document ID" example:"a1b2c3d4-e5f6-7890-1234-567890abcdef"
 // @Param limit query int false "Limit" default(50) minimum(1) maximum(100)
 // @Param offset query int false "Offset" default(0) minimum(0)
 // @Success 200 {object} schema.ViewHistoryListResponse "View history retrieved successfully"
 // @Failure 400 {object} schema.ErrorResponse "Invalid request"
 // @Failure 500 {object} schema.ErrorResponse "Internal server error"
-// @Router /api/documents/{id}/view-history [get]
+// @Router /api/documents/{docId}/view-history [get]
 func (h *ViewHistoryHandler) GetDocumentViewHistory(c *gin.Context) {
-	documentID := c.Param("id")
+	documentID := c.Param("docId")
 	requestID := c.GetString("request_id")
 
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "50"))

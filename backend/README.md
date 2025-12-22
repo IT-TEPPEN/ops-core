@@ -222,10 +222,10 @@ Gitリポジトリのアクセストークンは、AES-256-GCM方式で暗号化
 
 ```bash
 # 依存関係のインストール
-go mod download
+go mod tidy
 
 # ビルド
-go build -o bin/server cmd/server/main.go
+go build -o ./bin/server ./cmd/server
 
 # 実行
 ./bin/server
@@ -249,11 +249,14 @@ go test ./internal/document/...
 データベースマイグレーションの詳細は [ADR 0006: Database Migration](../adr/0006-database-migration.md) を参照してください。
 
 ```bash
-# マイグレーションの適用
-migrate -path db/migrations -database "postgres://user:pass@localhost:5432/opscore?sslmode=disable" up
+# Apply all pending migrations
+go run ./cmd/migrate up
 
-# マイグレーションのロールバック
-migrate -path db/migrations -database "postgres://user:pass@localhost:5432/opscore?sslmode=disable" down 1
+# Check migration status
+go run ./cmd/migrate status
+
+# Rollback the last migration
+go run ./cmd/migrate down
 ```
 
 ### API仕様書の生成

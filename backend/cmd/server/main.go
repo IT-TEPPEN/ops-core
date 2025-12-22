@@ -47,7 +47,6 @@ func main() {
 	fmt.Println("Successfully connected to the database.")
 	// --- End Database Connection ---
 
-	// Initialize dependencies using Wire, passing the db pool
 	repoHandler, docHandler, varHandler, execHandler, attachHandler, userHandler, groupHandler, viewHistoryHandler, viewStatsHandler, err := InitializeAPI(dbpool) // Pass dbpool and handle error
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to initialize API dependencies: %v\n", err)
@@ -142,13 +141,13 @@ func main() {
 		v1.GET("/users/:userId/groups", groupHandler.GetUserGroups)
 
 		// View history routes
-		v1.POST("/documents/:id/views", viewHistoryHandler.RecordView)
-		v1.GET("/users/:id/view-history", viewHistoryHandler.GetUserViewHistory)
-		v1.GET("/documents/:id/view-history", viewHistoryHandler.GetDocumentViewHistory)
+		v1.POST("/documents/:docId/views", viewHistoryHandler.RecordView)
+		v1.GET("/users/:userId/view-history", viewHistoryHandler.GetUserViewHistory)
+		v1.GET("/documents/:docId/view-history", viewHistoryHandler.GetDocumentViewHistory)
 
 		// View statistics routes
-		v1.GET("/documents/:id/statistics", viewStatsHandler.GetDocumentStatistics)
-		v1.GET("/users/:id/statistics", viewStatsHandler.GetUserStatistics)
+		v1.GET("/documents/:docId/statistics", viewStatsHandler.GetDocumentStatistics)
+		v1.GET("/users/:userId/statistics", viewStatsHandler.GetUserStatistics)
 		v1.GET("/statistics/popular-documents", viewStatsHandler.GetPopularDocuments)
 		v1.GET("/statistics/recent-documents", viewStatsHandler.GetRecentlyViewedDocuments)
 	}

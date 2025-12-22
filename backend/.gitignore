@@ -28,3 +28,5 @@ tmp/
 main
 
 cloned_repos/
+
+bin/

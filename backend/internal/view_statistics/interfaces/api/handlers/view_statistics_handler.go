@@ -37,13 +37,13 @@ func NewViewStatisticsHandler(uc usecase.ViewStatisticsUseCase, logger Logger) *
 // @Description Retrieves view statistics for a specific document
 // @Tags statistics
 // @Produce json
-// @Param id path string true "Document ID" example:"a1b2c3d4-e5f6-7890-1234-567890abcdef"
+// @Param docId path string true "Document ID" example:"a1b2c3d4-e5f6-7890-1234-567890abcdef"
 // @Success 200 {object} schema.DocumentStatisticsResponse "Statistics retrieved successfully"
 // @Failure 400 {object} schema.ErrorResponse "Invalid request"
 // @Failure 500 {object} schema.ErrorResponse "Internal server error"
-// @Router /api/documents/{id}/statistics [get]
+// @Router /api/documents/{docId}/statistics [get]
 func (h *ViewStatisticsHandler) GetDocumentStatistics(c *gin.Context) {
-	documentID := c.Param("id")
+	documentID := c.Param("docId")
 	requestID := c.GetString("request_id")
 
 	h.logger.Info("Getting document statistics", "request_id", requestID, "document_id", documentID)
@@ -70,13 +70,13 @@ func (h *ViewStatisticsHandler) GetDocumentStatistics(c *gin.Context) {
 // @Description Retrieves view statistics for a specific user
 // @Tags statistics
 // @Produce json
-// @Param id path string true "User ID" example:"user-123"
+// @Param userId path string true "User ID" example:"user-123"
 // @Success 200 {object} schema.UserStatisticsResponse "Statistics retrieved successfully"
 // @Failure 400 {object} schema.ErrorResponse "Invalid request"
 // @Failure 500 {object} schema.ErrorResponse "Internal server error"
-// @Router /api/users/{id}/statistics [get]
+// @Router /api/users/{userId}/statistics [get]
 func (h *ViewStatisticsHandler) GetUserStatistics(c *gin.Context) {
-	userID := c.Param("id")
+	userID := c.Param("userId")
 	requestID := c.GetString("request_id")
 
 	h.logger.Info("Getting user statistics", "request_id", requestID, "user_id", userID)
