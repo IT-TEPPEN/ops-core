@@ -28,8 +28,8 @@ export type { CheckboxInputProps } from "../ui/CheckboxInput";
 export { DateInput } from "../ui/DateInput";
 export type { DateInputProps } from "../ui/DateInput";
 
-export { FormField } from "../ui/FormField";
-export type { FormFieldProps } from "../ui/FormField";
+export { UI_Form_Field } from "../ui/form/FormField";
+export type { FormFieldProps } from "../ui/form/FormField";
 
 export { VariableForm } from "./Form/VariableForm";
 export type { VariableFormProps } from "./Form/VariableForm";
@@ -49,7 +49,10 @@ export { AttachmentList } from "./Display/AttachmentList";
 export type { AttachmentListProps } from "./Display/AttachmentList";
 
 export { AttachmentUploader } from "./Display/AttachmentUploader";
-export type { AttachmentUploaderProps, AttachmentResponse } from "./Display/AttachmentUploader";
+export type {
+  AttachmentUploaderProps,
+  AttachmentResponse,
+} from "./Display/AttachmentUploader";
 
 export { AttachmentViewer } from "./Display/AttachmentViewer";
 export type { AttachmentViewerProps } from "./Display/AttachmentViewer";

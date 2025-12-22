@@ -24,7 +24,7 @@ export interface FormFieldProps {
 /**
  * A wrapper component for form fields with label, error, and helper text
  */
-export function FormField({
+export function UI_Form_Field({
   label,
   name,
   error,

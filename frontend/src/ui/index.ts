@@ -10,7 +10,6 @@ export * from "./Tag";
 export * from "./StatusIndicator";
 
 // Form components
-export * from "./FormField";
 export * from "./TextInput";
 export * from "./SelectInput";
 export * from "./NumberInput";
@@ -20,3 +19,6 @@ export * from "./CheckboxInput";
 // Layout components
 export * from "./Breadcrumb";
 export * from "./PageHeader";
+
+// Form sub-components
+export * from "./form";

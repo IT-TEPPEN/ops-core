@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { RepositoryList } from "../features/repository/components/RepositoryList";
+import { UI_Form_Input, UI_Form_Submit } from "../ui/form";
+import { UI_Form_Field } from "../components";
 
 function RepositoriesPage() {
   const [newRepoUrl, setNewRepoUrl] = useState("");
@@ -54,30 +56,22 @@ function RepositoriesPage() {
       {/* Registration Form */}
       <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
         <h2 className="text-xl font-semibold mb-4">Register New Repository</h2>
+
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label htmlFor="repoUrl" className="block text-sm font-medium mb-1">
-              Repository URL
-            </label>
-            <input
+          <UI_Form_Field label="Repository URL" name="repoUrl" required>
+            <UI_Form_Input
               id="repoUrl"
               type="text"
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
               placeholder="https://github.com/username/repo.git"
               value={newRepoUrl}
               onChange={(e) => setNewRepoUrl(e.target.value)}
               required
             />
-          </div>
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className={`px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-              isSubmitting ? "opacity-50 cursor-not-allowed" : ""
-            }`}
-          >
-            {isSubmitting ? "Registering..." : "Register Repository"}
-          </button>
+          </UI_Form_Field>
+          <UI_Form_Submit
+            isSubmitting={isSubmitting}
+            label="Register Repository"
+          />
         </form>
 
         {submitMessage && (
