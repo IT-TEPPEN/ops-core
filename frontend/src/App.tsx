@@ -1,4 +1,3 @@
-import { useState, useEffect } from "react";
 import { Routes, Route, Link } from "react-router-dom";
 import BlogPage from "./pages/BlogPage";
 import RepositoriesPage from "./pages/RepositoriesPage";
@@ -13,28 +12,6 @@ import GroupDetailPage from "./pages/GroupDetailPage";
 
 // Define a simple Home component for the root path
 function HomePage() {
-  const [message, setMessage] = useState("Loading...");
-
-  useEffect(() => {
-    const apiHost = import.meta.env.VITE_API_HOST;
-    const apiUrl = apiHost ? `http://${apiHost}/api/v1` : "/api";
-
-    console.log(`Fetching data from: ${apiUrl}`);
-
-    fetch(apiUrl)
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
-      })
-      .then((data) => setMessage(data.message))
-      .catch((error) => {
-        console.error("Error fetching data:", error);
-        setMessage("Failed to load message from backend.");
-      });
-  }, []);
-
   return (
     <div className="text-center p-8">
       <h1 className="text-3xl font-bold mb-4">OpsCore Documentation System</h1>
@@ -70,10 +47,6 @@ function HomePage() {
             View Documentation
           </Link>
         </div>
-      </div>
-
-      <div className="mt-12 text-gray-500">
-        Backend status: <span className="font-semibold">{message}</span>
       </div>
     </div>
   );
@@ -145,9 +118,18 @@ function App() {
           <Route path="/documents" element={<DocumentListPage />} />
           <Route path="/documents/:docId" element={<DocumentDetailPage />} />
           <Route path="/documents/:docId/view" element={<DocumentViewPage />} />
-          <Route path="/documents/:docId/execute" element={<ExecutionRecordPage />} />
-          <Route path="/documents/:docId/execute/:recordId" element={<ExecutionRecordPage />} />
-          <Route path="/documents/:docId/versions" element={<DocumentVersionHistoryPage />} />
+          <Route
+            path="/documents/:docId/execute"
+            element={<ExecutionRecordPage />}
+          />
+          <Route
+            path="/documents/:docId/execute/:recordId"
+            element={<ExecutionRecordPage />}
+          />
+          <Route
+            path="/documents/:docId/versions"
+            element={<DocumentVersionHistoryPage />}
+          />
           <Route path="/groups" element={<GroupListPage />} />
           <Route path="/groups/:groupId" element={<GroupDetailPage />} />
           <Route path="/blog" element={<BlogPage />} />
