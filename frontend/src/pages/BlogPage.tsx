@@ -100,7 +100,9 @@ function BlogPage() {
 
     try {
       const response = await fetch(
-        `${apiUrl}/repositories/${repoId}/files/${encodeURIComponent(filePath)}`
+        `${apiUrl}/repositories/${repoId}/files/content?path=${encodeURIComponent(
+          filePath
+        )}`
       );
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
