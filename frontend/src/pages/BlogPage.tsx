@@ -1,59 +1,78 @@
-import { useState, useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
+import { useRepositoryManagementAdapter } from "../features/repository/contexts";
+import { useQuery } from "@tanstack/react-query";
+import {
+  DocumentKnowledgeMeta,
+  DocumentProcedureMeta,
+} from "../features/repository/data-types";
 
-interface Metadata {
-  [key: string]: any;
+function ProcedureMetaComponent(props: { meta: DocumentProcedureMeta }) {
+  return (
+    <div className="mb-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg shadow">
+      <h2 className="text-lg font-semibold mb-2">Procedure Metadata</h2>
+      <dl className="space-y-2">
+        <div>
+          <dt className="font-medium text-gray-600 dark:text-gray-400">
+            Title
+          </dt>
+          <dd className="text-gray-800 dark:text-gray-200">
+            {props.meta.title}
+          </dd>
+        </div>
+
+        <div>
+          <dt className="font-medium text-gray-600 dark:text-gray-400">
+            Owner
+          </dt>
+          <dd className="text-gray-800 dark:text-gray-200">
+            {props.meta.owner}
+          </dd>
+        </div>
+
+        <div>
+          <dt className="font-medium text-gray-600 dark:text-gray-400">Tags</dt>
+          <dd className="text-gray-800 dark:text-gray-200">
+            {props.meta.tags.join(", ")}
+          </dd>
+        </div>
+      </dl>
+    </div>
+  );
 }
 
-/**
- * Custom function to parse frontmatter from markdown content
- * This avoids using gray-matter which depends on Node.js Buffer
- */
-function parseFrontmatter(markdown: string): {
-  content: string;
-  data: Metadata;
-} {
-  const result: { content: string; data: Metadata } = {
-    content: markdown,
-    data: {},
-  };
+function KnowledgeMetaComponent(props: { meta: DocumentKnowledgeMeta }) {
+  return (
+    <div className="mb-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg shadow">
+      <h2 className="text-lg font-semibold mb-2">Knowledge Metadata</h2>
+      <dl className="space-y-2">
+        <div>
+          <dt className="font-medium text-gray-600 dark:text-gray-400">
+            Title
+          </dt>
+          <dd className="text-gray-800 dark:text-gray-200">
+            {props.meta.title}
+          </dd>
+        </div>
 
-  // Check if the content starts with frontmatter delimiters (---)
-  if (!markdown.startsWith("---")) {
-    return result;
-  }
+        <div>
+          <dt className="font-medium text-gray-600 dark:text-gray-400">
+            Owner
+          </dt>
+          <dd className="text-gray-800 dark:text-gray-200">
+            {props.meta.owner}
+          </dd>
+        </div>
 
-  // Find the end of the frontmatter block
-  const endOfFrontmatter = markdown.indexOf("---", 3);
-  if (endOfFrontmatter === -1) {
-    return result;
-  }
-
-  // Extract frontmatter text
-  const frontmatterText = markdown.substring(3, endOfFrontmatter).trim();
-
-  // Parse frontmatter lines into key-value pairs
-  const frontmatterLines = frontmatterText.split("\n");
-  frontmatterLines.forEach((line) => {
-    const colonIndex = line.indexOf(":");
-    if (colonIndex !== -1) {
-      const key = line.substring(0, colonIndex).trim();
-      const value = line.substring(colonIndex + 1).trim();
-
-      // Try to parse as JSON if possible
-      try {
-        result.data[key] = JSON.parse(value);
-      } catch (e) {
-        // If not valid JSON, use the string value
-        result.data[key] = value;
-      }
-    }
-  });
-
-  // Return content without frontmatter
-  result.content = markdown.substring(endOfFrontmatter + 3).trim();
-  return result;
+        <div>
+          <dt className="font-medium text-gray-600 dark:text-gray-400">Tags</dt>
+          <dd className="text-gray-800 dark:text-gray-200">
+            {props.meta.tags.join(", ")}
+          </dd>
+        </div>
+      </dl>
+    </div>
+  );
 }
 
 function BlogPage() {
@@ -61,27 +80,11 @@ function BlogPage() {
     repoId: string;
     filePath: string;
   }>();
-
-  console.log("Repo ID:", repoId);
-  console.log("File Path:", filePath);
-
-  const [markdownContent, setMarkdownContent] = useState<string>("");
-  const [metadata, setMetadata] = useState<Metadata>({});
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  // API base URL
-  const apiHost = import.meta.env.VITE_API_HOST;
-  const apiUrl = apiHost ? `http://${apiHost}/api/v1` : "/api";
-
-  useEffect(() => {
-    if (repoId) {
-      fetchMarkdownContent();
-    } else {
-      setIsLoading(false);
-      setError("No repository ID provided. Please select a repository first.");
-    }
-  }, [repoId]);
+  const adapter = useRepositoryManagementAdapter();
+  const query = useQuery({
+    queryKey: ["repositories", repoId, "files", filePath],
+    queryFn: () => adapter.getFileContent(repoId!, filePath!),
+  });
 
   if (!filePath) {
     return (
@@ -94,36 +97,37 @@ function BlogPage() {
     );
   }
 
-  const fetchMarkdownContent = async () => {
-    setIsLoading(true);
-    setError(null);
+  if (query.isLoading) {
+    return (
+      <div className="text-center p-8">
+        <p className="text-gray-500">Loading content...</p>
+      </div>
+    );
+  }
 
-    try {
-      const response = await fetch(
-        `${apiUrl}/repositories/${repoId}/files/content?path=${encodeURIComponent(
-          filePath
-        )}`
-      );
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
+  if (query.error) {
+    return (
+      <div className="p-3 bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100 rounded">
+        {(query.error as Error).message}
+      </div>
+    );
+  }
 
-      // Use custom function to parse the markdown and extract frontmatter
-      const { content, data: frontmatter } = parseFrontmatter(data.content);
+  if (!query.data) {
+    return (
+      <div className="p-8 bg-white dark:bg-gray-800 rounded-lg shadow-md">
+        <p className="text-gray-500">
+          No markdown content available for this repository.
+        </p>
+        <p className="text-gray-500 mt-2">
+          Make sure you have selected markdown files from the repository
+          management page.
+        </p>
+      </div>
+    );
+  }
 
-      // Set the main content without frontmatter
-      setMarkdownContent(content);
-
-      // Set the extracted metadata
-      setMetadata(frontmatter);
-    } catch (err) {
-      setError("Failed to load markdown content. Please try again later.");
-      console.error("Error fetching markdown content:", err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const meta = query.data.getMeta();
 
   return (
     <div className="space-y-6">
@@ -137,71 +141,18 @@ function BlogPage() {
         </Link>
       </div>
 
-      {isLoading && (
-        <div className="text-center p-8">
-          <p className="text-gray-500">Loading content...</p>
+      <div className="flex flex-col md:flex-row gap-6">
+        <div className="w-full md:w-1/4 bg-white dark:bg-gray-800 rounded-lg shadow-md">
+          {meta.type === "procedure" && <ProcedureMetaComponent meta={meta} />}
+          {meta.type === "knowledge" && <KnowledgeMetaComponent meta={meta} />}
         </div>
-      )}
 
-      {error && (
-        <div className="p-3 bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100 rounded">
-          {error}
+        <div className="p-6 md:p-8">
+          <article className="prose lg:prose-xl dark:prose-invert max-w-none">
+            <ReactMarkdown>{query.data.getContent()}</ReactMarkdown>
+          </article>
         </div>
-      )}
-
-      {!isLoading && !error && markdownContent && (
-        <div className="flex flex-col md:flex-row gap-6">
-          {/* Metadata sidebar */}
-          {Object.keys(metadata).length > 0 && (
-            <div className="w-full md:w-1/4 bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
-              <div className="p-4">
-                <h2 className="text-lg font-semibold mb-3 pb-2 border-b border-gray-200 dark:border-gray-700">
-                  Document Metadata
-                </h2>
-                <dl className="space-y-2">
-                  {Object.entries(metadata).map(([key, value]) => (
-                    <div key={key} className="pb-1">
-                      <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                        {key}
-                      </dt>
-                      <dd className="text-sm text-gray-700 dark:text-gray-300 break-words">
-                        {typeof value === "string"
-                          ? value
-                          : JSON.stringify(value)}
-                      </dd>
-                    </div>
-                  ))}
-                </dl>
-              </div>
-            </div>
-          )}
-
-          {/* Main content */}
-          <div
-            className={`w-full ${
-              Object.keys(metadata).length > 0 ? "md:w-3/4" : ""
-            } bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden`}
-          >
-            <div className="p-6 md:p-8">
-              <article className="prose lg:prose-xl dark:prose-invert max-w-none">
-                <ReactMarkdown>{markdownContent}</ReactMarkdown>
-              </article>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {!isLoading && !error && !markdownContent && (
-        <div className="text-center p-8 bg-white dark:bg-gray-800 rounded-lg shadow-md">
-          <p className="text-gray-500">
-            No markdown content available for this repository.
-          </p>
-          <p className="text-gray-500 mt-2">
-            Make sure you have selected markdown files from the repository
-            management page.
-          </p>
-        </div>
-      )}
+      </div>
     </div>
   );
 }

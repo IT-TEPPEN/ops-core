@@ -1,7 +1,29 @@
+import matter from "gray-matter";
 import { RepositoryManagementAdapter } from "../features/repository/adapters/RepositoryManagementAdapter";
-import { Repositories, Repository } from "../features/repository/data-types";
+import {
+  Document,
+  DocumentMeta,
+  Repositories,
+  Repository,
+} from "../features/repository/data-types";
 import { Pagenation } from "../shared/data-types";
 import { V1ApiClient } from "./client";
+
+/**
+ * Custom function to parse frontmatter from markdown content
+ * This avoids using gray-matter which depends on Node.js Buffer
+ */
+function parseFrontmatter(markdown: string): {
+  content: string;
+  meta: DocumentMeta;
+} {
+  const result = matter(markdown);
+
+  return {
+    content: result.content,
+    meta: result.data as DocumentMeta,
+  };
+}
 
 interface ResponseListRepositories {
   repositories: {
@@ -11,6 +33,12 @@ interface ResponseListRepositories {
     updated_at: string;
     url: string;
   }[];
+}
+
+interface ResponseGetFileContent {
+  repoId: string;
+  filePath: string;
+  content: string;
 }
 
 class RepositoryImpl implements Repository {
@@ -52,6 +80,38 @@ class RepositoryImpl implements Repository {
 
   getUpdatedAt(): Date {
     return this.updatedAt;
+  }
+}
+
+class DocumentImpl implements Document {
+  private readonly repoId: string;
+  private readonly filePath: string;
+  private readonly meta: DocumentMeta;
+  private readonly content: string;
+
+  constructor(data: { repoId: string; filePath: string; content: string }) {
+    this.repoId = data.repoId;
+    this.filePath = data.filePath;
+
+    const { content, meta } = parseFrontmatter(data.content);
+    this.content = content;
+    this.meta = meta;
+  }
+
+  getRepoId(): string {
+    return this.repoId;
+  }
+
+  getFilePath(): string {
+    return this.filePath;
+  }
+
+  getMeta(): DocumentMeta {
+    return this.meta;
+  }
+
+  getContent(): string {
+    return this.content;
   }
 }
 
@@ -141,5 +201,13 @@ export class RepositoryApi
       data: repositories,
       pagenation: pagenation,
     };
+  }
+
+  async getFileContent(repoId: string, filePath: string): Promise<Document> {
+    const res = await this.get<ResponseGetFileContent>(
+      `/${repoId}/files/content?path=${encodeURIComponent(filePath)}`
+    );
+
+    return new DocumentImpl(res);
   }
 }
