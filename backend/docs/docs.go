@@ -2519,9 +2519,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/repositories/{repoId}/files/{filePath}/contents": {
+        "/repositories/{repoId}/files/{filePath}": {
             "get": {
-                "description": "Retrieves the content of a specific file from a repository by its URL-safe encoded file path.",
+                "description": "Retrieves the content of a specific file from a repository by its URL-encoded file path.",
                 "produces": [
                     "application/json"
                 ],

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"net/url"
 	"opscore/backend/internal/git_repository/application/dto"
 	repository "opscore/backend/internal/git_repository/application/usecase"
 	"opscore/backend/internal/git_repository/interfaces/api/schema"
@@ -171,7 +172,7 @@ func (h *RepositoryHandler) ListRepositoryFiles(c *gin.Context) {
 
 // GetFileContents godoc
 // @Summary Get file contents from a repository
-// @Description Retrieves the content of a specific file from a repository by its URL-safe encoded file path.
+// @Description Retrieves the content of a specific file from a repository by its URL-encoded file path.
 // @Tags repositories
 // @Produce  json
 // @Param   repoId path string true "Repository ID" example:"a1b2c3d4-e5f6-7890-1234-567890abcdef"
@@ -180,10 +181,10 @@ func (h *RepositoryHandler) ListRepositoryFiles(c *gin.Context) {
 // @Failure 400 {object} schema.ErrorResponse "Invalid repository ID or file path"
 // @Failure 404 {object} schema.ErrorResponse "Repository or file not found"
 // @Failure 500 {object} schema.ErrorResponse "Internal server error"
-// @Router /repositories/{repoId}/files/{filePath}/contents [get]
+// @Router /repositories/{repoId}/files/{filePath} [get]
 func (h *RepositoryHandler) GetFileContents(c *gin.Context) {
 	repoId := c.Param("repoId")
-	filePath := c.Param("filePath")
+	encodedFilePath := c.Param("filePath")
 	requestID := c.GetString("request_id")
 
 	if repoId == "" {
@@ -192,9 +193,17 @@ func (h *RepositoryHandler) GetFileContents(c *gin.Context) {
 		return
 	}
 
-	if filePath == "" {
+	if encodedFilePath == "" {
 		h.logger.Warn("Missing file path", "request_id", requestID, "repo_id", repoId)
 		c.JSON(http.StatusBadRequest, schema.ErrorResponse{Code: "INVALID_REQUEST", Message: "File path is required"})
+		return
+	}
+
+	// Decode URL-encoded file path
+	filePath, err := url.QueryUnescape(encodedFilePath)
+	if err != nil {
+		h.logger.Warn("Invalid URL-encoded file path", "request_id", requestID, "repo_id", repoId, "encoded_path", encodedFilePath, "error", err.Error())
+		c.JSON(http.StatusBadRequest, schema.ErrorResponse{Code: "INVALID_REQUEST", Message: "Invalid URL-encoded file path: " + err.Error()})
 		return
 	}
 

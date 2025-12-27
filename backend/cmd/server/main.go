@@ -82,7 +82,7 @@ func main() {
 		v1.GET("/repositories", repoHandler.ListRepositories)      // Adding this route to list all repositories
 		v1.GET("/repositories/:repoId", repoHandler.GetRepository) // New route to get repository details by ID
 		v1.GET("/repositories/:repoId/files", repoHandler.ListRepositoryFiles)
-		v1.GET("/repositories/:repoId/files/*filePath/contents", repoHandler.GetFileContents)
+		v1.GET("/repositories/:repoId/files/:filePath", repoHandler.GetFileContents)
 		v1.PUT("/repositories/:repoId/token", repoHandler.UpdateAccessToken) // アクセストークン更新用エンドポイント
 
 		// Document routes

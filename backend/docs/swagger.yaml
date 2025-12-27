@@ -2573,10 +2573,10 @@ paths:
       summary: List files in a repository
       tags:
       - repositories
-  /repositories/{repoId}/files/{filePath}/contents:
+  /repositories/{repoId}/files/{filePath}:
     get:
       description: Retrieves the content of a specific file from a repository by its
-        URL-safe encoded file path.
+        URL-encoded file path.
       parameters:
       - description: Repository ID
         in: path
