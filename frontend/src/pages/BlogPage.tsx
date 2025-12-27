@@ -130,10 +130,10 @@ function BlogPage() {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Documentation</h1>
         <Link
-          to="/repositories"
+          to={`/repositories/${repoId}`}
           className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
         >
-          Back to Repositories
+          Back to Repository
         </Link>
       </div>
 

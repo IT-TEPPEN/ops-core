@@ -294,7 +294,7 @@ function RepositoryDetailPage() {
                           }/files/${encodeURIComponent(file.path)}`}
                           className="text-blue-500 hover:text-blue-700 font-medium"
                         >
-                          Manage Files
+                          Preview
                         </Link>
                       </td>
                     </tr>
