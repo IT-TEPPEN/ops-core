@@ -169,23 +169,22 @@ func (h *RepositoryHandler) ListRepositoryFiles(c *gin.Context) {
 	c.JSON(http.StatusOK, schema.ListFilesResponse{Files: responseFiles})
 }
 
-// SelectRepositoryFiles godoc
-// @Summary Select manageable files in a repository
-// @Description Marks specific files within a repository as manageable by OpsCore.
+// GetFileContents godoc
+// @Summary Get file contents from a repository
+// @Description Retrieves the content of a specific file from a repository by its URL-safe encoded file path.
 // @Tags repositories
-// @Accept  json
 // @Produce  json
 // @Param   repoId path string true "Repository ID" example:"a1b2c3d4-e5f6-7890-1234-567890abcdef"
-// @Param   files body schema.SelectFilesRequest true "List of file paths to select"
-// @Success 200 {object} schema.SelectFilesResponse "Files selected successfully"
-// @Failure 400 {object} schema.ErrorResponse "Invalid request body or repository ID"
-// @Failure 404 {object} schema.ErrorResponse "Repository not found"
+// @Param   filePath path string true "URL-encoded file path" example:"README.md" example:"docs%2Fadr%2F0001.md"
+// @Success 200 {object} schema.GetFileContentsResponse "Successfully retrieved file contents"
+// @Failure 400 {object} schema.ErrorResponse "Invalid repository ID or file path"
+// @Failure 404 {object} schema.ErrorResponse "Repository or file not found"
 // @Failure 500 {object} schema.ErrorResponse "Internal server error"
-// @Router /repositories/{repoId}/files/select [post]
-func (h *RepositoryHandler) SelectRepositoryFiles(c *gin.Context) {
+// @Router /repositories/{repoId}/files/{filePath}/contents [get]
+func (h *RepositoryHandler) GetFileContents(c *gin.Context) {
 	repoId := c.Param("repoId")
-	requestID := c.GetString("request_id") // ミドルウェアから設定されたリクエストID
-	var req schema.SelectFilesRequest
+	filePath := c.Param("filePath")
+	requestID := c.GetString("request_id")
 
 	if repoId == "" {
 		h.logger.Warn("Missing repository ID", "request_id", requestID)
@@ -193,75 +192,28 @@ func (h *RepositoryHandler) SelectRepositoryFiles(c *gin.Context) {
 		return
 	}
 
-	if err := c.ShouldBindJSON(&req); err != nil {
-		h.logger.Error("Invalid request body", "request_id", requestID, "repo_id", repoId, "error", err.Error())
-		c.JSON(http.StatusBadRequest, schema.ErrorResponse{Code: "INVALID_REQUEST", Message: "Invalid request body: " + err.Error()})
-		return
-	}
-	if len(req.FilePaths) == 0 {
-		h.logger.Warn("Empty file paths", "request_id", requestID, "repo_id", repoId)
-		c.JSON(http.StatusBadRequest, schema.ErrorResponse{Code: "INVALID_REQUEST", Message: "filePaths cannot be empty"})
+	if filePath == "" {
+		h.logger.Warn("Missing file path", "request_id", requestID, "repo_id", repoId)
+		c.JSON(http.StatusBadRequest, schema.ErrorResponse{Code: "INVALID_REQUEST", Message: "File path is required"})
 		return
 	}
 
-	// Convert schema to DTO
-	dtoReq := schema.ToSelectFilesDTO(req)
-
-	h.logger.Info("Selecting repository files", "request_id", requestID, "repo_id", repoId, "file_count", len(dtoReq.FilePaths))
-	err := h.repoUseCase.SelectFiles(c.Request.Context(), repoId, dtoReq.FilePaths)
+	h.logger.Info("Getting file contents", "request_id", requestID, "repo_id", repoId, "file_path", filePath)
+	content, err := h.repoUseCase.GetFileContents(c.Request.Context(), repoId, filePath)
 
 	if err != nil {
 		// Use error mapper to convert application errors to HTTP errors
 		httpErr := intererror.MapToHTTPError(err, requestID)
-		h.logger.Error("Failed to select files", "request_id", requestID, "repo_id", repoId, "error", err.Error(), "http_code", httpErr.Code)
+		h.logger.Error("Failed to retrieve file contents", "request_id", requestID, "repo_id", repoId, "file_path", filePath, "error", err.Error(), "http_code", httpErr.Code)
 		c.JSON(httpErr.StatusCode, schema.ErrorResponse{Code: httpErr.Code, Message: httpErr.Message})
 		return
 	}
 
-	h.logger.Info("Files selected successfully", "request_id", requestID, "repo_id", repoId, "file_count", len(dtoReq.FilePaths))
-	c.JSON(http.StatusOK, schema.SelectFilesResponse{
-		Message:       "Files selected successfully",
-		RepoID:        repoId,
-		SelectedFiles: len(dtoReq.FilePaths),
-	})
-}
-
-// GetSelectedMarkdown godoc
-// @Summary Get selected Markdown content from a repository
-// @Description Retrieves the concatenated content of all selected Markdown files for a given repository.
-// @Tags repositories
-// @Produce  json
-// @Param   repoId path string true "Repository ID" example:"a1b2c3d4-e5f6-7890-1234-567890abcdef"
-// @Success 200 {object} schema.GetMarkdownResponse "Successfully retrieved Markdown content"
-// @Failure 400 {object} schema.ErrorResponse "Invalid repository ID format"
-// @Failure 404 {object} schema.ErrorResponse "Repository not found or no files selected"
-// @Failure 500 {object} schema.ErrorResponse "Internal server error"
-// @Router /repositories/{repoId}/markdown [get]
-func (h *RepositoryHandler) GetSelectedMarkdown(c *gin.Context) {
-	repoId := c.Param("repoId")
-	requestID := c.GetString("request_id") // ミドルウェアから設定されたリクエストID
-
-	if repoId == "" {
-		h.logger.Warn("Missing repository ID", "request_id", requestID)
-		c.JSON(http.StatusBadRequest, schema.ErrorResponse{Code: "INVALID_ID", Message: "Repository ID is required"})
-		return
-	}
-
-	h.logger.Info("Getting selected Markdown content", "request_id", requestID, "repo_id", repoId)
-	markdownContent, err := h.repoUseCase.GetSelectedMarkdown(c.Request.Context(), repoId)
-
-	if err != nil {
-		// Use error mapper to convert application errors to HTTP errors
-		httpErr := intererror.MapToHTTPError(err, requestID)
-		h.logger.Error("Failed to retrieve Markdown content", "request_id", requestID, "repo_id", repoId, "error", err.Error(), "http_code", httpErr.Code)
-		c.JSON(httpErr.StatusCode, schema.ErrorResponse{Code: httpErr.Code, Message: httpErr.Message})
-		return
-	}
-
-	h.logger.Info("Successfully retrieved Markdown content", "request_id", requestID, "repo_id", repoId, "content_length", len(markdownContent))
-	c.JSON(http.StatusOK, schema.GetMarkdownResponse{
-		RepoID:  repoId,
-		Content: markdownContent,
+	h.logger.Info("Successfully retrieved file contents", "request_id", requestID, "repo_id", repoId, "file_path", filePath, "content_length", len(content))
+	c.JSON(http.StatusOK, schema.GetFileContentsResponse{
+		RepoID:   repoId,
+		FilePath: filePath,
+		Content:  content,
 	})
 }
 

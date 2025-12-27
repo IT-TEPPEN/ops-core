@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -79,86 +78,6 @@ func TestRepositoryUseCaseIntegration(t *testing.T) {
 
 		// Note: リポジトリエンティティはアクセストークンを外部に公開しないので
 		// 直接検証はできないが、内部的に更新されていることを前提とする
-	})
-
-	// テスト: SelectFiles と GetSelectedMarkdown
-	t.Run("SelectFiles and GetSelectedMarkdown", func(t *testing.T) {
-		// マネージドファイルの選択と Markdown 取得のテストのため
-		// GitManager をモックしてファイルの内容を返すように設定
-
-		// 新しいリポジトリを登録
-		repoURL := "https://github.com/example/markdown-repo"
-		accessToken := "token"
-
-		newRepo, err := useCase.Register(ctx, repoURL, accessToken)
-		require.NoError(t, err)
-		repoID := newRepo.ID()
-
-		// MockGitManager にテスト用の振る舞いを設定
-		mockGitManager := git.NewMockGitManager()
-
-		// Using contextMatcher to match any context
-		contextMatcher := mock.MatchedBy(func(ctx context.Context) bool { return true })
-		repoMatcher := mock.MatchedBy(func(repo entity.Repository) bool {
-			return repo.ID() == repoID
-		})
-
-		// Set up mock expectations correctly with context and repo parameters
-		mockPath := "/mock/path/to/repo"
-		mockGitManager.On("EnsureCloned", contextMatcher, repoMatcher).Return(mockPath, nil)
-
-		// Add mock files
-		mockGitManager.AddMockFile(repoID, "README.md", "# Test Repository\n\nThis is a test.")
-		mockGitManager.AddMockFile(repoID, "docs/adr/0001-test-adr.md", "# ADR 0001\n\nThis is a test ADR.")
-
-		// Set up expectations for other methods
-		filePathsMatcher := mock.MatchedBy(func(paths []string) bool { return true })
-		mockGitManager.On("ValidateFilesExist", contextMatcher, mockPath, filePathsMatcher, repoMatcher).Return(nil)
-
-		readmeMatcher := mock.MatchedBy(func(path string) bool { return path == "README.md" })
-		adrMatcher := mock.MatchedBy(func(path string) bool { return path == "docs/adr/0001-test-adr.md" })
-
-		mockGitManager.On("ReadManagedFileContent", contextMatcher, mockPath, readmeMatcher, repoMatcher).
-			Return([]byte("# Test Repository\n\nThis is a test."), nil)
-		mockGitManager.On("ReadManagedFileContent", contextMatcher, mockPath, adrMatcher, repoMatcher).
-			Return([]byte("# ADR 0001\n\nThis is a test ADR."), nil)
-
-		// 実際のユースケースのGitManagerをモックに置き換え
-		useCaseWithMock := NewRepositoryUseCase(repo, mockGitManager)
-
-		// ファイルを選択
-		filePaths := []string{"README.md", "docs/adr/0001-test-adr.md"}
-		err = useCaseWithMock.SelectFiles(ctx, repoID, filePaths)
-		require.NoError(t, err)
-
-		// マークダウン内容を取得
-		markdown, err := useCaseWithMock.GetSelectedMarkdown(ctx, repoID)
-		require.NoError(t, err)
-
-		// 両方のファイルの内容が連結されていることを確認
-		assert.Contains(t, markdown, "# Test Repository")
-		assert.Contains(t, markdown, "# ADR 0001")
-	})
-
-	// テスト: 存在しないリポジトリIDでのエラー処理
-	t.Run("Error handling with non-existent repository", func(t *testing.T) {
-		nonExistentID := "non-existent-id"
-
-		// GetRepository
-		_, err := useCase.GetRepository(ctx, nonExistentID)
-		assert.ErrorIs(t, err, ErrRepositoryNotFound)
-
-		// UpdateAccessToken
-		err = useCase.UpdateAccessToken(ctx, nonExistentID, "token")
-		assert.ErrorIs(t, err, ErrRepositoryNotFound)
-
-		// SelectFiles
-		err = useCase.SelectFiles(ctx, nonExistentID, []string{"file.md"})
-		assert.ErrorIs(t, err, ErrRepositoryNotFound)
-
-		// GetSelectedMarkdown
-		_, err = useCase.GetSelectedMarkdown(ctx, nonExistentID)
-		assert.ErrorIs(t, err, ErrRepositoryNotFound)
 	})
 }
 

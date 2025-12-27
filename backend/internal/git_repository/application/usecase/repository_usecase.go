@@ -6,13 +6,12 @@ import (
 	"fmt"
 	"net/url"
 	"path"
-	"path/filepath"
 	"regexp"
 	"strings"
 
 	apperror "opscore/backend/internal/git_repository/application/error"
-	domainerror "opscore/backend/internal/git_repository/domain/error"
 	"opscore/backend/internal/git_repository/domain/entity"
+	domainerror "opscore/backend/internal/git_repository/domain/error"
 	"opscore/backend/internal/git_repository/domain/repository"
 	"opscore/backend/internal/git_repository/infrastructure/git"
 
@@ -43,10 +42,8 @@ type RepositoryUseCase interface {
 	ListRepositories(ctx context.Context) ([]entity.Repository, error)
 	// ListFiles retrieves the file structure for a given repository ID.
 	ListFiles(ctx context.Context, repoID string) ([]entity.FileNode, error) // Use entity.FileNode
-	// SelectFiles marks specific files within a repository as manageable.
-	SelectFiles(ctx context.Context, repoID string, filePaths []string) error
-	// GetSelectedMarkdown retrieves the concatenated content of selected Markdown files.
-	GetSelectedMarkdown(ctx context.Context, repoID string) (string, error)
+	// GetFileContents retrieves the content of a specific file from a repository.
+	GetFileContents(ctx context.Context, repoID string, filePath string) (string, error)
 	// UpdateAccessToken updates the access token for a repository.
 	UpdateAccessToken(ctx context.Context, repoID string, accessToken string) error
 }
@@ -205,40 +202,8 @@ func (uc *repositoryUseCase) ListFiles(ctx context.Context, repoID string) ([]en
 	return fileNodes, nil
 }
 
-// SelectFiles implements the logic for selecting manageable files.
-func (uc *repositoryUseCase) SelectFiles(ctx context.Context, repoID string, filePaths []string) error {
-	// 1. Find the repository by ID to ensure it exists
-	repo, err := uc.repo.FindByID(ctx, repoID)
-	if err != nil {
-		return fmt.Errorf("failed to retrieve repository details: %w", err)
-	}
-	if repo == nil {
-		return apperror.NewNotFoundError("Repository", repoID, nil)
-	}
-
-	// 3. Ensure repository is cloned/updated locally and get its path
-	localPath, err := uc.gitManager.EnsureCloned(ctx, repo)
-	if err != nil {
-		return fmt.Errorf("failed to ensure repository is cloned: %w", err)
-	}
-
-	// 4. Validate that each file path in filePaths exists in the repository
-	err = uc.gitManager.ValidateFilesExist(ctx, localPath, filePaths, repo)
-	if err != nil {
-		return err
-	}
-
-	// 6. Persist the selection using the repository method
-	err = uc.repo.SaveManagedFiles(ctx, repoID, filePaths)
-	if err != nil {
-		return fmt.Errorf("failed to save managed files selection: %w", err)
-	}
-
-	return nil
-}
-
-// GetSelectedMarkdown implements the logic for retrieving selected Markdown content.
-func (uc *repositoryUseCase) GetSelectedMarkdown(ctx context.Context, repoID string) (string, error) {
+// GetFileContents implements the logic for retrieving a specific file's content.
+func (uc *repositoryUseCase) GetFileContents(ctx context.Context, repoID string, filePath string) (string, error) {
 	// 1. Find the repository by ID to ensure it exists
 	repo, err := uc.repo.FindByID(ctx, repoID)
 	if err != nil {
@@ -248,45 +213,26 @@ func (uc *repositoryUseCase) GetSelectedMarkdown(ctx context.Context, repoID str
 		return "", apperror.NewNotFoundError("Repository", repoID, nil)
 	}
 
-	// 3. Retrieve the list of selected file paths for this repoID
-	selectedPaths, err := uc.repo.GetManagedFiles(ctx, repoID)
-	if err != nil {
-		return "", fmt.Errorf("failed to retrieve managed files: %w", err)
+	// Check if access token is set
+	if repo.AccessToken() == "" {
+		return "", apperror.NewValidationFailedError([]apperror.FieldError{
+			{Field: "access_token", Message: "access token is required for this operation"},
+		})
 	}
 
-	if len(selectedPaths) == 0 {
-		return "", nil // No files selected, return empty string
-	}
-
-	// 5. Ensure repository is cloned/updated locally and get its path
+	// 2. Ensure repository is cloned/updated locally and get its path
 	localPath, err := uc.gitManager.EnsureCloned(ctx, repo)
 	if err != nil {
 		return "", fmt.Errorf("failed to ensure repository is cloned: %w", err)
 	}
 
-	// 6 & 7. Read and concatenate content of selected Markdown files
-	var concatenatedContent strings.Builder
-	filesRead := 0
-	for _, p := range selectedPaths {
-		// a. Verify it's a Markdown file (case-insensitive check)
-		ext := strings.ToLower(filepath.Ext(p))
-		if ext == ".md" || ext == ".markdown" {
-			// b. Read the file content from the local repository path
-			contentBytes, readErr := uc.gitManager.ReadManagedFileContent(ctx, localPath, p, repo)
-			if readErr != nil {
-				return "", fmt.Errorf("failed to read content of file '%s': %w", p, readErr)
-			}
-			// Add a separator (like ---) between files? Optional.
-			if concatenatedContent.Len() > 0 {
-				concatenatedContent.WriteString("\n\n---\n\n") // Markdown horizontal rule
-			}
-			concatenatedContent.Write(contentBytes)
-			filesRead++
-		}
+	// 3. Read the file content from the local repository path
+	contentBytes, err := uc.gitManager.ReadManagedFileContent(ctx, localPath, filePath, repo)
+	if err != nil {
+		return "", fmt.Errorf("failed to read content of file '%s': %w", filePath, err)
 	}
 
-	// 8. Return the concatenated content
-	return concatenatedContent.String(), nil
+	return string(contentBytes), nil
 }
 
 // UpdateAccessToken updates the access token for a repository.

@@ -48,15 +48,9 @@ func (m *MockRepositoryUseCase) ListFiles(ctx context.Context, repoID string) ([
 	return args.Get(0).([]entity.FileNode), args.Error(1)
 }
 
-// SelectFiles is a mock implementation of the RepositoryUseCase.SelectFiles method
-func (m *MockRepositoryUseCase) SelectFiles(ctx context.Context, repoID string, filePaths []string) error {
-	args := m.Called(ctx, repoID, filePaths)
-	return args.Error(0)
-}
-
-// GetSelectedMarkdown is a mock implementation of the RepositoryUseCase.GetSelectedMarkdown method
-func (m *MockRepositoryUseCase) GetSelectedMarkdown(ctx context.Context, repoID string) (string, error) {
-	args := m.Called(ctx, repoID)
+// GetFileContents is a mock implementation of the RepositoryUseCase.GetFileContents method
+func (m *MockRepositoryUseCase) GetFileContents(ctx context.Context, repoID string, filePath string) (string, error) {
+	args := m.Called(ctx, repoID, filePath)
 	return args.String(0), args.Error(1)
 }
 

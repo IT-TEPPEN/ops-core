@@ -15,7 +15,7 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/api/documents/{id}/statistics": {
+        "/api/documents/{docId}/statistics": {
             "get": {
                 "description": "Retrieves view statistics for a specific document",
                 "produces": [
@@ -29,7 +29,7 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "description": "Document ID",
-                        "name": "id",
+                        "name": "docId",
                         "in": "path",
                         "required": true
                     }
@@ -56,7 +56,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/documents/{id}/view-history": {
+        "/api/documents/{docId}/view-history": {
             "get": {
                 "description": "Retrieves the view history for a specific document",
                 "produces": [
@@ -70,7 +70,7 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "description": "Document ID",
-                        "name": "id",
+                        "name": "docId",
                         "in": "path",
                         "required": true
                     },
@@ -114,7 +114,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/documents/{id}/views": {
+        "/api/documents/{docId}/views": {
             "post": {
                 "description": "Records a view of a document by a user",
                 "consumes": [
@@ -131,7 +131,7 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "description": "Document ID",
-                        "name": "id",
+                        "name": "docId",
                         "in": "path",
                         "required": true
                     },
@@ -249,7 +249,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/users/{id}/statistics": {
+        "/api/users/{userId}/statistics": {
             "get": {
                 "description": "Retrieves view statistics for a specific user",
                 "produces": [
@@ -263,7 +263,7 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "description": "User ID",
-                        "name": "id",
+                        "name": "userId",
                         "in": "path",
                         "required": true
                     }
@@ -290,7 +290,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/users/{id}/view-history": {
+        "/api/users/{userId}/view-history": {
             "get": {
                 "description": "Retrieves the view history for a specific user",
                 "produces": [
@@ -304,7 +304,7 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "description": "User ID",
-                        "name": "id",
+                        "name": "userId",
                         "in": "path",
                         "required": true
                     },
@@ -2519,75 +2519,16 @@ const docTemplate = `{
                 }
             }
         },
-        "/repositories/{repoId}/files/select": {
-            "post": {
-                "description": "Marks specific files within a repository as manageable by OpsCore.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "repositories"
-                ],
-                "summary": "Select manageable files in a repository",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Repository ID",
-                        "name": "repoId",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "List of file paths to select",
-                        "name": "files",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.SelectFilesRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Files selected successfully",
-                        "schema": {
-                            "$ref": "#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.SelectFilesResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid request body or repository ID",
-                        "schema": {
-                            "$ref": "#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Repository not found",
-                        "schema": {
-                            "$ref": "#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/repositories/{repoId}/markdown": {
+        "/repositories/{repoId}/files/{filePath}/contents": {
             "get": {
-                "description": "Retrieves the concatenated content of all selected Markdown files for a given repository.",
+                "description": "Retrieves the content of a specific file from a repository by its URL-safe encoded file path.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "repositories"
                 ],
-                "summary": "Get selected Markdown content from a repository",
+                "summary": "Get file contents from a repository",
                 "parameters": [
                     {
                         "type": "string",
@@ -2595,23 +2536,30 @@ const docTemplate = `{
                         "name": "repoId",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "URL-encoded file path",
+                        "name": "filePath",
+                        "in": "path",
+                        "required": true
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successfully retrieved Markdown content",
+                        "description": "Successfully retrieved file contents",
                         "schema": {
-                            "$ref": "#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.GetMarkdownResponse"
+                            "$ref": "#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.GetFileContentsResponse"
                         }
                     },
                     "400": {
-                        "description": "Invalid repository ID format",
+                        "description": "Invalid repository ID or file path",
                         "schema": {
                             "$ref": "#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse"
                         }
                     },
                     "404": {
-                        "description": "Repository not found or no files selected",
+                        "description": "Repository or file not found",
                         "schema": {
                             "$ref": "#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse"
                         }
@@ -3879,13 +3827,16 @@ const docTemplate = `{
                 }
             }
         },
-        "opscore_backend_internal_git_repository_interfaces_api_schema.GetMarkdownResponse": {
+        "opscore_backend_internal_git_repository_interfaces_api_schema.GetFileContentsResponse": {
             "type": "object",
             "properties": {
                 "content": {
-                    "description": "Concatenated Markdown content",
                     "type": "string",
-                    "example": "# Project Title\\n\\n## ADR 1\\n..."
+                    "example": "# Project Title\n\nThis is the README content..."
+                },
+                "filePath": {
+                    "type": "string",
+                    "example": "README.md"
                 },
                 "repoId": {
                     "type": "string",
@@ -3954,42 +3905,6 @@ const docTemplate = `{
                 "url": {
                     "type": "string",
                     "example": "https://github.com/user/repo.git"
-                }
-            }
-        },
-        "opscore_backend_internal_git_repository_interfaces_api_schema.SelectFilesRequest": {
-            "type": "object",
-            "required": [
-                "filePaths"
-            ],
-            "properties": {
-                "filePaths": {
-                    "description": "List of file paths to select",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    },
-                    "example": [
-                        "[\"README.md\"",
-                        " \"docs/adr/0001.md\"]"
-                    ]
-                }
-            }
-        },
-        "opscore_backend_internal_git_repository_interfaces_api_schema.SelectFilesResponse": {
-            "type": "object",
-            "properties": {
-                "message": {
-                    "type": "string",
-                    "example": "Files selected successfully"
-                },
-                "repoId": {
-                    "type": "string",
-                    "example": "a1b2c3d4-e5f6-7890-1234-567890abcdef"
-                },
-                "selectedFiles": {
-                    "type": "integer",
-                    "example": 2
                 }
             }
         },
@@ -4460,8 +4375,6 @@ var SwaggerInfo = &swag.Spec{
 	Description:      "This is the API documentation for the OpsCore backend service.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
-	// LeftDelim:        "{{",
-	// RightDelim:       "}}",
 }
 
 func init() {

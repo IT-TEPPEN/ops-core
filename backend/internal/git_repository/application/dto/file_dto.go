@@ -5,8 +5,3 @@ type FileNode struct {
 	Path string
 	Type string // "file" or "dir"
 }
-
-// SelectFilesRequest represents the use case request for selecting files
-type SelectFilesRequest struct {
-	FilePaths []string // List of file paths to select
-}

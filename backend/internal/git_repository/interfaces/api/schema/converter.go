@@ -19,13 +19,6 @@ func ToUpdateAccessTokenDTO(req UpdateAccessTokenRequest) dto.UpdateAccessTokenR
 	}
 }
 
-// ToSelectFilesDTO converts API schema to application DTO
-func ToSelectFilesDTO(req SelectFilesRequest) dto.SelectFilesRequest {
-	return dto.SelectFilesRequest{
-		FilePaths: req.FilePaths,
-	}
-}
-
 // FromRepositoryDTO converts application DTO to API schema
 func FromRepositoryDTO(dtoResp dto.RepositoryResponse) RepositoryResponse {
 	return RepositoryResponse{

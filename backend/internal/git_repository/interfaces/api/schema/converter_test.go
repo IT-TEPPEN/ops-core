@@ -30,16 +30,6 @@ func TestToUpdateAccessTokenDTO(t *testing.T) {
 	assert.Equal(t, req.AccessToken, dtoReq.AccessToken)
 }
 
-func TestToSelectFilesDTO(t *testing.T) {
-	req := SelectFilesRequest{
-		FilePaths: []string{"README.md", "docs/guide.md"},
-	}
-
-	dtoReq := ToSelectFilesDTO(req)
-
-	assert.Equal(t, req.FilePaths, dtoReq.FilePaths)
-}
-
 func TestFromRepositoryDTO(t *testing.T) {
 	now := time.Now()
 	dtoResp := dto.RepositoryResponse{

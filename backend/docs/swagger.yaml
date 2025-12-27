@@ -513,11 +513,16 @@ definitions:
         example: file
         type: string
     type: object
-  opscore_backend_internal_git_repository_interfaces_api_schema.GetMarkdownResponse:
+  opscore_backend_internal_git_repository_interfaces_api_schema.GetFileContentsResponse:
     properties:
       content:
-        description: Concatenated Markdown content
-        example: '# Project Title\n\n## ADR 1\n...'
+        example: |-
+          # Project Title
+
+          This is the README content...
+        type: string
+      filePath:
+        example: README.md
         type: string
       repoId:
         example: a1b2c3d4-e5f6-7890-1234-567890abcdef
@@ -566,31 +571,6 @@ definitions:
       url:
         example: https://github.com/user/repo.git
         type: string
-    type: object
-  opscore_backend_internal_git_repository_interfaces_api_schema.SelectFilesRequest:
-    properties:
-      filePaths:
-        description: List of file paths to select
-        example:
-        - '["README.md"'
-        - ' "docs/adr/0001.md"]'
-        items:
-          type: string
-        type: array
-    required:
-    - filePaths
-    type: object
-  opscore_backend_internal_git_repository_interfaces_api_schema.SelectFilesResponse:
-    properties:
-      message:
-        example: Files selected successfully
-        type: string
-      repoId:
-        example: a1b2c3d4-e5f6-7890-1234-567890abcdef
-        type: string
-      selectedFiles:
-        example: 2
-        type: integer
     type: object
   opscore_backend_internal_git_repository_interfaces_api_schema.UpdateAccessTokenRequest:
     properties:
@@ -914,13 +894,13 @@ info:
   title: OpsCore Backend API
   version: "1.0"
 paths:
-  /api/documents/{id}/statistics:
+  /api/documents/{docId}/statistics:
     get:
       description: Retrieves view statistics for a specific document
       parameters:
       - description: Document ID
         in: path
-        name: id
+        name: docId
         required: true
         type: string
       produces:
@@ -941,13 +921,13 @@ paths:
       summary: Get document statistics
       tags:
       - statistics
-  /api/documents/{id}/view-history:
+  /api/documents/{docId}/view-history:
     get:
       description: Retrieves the view history for a specific document
       parameters:
       - description: Document ID
         in: path
-        name: id
+        name: docId
         required: true
         type: string
       - default: 50
@@ -981,7 +961,7 @@ paths:
       summary: Get document's view history
       tags:
       - view-history
-  /api/documents/{id}/views:
+  /api/documents/{docId}/views:
     post:
       consumes:
       - application/json
@@ -989,7 +969,7 @@ paths:
       parameters:
       - description: Document ID
         in: path
-        name: id
+        name: docId
         required: true
         type: string
       - description: User ID
@@ -1072,13 +1052,13 @@ paths:
       summary: Get recently viewed documents
       tags:
       - statistics
-  /api/users/{id}/statistics:
+  /api/users/{userId}/statistics:
     get:
       description: Retrieves view statistics for a specific user
       parameters:
       - description: User ID
         in: path
-        name: id
+        name: userId
         required: true
         type: string
       produces:
@@ -1099,13 +1079,13 @@ paths:
       summary: Get user statistics
       tags:
       - statistics
-  /api/users/{id}/view-history:
+  /api/users/{userId}/view-history:
     get:
       description: Retrieves the view history for a specific user
       parameters:
       - description: User ID
         in: path
-        name: id
+        name: userId
         required: true
         type: string
       - default: 50
@@ -2593,75 +2573,41 @@ paths:
       summary: List files in a repository
       tags:
       - repositories
-  /repositories/{repoId}/files/select:
-    post:
-      consumes:
-      - application/json
-      description: Marks specific files within a repository as manageable by OpsCore.
-      parameters:
-      - description: Repository ID
-        in: path
-        name: repoId
-        required: true
-        type: string
-      - description: List of file paths to select
-        in: body
-        name: files
-        required: true
-        schema:
-          $ref: '#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.SelectFilesRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Files selected successfully
-          schema:
-            $ref: '#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.SelectFilesResponse'
-        "400":
-          description: Invalid request body or repository ID
-          schema:
-            $ref: '#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse'
-        "404":
-          description: Repository not found
-          schema:
-            $ref: '#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse'
-      summary: Select manageable files in a repository
-      tags:
-      - repositories
-  /repositories/{repoId}/markdown:
+  /repositories/{repoId}/files/{filePath}/contents:
     get:
-      description: Retrieves the concatenated content of all selected Markdown files
-        for a given repository.
+      description: Retrieves the content of a specific file from a repository by its
+        URL-safe encoded file path.
       parameters:
       - description: Repository ID
         in: path
         name: repoId
         required: true
         type: string
+      - description: URL-encoded file path
+        in: path
+        name: filePath
+        required: true
+        type: string
       produces:
       - application/json
       responses:
         "200":
-          description: Successfully retrieved Markdown content
+          description: Successfully retrieved file contents
           schema:
-            $ref: '#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.GetMarkdownResponse'
+            $ref: '#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.GetFileContentsResponse'
         "400":
-          description: Invalid repository ID format
+          description: Invalid repository ID or file path
           schema:
             $ref: '#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse'
         "404":
-          description: Repository not found or no files selected
+          description: Repository or file not found
           schema:
             $ref: '#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse'
         "500":
           description: Internal server error
           schema:
             $ref: '#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse'
-      summary: Get selected Markdown content from a repository
+      summary: Get file contents from a repository
       tags:
       - repositories
   /repositories/{repoId}/token:
