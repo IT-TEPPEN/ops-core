@@ -29,6 +29,10 @@ import (
 
 	viewstatsusecase "opscore/backend/internal/view_statistics/application/usecase"
 	viewstatshandlers "opscore/backend/internal/view_statistics/interfaces/api/handlers"
+
+	oauthservice "opscore/backend/internal/oauth/application/service"
+	oauthdomain "opscore/backend/internal/oauth/domain"
+	oauthhandlers "opscore/backend/internal/oauth/interfaces/api/handlers"
 )
 
 // Base path for cloning repositories
@@ -114,6 +118,11 @@ func provideViewStatsHandlerLogger() viewstatshandlers.Logger {
 	return &SlogLoggerAdapter{logger: provideAppLogger()}
 }
 
+// provideOAuthHandlerLogger adapts slog.Logger to the OAuth handlers.Logger interface.
+func provideOAuthHandlerLogger() oauthdomain.Logger {
+	return &SlogLoggerAdapter{logger: provideAppLogger()}
+}
+
 // provideEncryptor creates an Encryptor from the environment variable.
 func provideEncryptor() (*encryption.Encryptor, error) {
 	keyStr := os.Getenv("ENCRYPTION_KEY")
@@ -131,11 +140,22 @@ func provideEncryptor() (*encryption.Encryptor, error) {
 }
 
 // InitializeAPI initializes all dependencies for the API handlers, using Postgres.
-func InitializeAPI(db *pgxpool.Pool) (*repohandlers.RepositoryHandler, *dochandlers.DocumentHandler, *dochandlers.VariableHandler, *exechandlers.ExecutionRecordHandler, *exechandlers.AttachmentHandler, *userhandlers.UserHandler, *userhandlers.GroupHandler, *viewhistoryhandlers.ViewHistoryHandler, *viewstatshandlers.ViewStatisticsHandler, error) {
+func InitializeAPI(db *pgxpool.Pool) (*repohandlers.RepositoryHandler,
+	*dochandlers.DocumentHandler,
+	*dochandlers.VariableHandler,
+	*exechandlers.ExecutionRecordHandler,
+	*exechandlers.AttachmentHandler,
+	*userhandlers.UserHandler,
+	*userhandlers.GroupHandler,
+	*viewhistoryhandlers.ViewHistoryHandler,
+	*viewstatshandlers.ViewStatisticsHandler,
+	*oauthhandlers.OAuthHandler,
+	error,
+) {
 	// Create encryptor
 	encryptor, err := provideEncryptor()
 	if err != nil {
-		return nil, nil, nil, nil, nil, nil, nil, nil, nil, err
+		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, err
 	}
 
 	// Create repository (persistence layer)
@@ -144,7 +164,7 @@ func InitializeAPI(db *pgxpool.Pool) (*repohandlers.RepositoryHandler, *dochandl
 	// Create git manager
 	gitManager, err := provideGitManager()
 	if err != nil {
-		return nil, nil, nil, nil, nil, nil, nil, nil, nil, err
+		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, err
 	}
 
 	// Create use case
@@ -194,7 +214,7 @@ func InitializeAPI(db *pgxpool.Pool) (*repohandlers.RepositoryHandler, *dochandl
 	}
 	storageManager, err := storage.NewLocalStorageManager(storageBasePath)
 	if err != nil {
-		return nil, nil, nil, nil, nil, nil, nil, nil, nil, err
+		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, err
 	}
 
 	// Create attachment use case
@@ -248,5 +268,14 @@ func InitializeAPI(db *pgxpool.Pool) (*repohandlers.RepositoryHandler, *dochandl
 	// Create view statistics handler
 	viewStatsHandler := viewstatshandlers.NewViewStatisticsHandler(viewStatsUseCase, viewStatsLogger)
 
-	return repositoryHandler, documentHandler, variableHandler, executionRecordHandler, attachmentHandler, userHandler, groupHandler, viewHistoryHandler, viewStatsHandler, nil
+	// Create OAuth service
+	oauthService := oauthservice.NewOAuthService()
+
+	// Create OAuth logger
+	oauthLogger := provideOAuthHandlerLogger()
+
+	// Create OAuth handler
+	oauthHandler := oauthhandlers.NewOAuthHandler(oauthService, oauthLogger)
+
+	return repositoryHandler, documentHandler, variableHandler, executionRecordHandler, attachmentHandler, userHandler, groupHandler, viewHistoryHandler, viewStatsHandler, oauthHandler, nil
 }

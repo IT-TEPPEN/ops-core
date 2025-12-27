@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/joho/godotenv"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 
@@ -22,6 +24,15 @@ import (
 // @host localhost:8080
 // @BasePath /api/v1
 func main() {
+	// Load .env file if it exists
+	if err := godotenv.Load(); err != nil {
+		// .env file not found or error loading - this is not fatal
+		// Environment variables can be set directly in the system
+		log.Println("No .env file found or error loading it, using system environment variables")
+	} else {
+		log.Println("Loaded .env file successfully")
+	}
+
 	// --- Database Connection ---
 	// Use environment variable for connection string (replace with your actual env var name)
 	databaseUrl := os.Getenv("DATABASE_URL")
@@ -47,7 +58,7 @@ func main() {
 	fmt.Println("Successfully connected to the database.")
 	// --- End Database Connection ---
 
-	repoHandler, docHandler, varHandler, execHandler, attachHandler, userHandler, groupHandler, viewHistoryHandler, viewStatsHandler, err := InitializeAPI(dbpool) // Pass dbpool and handle error
+	repoHandler, docHandler, varHandler, execHandler, attachHandler, userHandler, groupHandler, viewHistoryHandler, viewStatsHandler, oauthHandler, err := InitializeAPI(dbpool) // Pass dbpool and handle error
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to initialize API dependencies: %v\n", err)
 		os.Exit(1)
@@ -77,6 +88,12 @@ func main() {
 	// API v1 routes group
 	v1 := r.Group("/api/v1")
 	{
+		// OAuth routes
+		authGroup := v1.Group("/auth")
+		{
+			authGroup.POST("/oauth/callback", oauthHandler.HandleCallback)
+		}
+
 		// Repository routes - use methods from the initialized handler
 		v1.POST("/repositories", repoHandler.RegisterRepository)
 		v1.GET("/repositories", repoHandler.ListRepositories)      // Adding this route to list all repositories

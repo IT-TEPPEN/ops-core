@@ -66,6 +66,7 @@ function OAuthCallbackPage() {
           code: string;
           state: string;
           gitlabUrl?: string;
+          clientId?: string;
           clientSecret?: string;
         } = {
           provider: savedProvider,
@@ -73,13 +74,20 @@ function OAuthCallbackPage() {
           state,
         };
 
-        // セルフホストGitLabの場合はURLとClient Secretも送信
+        // セルフホストGitLabの場合はURL、Client ID、Client Secretも送信
         if (savedProvider === "gitlab-self-hosted") {
           if (savedGitlabUrl) {
             requestBody.gitlabUrl = savedGitlabUrl;
           }
           if (savedGitlabClientSecret) {
             requestBody.clientSecret = savedGitlabClientSecret;
+          }
+          // Client IDもsessionStorageから取得して送信
+          const savedGitlabClientId = sessionStorage.getItem(
+            "oauth_gitlab_client_id"
+          );
+          if (savedGitlabClientId) {
+            requestBody.clientId = savedGitlabClientId;
           }
         }
 
@@ -105,6 +113,7 @@ function OAuthCallbackPage() {
         sessionStorage.removeItem("oauth_state");
         sessionStorage.removeItem("oauth_provider");
         sessionStorage.removeItem("oauth_gitlab_url");
+        sessionStorage.removeItem("oauth_gitlab_client_id");
         sessionStorage.removeItem("oauth_gitlab_client_secret");
 
         // トークンをlocalStorageに保存（必要に応じて）

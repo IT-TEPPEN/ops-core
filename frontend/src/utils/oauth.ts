@@ -101,6 +101,7 @@ export async function initiateOAuthFlow(
   // セルフホストの場合は追加情報も保存
   if (provider === "gitlab-self-hosted" && selfHostedParams) {
     sessionStorage.setItem("oauth_gitlab_url", selfHostedParams.gitlabUrl);
+    sessionStorage.setItem("oauth_gitlab_client_id", selfHostedParams.clientId);
     sessionStorage.setItem(
       "oauth_gitlab_client_secret",
       selfHostedParams.clientSecret
