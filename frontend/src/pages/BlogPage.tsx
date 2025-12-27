@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useSearchParams, Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 
 interface Metadata {
@@ -57,8 +57,13 @@ function parseFrontmatter(markdown: string): {
 }
 
 function BlogPage() {
-  const [searchParams] = useSearchParams();
-  const repoId = searchParams.get("repoId");
+  const { repoId, filePath } = useParams<{
+    repoId: string;
+    filePath: string;
+  }>();
+
+  console.log("Repo ID:", repoId);
+  console.log("File Path:", filePath);
 
   const [markdownContent, setMarkdownContent] = useState<string>("");
   const [metadata, setMetadata] = useState<Metadata>({});
@@ -78,12 +83,25 @@ function BlogPage() {
     }
   }, [repoId]);
 
+  if (!filePath) {
+    return (
+      <div className="p-8 bg-white dark:bg-gray-800 rounded-lg shadow-md">
+        <p className="text-gray-500">
+          No file path provided. Please select a markdown file from the
+          repository management page.
+        </p>
+      </div>
+    );
+  }
+
   const fetchMarkdownContent = async () => {
     setIsLoading(true);
     setError(null);
 
     try {
-      const response = await fetch(`${apiUrl}/repositories/${repoId}/markdown`);
+      const response = await fetch(
+        `${apiUrl}/repositories/${repoId}/files/${encodeURIComponent(filePath)}`
+      );
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }

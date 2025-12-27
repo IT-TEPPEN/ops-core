@@ -26,7 +26,10 @@ function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="repositories">
               <Route index element={<RepositoriesPage />} />
-              <Route path=":repoId" element={<RepositoryDetailPage />} />
+              <Route path=":repoId">
+                <Route index element={<RepositoryDetailPage />} />
+                <Route path="files/:filePath" element={<BlogPage />} />
+              </Route>
             </Route>
             <Route path="documents">
               <Route index element={<DocumentListPage />} />
@@ -44,7 +47,6 @@ function App() {
             </Route>
             <Route path="/groups" element={<GroupListPage />} />
             <Route path="/groups/:groupId" element={<GroupDetailPage />} />
-            <Route path="/blog" element={<BlogPage />} />
           </Routes>
         </main>
 

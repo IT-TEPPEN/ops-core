@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
-import { useNotificationsActions } from "../features/notification";
+import { useParams, Link } from "react-router-dom";
 
 interface Repository {
   id: string;
@@ -16,17 +15,13 @@ interface FileNode {
 }
 
 function RepositoryDetailPage() {
-  const notificationsActions = useNotificationsActions();
   const { repoId } = useParams<{ repoId: string }>();
-  const navigate = useNavigate();
 
   const [repository, setRepository] = useState<Repository | null>(null);
   const [files, setFiles] = useState<FileNode[]>([]);
-  const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Access token state
   const [accessToken, setAccessToken] = useState<string>("");
@@ -98,68 +93,6 @@ function RepositoryDetailPage() {
       console.error("Error fetching files:", err);
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const toggleFileSelection = (path: string) => {
-    setSelectedFiles((prevSelected) => {
-      if (prevSelected.includes(path)) {
-        return prevSelected.filter((p) => p !== path);
-      } else {
-        return [...prevSelected, path];
-      }
-    });
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (selectedFiles.length === 0) {
-      notificationsActions.push({
-        title: "No Files Selected",
-        message: "Please select at least one markdown file to continue",
-        type: "error",
-      });
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    try {
-      const response = await fetch(
-        `${apiUrl}/repositories/${repoId}/files/select`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ filePaths: selectedFiles }),
-        }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Failed to select files");
-      }
-
-      notificationsActions.push({
-        title: "Files Selected",
-        message:
-          "Files selected successfully! Redirecting to view markdown content...",
-        type: "success",
-      });
-
-      // Redirect to the blog page with the repository ID as a parameter
-      setTimeout(() => {
-        navigate(`/blog?repoId=${repoId}`);
-      }, 1500);
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "An unknown error occurred";
-      notificationsActions.push({ type: "error", title: "Error", message });
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -337,57 +270,38 @@ function RepositoryDetailPage() {
         ) : (
           !needsToken &&
           !fileError && (
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="overflow-y-auto max-h-96 border border-gray-200 dark:border-gray-700 rounded p-2">
-                <table className="min-w-full">
-                  <thead>
-                    <tr>
-                      <th className="px-4 py-2 text-left text-sm font-medium text-gray-500 dark:text-gray-400">
-                        Select
-                      </th>
-                      <th className="px-4 py-2 text-left text-sm font-medium text-gray-500 dark:text-gray-400">
-                        File Path
-                      </th>
+            <div className="overflow-y-auto max-h-96 border border-gray-200 dark:border-gray-700 rounded p-2">
+              <table className="min-w-full">
+                <thead>
+                  <tr>
+                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-500 dark:text-gray-400">
+                      File Path
+                    </th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {markdownFiles.map((file) => (
+                    <tr
+                      key={file.path}
+                      className="hover:bg-gray-100 dark:hover:bg-gray-700"
+                    >
+                      <td className="px-4 py-2 text-sm">{file.path}</td>
+                      <td className="px-4 py-2 text-sm">
+                        <Link
+                          to={`/repositories/${
+                            repository?.id
+                          }/files/${encodeURIComponent(file.path)}`}
+                          className="text-blue-500 hover:text-blue-700 font-medium"
+                        >
+                          Manage Files
+                        </Link>
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {markdownFiles.map((file) => (
-                      <tr
-                        key={file.path}
-                        className="hover:bg-gray-100 dark:hover:bg-gray-700"
-                      >
-                        <td className="px-4 py-2">
-                          <input
-                            type="checkbox"
-                            checked={selectedFiles.includes(file.path)}
-                            onChange={() => toggleFileSelection(file.path)}
-                            className="rounded text-blue-500 focus:ring-blue-500"
-                          />
-                        </td>
-                        <td className="px-4 py-2 text-sm">{file.path}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600 dark:text-gray-400">
-                  {selectedFiles.length} file(s) selected
-                </span>
-                <button
-                  type="submit"
-                  disabled={isSubmitting || selectedFiles.length === 0}
-                  className={`px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-                    isSubmitting || selectedFiles.length === 0
-                      ? "opacity-50 cursor-not-allowed"
-                      : ""
-                  }`}
-                >
-                  {isSubmitting ? "Processing..." : "Process Selected Files"}
-                </button>
-              </div>
-            </form>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )
         )}
       </div>
