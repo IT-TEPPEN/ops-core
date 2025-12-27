@@ -180,19 +180,13 @@ func (uc *repositoryUseCase) ListFiles(ctx context.Context, repoID string) ([]en
 		})
 	}
 
-	// 3. Ensure repository is cloned/updated locally and get its path
-	localPath, err := uc.gitManager.EnsureCloned(ctx, repo)
-	if err != nil {
-		return nil, fmt.Errorf("failed to ensure repository is cloned: %w", err)
-	}
-
-	// 4. List files using GitManager
-	files, err := uc.gitManager.ListRepositoryFiles(ctx, localPath, repo)
+	// 2. List files directly from GitHub API (not from local cache)
+	files, err := uc.gitManager.ListRepositoryFiles(ctx, "", repo)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list repository files: %w", err)
 	}
 
-	// 5. Map the output to []entity.FileNode (Basic mapping)
+	// 3. Map the output to []entity.FileNode (Basic mapping)
 	fileNodes := make([]entity.FileNode, 0, len(files))
 	for _, f := range files {
 		fileType := "file"

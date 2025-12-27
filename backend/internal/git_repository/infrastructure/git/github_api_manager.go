@@ -192,47 +192,24 @@ func (g *githubApiManager) downloadRepository(ctx context.Context, client *githu
 	return nil
 }
 
-// ListRepositoryFiles lists all files in the repository.
+// ListRepositoryFiles lists all files in the repository directly from GitHub API.
 func (g *githubApiManager) ListRepositoryFiles(ctx context.Context, localPath string, repo entity.Repository) ([]string, error) {
-	// Get the file list from the local clone
-	var files []string
-	err := filepath.Walk(localPath, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		// Skip the root directory and hidden files/dirs
-		if path == localPath || filepath.Base(path)[0] == '.' {
-			return nil
-		}
-		// Only include files, not directories
-		if !info.IsDir() {
-			// Get path relative to repository root
-			relPath, err := filepath.Rel(localPath, path)
-			if err != nil {
-				return err
-			}
-			files = append(files, filepath.ToSlash(relPath))
-		}
-		return nil
-	})
+	// Always fetch file list from GitHub API to get the latest repository structure
+	fmt.Printf("Fetching file list from GitHub API for repository: %s\n", repo.URL())
 
+	// Extract owner and repo name from URL
+	owner, repoName, err := parseGitHubURL(repo.URL())
 	if err != nil {
-		// If walking the local directory fails, try to get files directly from the API
-		fmt.Printf("Failed to walk local directory, falling back to API: %v\n", err)
+		return nil, err
+	}
 
-		// Extract owner and repo name from URL
-		owner, repoName, err := parseGitHubURL(repo.URL())
-		if err != nil {
-			return nil, err
-		}
+	// Get GitHub client
+	client := g.getGitHubClient(repo.AccessToken())
 
-		// Get GitHub client
-		client := g.getGitHubClient(repo.AccessToken())
-
-		files, err = g.listFilesFromAPI(ctx, client, owner, repoName, "")
-		if err != nil {
-			return nil, fmt.Errorf("failed to list files in repository: %w", err)
-		}
+	// Get files from API
+	files, err := g.listFilesFromAPI(ctx, client, owner, repoName, "")
+	if err != nil {
+		return nil, fmt.Errorf("failed to list files in repository: %w", err)
 	}
 
 	return files, nil
