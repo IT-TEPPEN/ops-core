@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
+import { useNotificationsActions } from "../features/notification";
 
 interface Repository {
   id: string;
@@ -15,6 +16,7 @@ interface FileNode {
 }
 
 function RepositoryDetailPage() {
+  const notificationsActions = useNotificationsActions();
   const { repoId } = useParams<{ repoId: string }>();
   const navigate = useNavigate();
 
@@ -24,10 +26,6 @@ function RepositoryDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
-  const [submitMessage, setSubmitMessage] = useState<{
-    type: "success" | "error";
-    text: string;
-  } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Access token state
@@ -117,15 +115,15 @@ function RepositoryDetailPage() {
     e.preventDefault();
 
     if (selectedFiles.length === 0) {
-      setSubmitMessage({
+      notificationsActions.push({
+        title: "No Files Selected",
+        message: "Please select at least one markdown file to continue",
         type: "error",
-        text: "Please select at least one markdown file to continue",
       });
       return;
     }
 
     setIsSubmitting(true);
-    setSubmitMessage(null);
 
     try {
       const response = await fetch(
@@ -145,9 +143,11 @@ function RepositoryDetailPage() {
         throw new Error(data.message || "Failed to select files");
       }
 
-      setSubmitMessage({
+      notificationsActions.push({
+        title: "Files Selected",
+        message:
+          "Files selected successfully! Redirecting to view markdown content...",
         type: "success",
-        text: "Files selected successfully! Redirecting to view markdown content...",
       });
 
       // Redirect to the blog page with the repository ID as a parameter
@@ -157,7 +157,7 @@ function RepositoryDetailPage() {
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "An unknown error occurred";
-      setSubmitMessage({ type: "error", text: message });
+      notificationsActions.push({ type: "error", title: "Error", message });
     } finally {
       setIsSubmitting(false);
     }
@@ -387,18 +387,6 @@ function RepositoryDetailPage() {
                   {isSubmitting ? "Processing..." : "Process Selected Files"}
                 </button>
               </div>
-
-              {submitMessage && (
-                <div
-                  className={`mt-4 p-3 rounded ${
-                    submitMessage.type === "success"
-                      ? "bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100"
-                      : "bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100"
-                  }`}
-                >
-                  {submitMessage.text}
-                </div>
-              )}
             </form>
           )
         )}
