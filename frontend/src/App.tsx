@@ -12,11 +12,12 @@ import GroupDetailPage from "./pages/GroupDetailPage";
 import { Header } from "./components/Layout/Header";
 import { HomePage } from "./pages/Home";
 import { DiProviders } from "./providers";
+import { NotificationCard } from "./features/notification/components";
 
 function App() {
   return (
     <DiProviders>
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+      <div className="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
         <Header />
 
         {/* Page Content Area */}
@@ -51,6 +52,13 @@ function App() {
             <Route path="/blog" element={<BlogPage />} />
           </Routes>
         </main>
+
+        <div className="fixed bottom-4 right-4">
+          <NotificationCard
+            title="Success!!!"
+            message="Your operation was completed successfully."
+          />
+        </div>
       </div>
     </DiProviders>
   );
