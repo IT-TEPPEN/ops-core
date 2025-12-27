@@ -24,29 +24,24 @@ function App() {
         <main className="max-w-5xl mx-auto p-4">
           <Routes>
             <Route path="/" element={<HomePage />} />
-            <Route path="/repositories" element={<RepositoriesPage />} />
-            <Route
-              path="/repositories/:repoId"
-              element={<RepositoryDetailPage />}
-            />
-            <Route path="/documents" element={<DocumentListPage />} />
-            <Route path="/documents/:docId" element={<DocumentDetailPage />} />
-            <Route
-              path="/documents/:docId/view"
-              element={<DocumentViewPage />}
-            />
-            <Route
-              path="/documents/:docId/execute"
-              element={<ExecutionRecordPage />}
-            />
-            <Route
-              path="/documents/:docId/execute/:recordId"
-              element={<ExecutionRecordPage />}
-            />
-            <Route
-              path="/documents/:docId/versions"
-              element={<DocumentVersionHistoryPage />}
-            />
+            <Route path="repositories">
+              <Route index element={<RepositoriesPage />} />
+              <Route path=":repoId" element={<RepositoryDetailPage />} />
+            </Route>
+            <Route path="documents">
+              <Route index element={<DocumentListPage />} />
+              <Route path=":docId">
+                <Route index element={<DocumentDetailPage />} />
+                <Route path="view" element={<DocumentViewPage />} />
+                <Route path="execute">
+                  <Route path=":recordId" element={<ExecutionRecordPage />} />
+                </Route>
+                <Route
+                  path="versions"
+                  element={<DocumentVersionHistoryPage />}
+                ></Route>
+              </Route>
+            </Route>
             <Route path="/groups" element={<GroupListPage />} />
             <Route path="/groups/:groupId" element={<GroupDetailPage />} />
             <Route path="/blog" element={<BlogPage />} />
@@ -54,10 +49,7 @@ function App() {
         </main>
 
         <div className="fixed bottom-4 right-4">
-          <NotificationCard
-            title="Success!!!"
-            message="Your operation was completed successfully."
-          />
+          <NotificationCard />
         </div>
       </div>
     </DiProviders>
