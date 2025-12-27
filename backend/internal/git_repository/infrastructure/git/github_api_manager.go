@@ -109,28 +109,9 @@ func (g *githubApiManager) EnsureCloned(ctx context.Context, repo entity.Reposit
 			return "", fmt.Errorf("failed to clone repository %s: %w", repo.URL(), err)
 		}
 	} else if err == nil {
-		// Directory exists, update the repository
-		fmt.Printf("Updating repository %s in %s\n", repo.URL(), localPath)
-
-		// Clear the directory and re-download
-		files, err := os.ReadDir(localPath)
-		if err != nil {
-			return "", fmt.Errorf("failed to read repository directory: %w", err)
-		}
-
-		// Only remove files and directories inside the local path, not the directory itself
-		for _, file := range files {
-			path := filepath.Join(localPath, file.Name())
-			if err := os.RemoveAll(path); err != nil {
-				return "", fmt.Errorf("failed to remove old files: %w", err)
-			}
-		}
-
-		// Download the repository content again
-		err = g.downloadRepository(ctx, client, owner, repoName, "", localPath)
-		if err != nil {
-			return "", fmt.Errorf("failed to update repository %s: %w", repo.URL(), err)
-		}
+		// Directory exists, use cached clone
+		fmt.Printf("Using cached repository %s in %s\n", repo.URL(), localPath)
+		// TODO: Implement update logic with SHA checking or periodic refresh if needed
 	} else {
 		// Other error checking directory
 		return "", fmt.Errorf("failed to check repository directory %s: %w", localPath, err)
@@ -302,11 +283,16 @@ func (g *githubApiManager) ValidateFilesExist(ctx context.Context, localPath str
 	return nil
 }
 
-// ReadManagedFileContent reads the content of a repository file.
+// ReadManagedFileContent reads the content of a repository file with on-demand fetching.
 func (g *githubApiManager) ReadManagedFileContent(ctx context.Context, localPath string, filePath string, repo entity.Repository) ([]byte, error) {
 	// Security check: ensure the filePath doesn't contain path traversal sequences
 	if strings.Contains(filePath, "..") {
 		return nil, fmt.Errorf("invalid file path containing path traversal sequences: %s", filePath)
+	}
+
+	// Determine the local cache path
+	if localPath == "" {
+		localPath = g.getLocalPath(repo)
 	}
 
 	// Join the local repository path with the requested file path
@@ -319,33 +305,52 @@ func (g *githubApiManager) ReadManagedFileContent(ctx context.Context, localPath
 		return nil, fmt.Errorf("invalid file path: attempt to access file outside repository directory")
 	}
 
-	// Read the file content from the local filesystem
+	// Try to read from local cache first
 	content, err := os.ReadFile(fullPath)
-	if err != nil {
-		// If file not found or other error reading locally, try to get it from the API
-		if os.IsNotExist(err) {
-			// Extract owner and repo name from URL
-			owner, repoName, err := parseGitHubURL(repo.URL())
-			if err != nil {
-				return nil, err
-			}
-
-			// Get file content via GitHub API
-			client := g.getGitHubClient(repo.AccessToken())
-			fileContent, _, _, err := client.Repositories.GetContents(ctx, owner, repoName, filePath, &github.RepositoryContentGetOptions{})
-			if err != nil {
-				return nil, fmt.Errorf("failed to get file content from API: %w", err)
-			}
-
-			content, err := fileContent.GetContent()
-			if err != nil {
-				return nil, fmt.Errorf("failed to decode content from API: %w", err)
-			}
-
-			return []byte(content), nil
-		}
-		return nil, fmt.Errorf("failed to read file %s: %w", fullPath, err)
+	if err == nil {
+		fmt.Printf("Reading file from cache: %s\n", filePath)
+		return content, nil
 	}
 
-	return content, nil
+	// If file not found locally, fetch from GitHub API
+	if os.IsNotExist(err) {
+		fmt.Printf("Fetching file from GitHub API: %s\n", filePath)
+
+		// Extract owner and repo name from URL
+		owner, repoName, err := parseGitHubURL(repo.URL())
+		if err != nil {
+			return nil, err
+		}
+
+		// Get file content via GitHub API
+		client := g.getGitHubClient(repo.AccessToken())
+		fileContent, _, _, err := client.Repositories.GetContents(ctx, owner, repoName, filePath, &github.RepositoryContentGetOptions{})
+		if err != nil {
+			return nil, fmt.Errorf("failed to get file content from API: %w", err)
+		}
+
+		contentStr, err := fileContent.GetContent()
+		if err != nil {
+			return nil, fmt.Errorf("failed to decode content from API: %w", err)
+		}
+
+		content = []byte(contentStr)
+
+		// Cache the file locally for future requests
+		dir := filepath.Dir(fullPath)
+		if err := os.MkdirAll(dir, 0755); err != nil {
+			fmt.Printf("Warning: failed to create cache directory %s: %v\n", dir, err)
+		} else {
+			if err := os.WriteFile(fullPath, content, 0644); err != nil {
+				fmt.Printf("Warning: failed to cache file %s: %v\n", fullPath, err)
+			} else {
+				fmt.Printf("Cached file: %s\n", fullPath)
+			}
+		}
+
+		return content, nil
+	}
+
+	// Other error reading file
+	return nil, fmt.Errorf("failed to read file %s: %w", fullPath, err)
 }

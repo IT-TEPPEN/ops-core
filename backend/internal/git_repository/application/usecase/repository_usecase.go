@@ -220,14 +220,8 @@ func (uc *repositoryUseCase) GetFileContents(ctx context.Context, repoID string,
 		})
 	}
 
-	// 2. Ensure repository is cloned/updated locally and get its path
-	localPath, err := uc.gitManager.EnsureCloned(ctx, repo)
-	if err != nil {
-		return "", fmt.Errorf("failed to ensure repository is cloned: %w", err)
-	}
-
-	// 3. Read the file content from the local repository path
-	contentBytes, err := uc.gitManager.ReadManagedFileContent(ctx, localPath, filePath, repo)
+	// 2. Read the file content (on-demand fetching with caching)
+	contentBytes, err := uc.gitManager.ReadManagedFileContent(ctx, "", filePath, repo)
 	if err != nil {
 		return "", fmt.Errorf("failed to read content of file '%s': %w", filePath, err)
 	}
