@@ -146,6 +146,7 @@
   // Use 'forwardPorts' to make a list of ports inside the container available locally.
   "forwardPorts": [
     3000,
+    5173,
     8080
   ], // Forward frontend (3000) and Go backend (8080 typical for Go)
   "features": {

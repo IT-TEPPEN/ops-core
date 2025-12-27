@@ -1,7 +1,9 @@
 import { Routes, Route } from "react-router-dom";
 import BlogPage from "./pages/BlogPage";
-import RepositoriesPage from "./pages/RepositoriesPage";
+import RepositoryListPage from "./pages/RepositoryListPage";
+import RepositoryCreatePage from "./pages/RepositoryCreatePage";
 import RepositoryDetailPage from "./pages/RepositoryDetailPage";
+import OAuthCallbackPage from "./pages/OAuthCallbackPage";
 import DocumentListPage from "./pages/DocumentListPage";
 import DocumentDetailPage from "./pages/DocumentDetailPage";
 import DocumentViewPage from "./pages/DocumentViewPage";
@@ -24,8 +26,10 @@ function App() {
         <main className="max-w-5xl mx-auto p-4">
           <Routes>
             <Route path="/" element={<HomePage />} />
+            <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
             <Route path="repositories">
-              <Route index element={<RepositoriesPage />} />
+              <Route index element={<RepositoryListPage />} />
+              <Route path="new" element={<RepositoryCreatePage />} />
               <Route path=":repoId">
                 <Route index element={<RepositoryDetailPage />} />
                 <Route path="files/:filePath" element={<BlogPage />} />

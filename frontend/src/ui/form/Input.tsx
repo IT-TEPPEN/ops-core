@@ -1,11 +1,6 @@
-import { ChangeEvent, InputHTMLAttributes } from "react";
+import { InputHTMLAttributes } from "react";
 
-interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
-  value: string;
-  onChange: (e: ChangeEvent<HTMLInputElement>) => void;
-}
-
-export function UI_Form_Input(props: InputProps) {
+export function UI_Form_Input(props: InputHTMLAttributes<HTMLInputElement>) {
   const { className, ...others } = props;
 
   return (
