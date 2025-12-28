@@ -1,0 +1,261 @@
+package service
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
+	"time"
+
+	"opscore/backend/internal/oauth/domain"
+)
+
+// GitProviderService provides Git provider specific operations using OAuth tokens
+type GitProviderService struct {
+	oauthService *OAuthService
+	httpClient   *http.Client
+}
+
+// NewGitProviderService creates a new GitProviderService
+func NewGitProviderService(oauthService *OAuthService) *GitProviderService {
+	return &GitProviderService{
+		oauthService: oauthService,
+		httpClient: &http.Client{
+			Timeout: 30 * time.Second,
+		},
+	}
+}
+
+// GitRepository represents a repository from a Git provider
+type GitRepository struct {
+	ID            int64  `json:"id"`
+	Name          string `json:"name"`
+	FullName      string `json:"full_name"`
+	Description   string `json:"description"`
+	Private       bool   `json:"private"`
+	HTMLURL       string `json:"html_url"`
+	CloneURL      string `json:"clone_url"`
+	DefaultBranch string `json:"default_branch"`
+	Provider      string `json:"provider"`
+}
+
+// ListUserRepositories lists repositories accessible to the user for a given provider
+func (s *GitProviderService) ListUserRepositories(ctx context.Context, userID string, provider domain.Provider) ([]GitRepository, error) {
+	// Get access token for the user
+	token, err := s.oauthService.GetAccessToken(ctx, userID, provider)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get access token: %w", err)
+	}
+
+	switch provider {
+	case domain.ProviderGitHub:
+		return s.listGitHubRepositories(ctx, token)
+	case domain.ProviderGitLab, domain.ProviderGitLabSelfHosted:
+		return s.listGitLabRepositories(ctx, token, "https://gitlab.com")
+	default:
+		return nil, fmt.Errorf("unsupported provider: %s", provider)
+	}
+}
+
+// listGitHubRepositories lists repositories from GitHub
+func (s *GitProviderService) listGitHubRepositories(ctx context.Context, accessToken string) ([]GitRepository, error) {
+	var allRepos []GitRepository
+	page := 1
+	perPage := 100
+
+	for {
+		url := fmt.Sprintf("https://api.github.com/user/repos?per_page=%d&page=%d&sort=updated", perPage, page)
+		req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+		if err != nil {
+			return nil, err
+		}
+		req.Header.Set("Authorization", "Bearer "+accessToken)
+		req.Header.Set("Accept", "application/vnd.github+json")
+		req.Header.Set("X-GitHub-Api-Version", "2022-11-28")
+
+		resp, err := s.httpClient.Do(req)
+		if err != nil {
+			return nil, err
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			body, _ := io.ReadAll(resp.Body)
+			return nil, fmt.Errorf("github api error: %s - %s", resp.Status, string(body))
+		}
+
+		var repos []struct {
+			ID            int64  `json:"id"`
+			Name          string `json:"name"`
+			FullName      string `json:"full_name"`
+			Description   string `json:"description"`
+			Private       bool   `json:"private"`
+			HTMLURL       string `json:"html_url"`
+			CloneURL      string `json:"clone_url"`
+			DefaultBranch string `json:"default_branch"`
+		}
+
+		if err := json.NewDecoder(resp.Body).Decode(&repos); err != nil {
+			return nil, err
+		}
+
+		for _, r := range repos {
+			allRepos = append(allRepos, GitRepository{
+				ID:            r.ID,
+				Name:          r.Name,
+				FullName:      r.FullName,
+				Description:   r.Description,
+				Private:       r.Private,
+				HTMLURL:       r.HTMLURL,
+				CloneURL:      r.CloneURL,
+				DefaultBranch: r.DefaultBranch,
+				Provider:      string(domain.ProviderGitHub),
+			})
+		}
+
+		// Check if there are more pages
+		if len(repos) < perPage {
+			break
+		}
+		page++
+	}
+
+	return allRepos, nil
+}
+
+// listGitLabRepositories lists repositories from GitLab
+func (s *GitProviderService) listGitLabRepositories(ctx context.Context, accessToken string, baseURL string) ([]GitRepository, error) {
+	var allRepos []GitRepository
+	page := 1
+	perPage := 100
+
+	for {
+		url := fmt.Sprintf("%s/api/v4/projects?membership=true&per_page=%d&page=%d&order_by=updated_at", baseURL, perPage, page)
+		req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+		if err != nil {
+			return nil, err
+		}
+		req.Header.Set("Authorization", "Bearer "+accessToken)
+
+		resp, err := s.httpClient.Do(req)
+		if err != nil {
+			return nil, err
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			body, _ := io.ReadAll(resp.Body)
+			return nil, fmt.Errorf("gitlab api error: %s - %s", resp.Status, string(body))
+		}
+
+		var repos []struct {
+			ID                int64  `json:"id"`
+			Name              string `json:"name"`
+			PathWithNamespace string `json:"path_with_namespace"`
+			Description       string `json:"description"`
+			Visibility        string `json:"visibility"`
+			WebURL            string `json:"web_url"`
+			HTTPURLToRepo     string `json:"http_url_to_repo"`
+			DefaultBranch     string `json:"default_branch"`
+		}
+
+		if err := json.NewDecoder(resp.Body).Decode(&repos); err != nil {
+			return nil, err
+		}
+
+		for _, r := range repos {
+			allRepos = append(allRepos, GitRepository{
+				ID:            r.ID,
+				Name:          r.Name,
+				FullName:      r.PathWithNamespace,
+				Description:   r.Description,
+				Private:       r.Visibility == "private",
+				HTMLURL:       r.WebURL,
+				CloneURL:      r.HTTPURLToRepo,
+				DefaultBranch: r.DefaultBranch,
+				Provider:      string(domain.ProviderGitLab),
+			})
+		}
+
+		// Check if there are more pages
+		if len(repos) < perPage {
+			break
+		}
+		page++
+	}
+
+	return allRepos, nil
+}
+
+// GetRepositoryContents gets the contents of a path in a repository
+func (s *GitProviderService) GetRepositoryContents(ctx context.Context, userID string, provider domain.Provider, owner, repo, path, ref string) ([]byte, error) {
+	token, err := s.oauthService.GetAccessToken(ctx, userID, provider)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get access token: %w", err)
+	}
+
+	switch provider {
+	case domain.ProviderGitHub:
+		return s.getGitHubFileContent(ctx, token, owner, repo, path, ref)
+	case domain.ProviderGitLab, domain.ProviderGitLabSelfHosted:
+		return s.getGitLabFileContent(ctx, token, "https://gitlab.com", owner+"/"+repo, path, ref)
+	default:
+		return nil, fmt.Errorf("unsupported provider: %s", provider)
+	}
+}
+
+func (s *GitProviderService) getGitHubFileContent(ctx context.Context, accessToken, owner, repo, path, ref string) ([]byte, error) {
+	url := fmt.Sprintf("https://api.github.com/repos/%s/%s/contents/%s", owner, repo, path)
+	if ref != "" {
+		url += "?ref=" + ref
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Authorization", "Bearer "+accessToken)
+	req.Header.Set("Accept", "application/vnd.github.raw+json")
+	req.Header.Set("X-GitHub-Api-Version", "2022-11-28")
+
+	resp, err := s.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("github api error: %s - %s", resp.Status, string(body))
+	}
+
+	return io.ReadAll(resp.Body)
+}
+
+func (s *GitProviderService) getGitLabFileContent(ctx context.Context, accessToken, baseURL, projectPath, filePath, ref string) ([]byte, error) {
+	// GitLab requires URL-encoded project path and file path
+	url := fmt.Sprintf("%s/api/v4/projects/%s/repository/files/%s/raw", baseURL, projectPath, filePath)
+	if ref != "" {
+		url += "?ref=" + ref
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Authorization", "Bearer "+accessToken)
+
+	resp, err := s.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("gitlab api error: %s - %s", resp.Status, string(body))
+	}
+
+	return io.ReadAll(resp.Body)
+}

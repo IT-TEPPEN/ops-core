@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted
+Accepted (Updated: 2025-01)
 
 ## Context
 
@@ -10,32 +10,71 @@ Following ADR 0001, OpsCore requires read access to external private GitLab and 
 
 ## Decision
 
-We propose the following methods for OpsCore to access external repositories, offering flexibility and security:
+We use **OAuth 2.0** as the primary method for accessing external Git repositories. This provides a secure, user-friendly authentication flow with proper token lifecycle management.
 
-1. **Primary Method: Access Keys (Deploy Keys / Fine-grained PATs)**
-    * **GitLab:** Utilize **Deploy Keys** with read-only access (`read_repository`). These keys are specific to a single repository, providing granular access control.
-    * **GitHub:** Utilize **Deploy Keys** with read-only access or **Fine-grained Personal Access Tokens (PATs)**. Fine-grained PATs are preferred over classic PATs as they allow scoping permissions strictly to repository contents (read-only) for selected repositories.
-    * **Permissions:** While read-only access (`read_repository` on GitLab, `contents:read` on GitHub) is the minimum requirement for fetching documents, granting write access (`write_repository` on GitLab, `contents:write` on GitHub) can be considered for future enhancements, such as allowing OpsCore to directly modify procedure documents.
-    * **Configuration:** OpsCore administrators will configure the necessary keys/tokens within the OpsCore system for each target repository or organization. Secure storage and handling of these credentials within OpsCore are paramount.
+### OAuth 2.0 Flow
 
-2. **Alternative/Recommended Method: Application-based Access (GitHub App / GitLab Application)**
-    * **Concept:** OpsCore can be registered as a **GitHub App** or a **GitLab Application**. Repository owners/administrators would then install/authorize this application on their specific repositories or organizations, granting it the necessary read-only permissions.
-    * **Advantages:** This method offers superior security and manageability:
-        * **Granular Permissions:** Permissions are explicitly granted by the user during installation/authorization, adhering to the principle of least privilege.
-        * **Centralized Management:** Access control is managed through the Git platform's application interface.
-        * **No Manual Key Handling (for users):** Users don't need to generate or share keys directly with OpsCore.
-        * **Enhanced Auditability:** Actions performed by the application are typically logged more clearly.
-    * **Implementation:** This requires OpsCore to implement the necessary OAuth flows or installation handling logic for GitHub Apps/GitLab Applications.
+1. **Authorization Flow**
+   - User initiates GitHub/GitLab connection from OpsCore UI
+   - OpsCore redirects to provider's OAuth authorization endpoint
+   - User grants permissions to OpsCore application
+   - Provider redirects back with authorization code
+   - OpsCore exchanges code for access token and refresh token
+   - Tokens are encrypted and stored in database, associated with user
 
-3. **Phased Approach:**
-    * **Initially,** OpsCore will primarily support the **Access Key method** (Deploy Keys and Fine-grained PATs) due to its simpler initial implementation for both OpsCore and potentially for users setting up individual repositories.
-    * **The Application-based method** is the recommended long-term solution. Development effort should be allocated to support this method, and users should be encouraged to migrate to it once available for enhanced security and manageability.
+2. **Token Management**
+   - Access tokens are used for API calls to Git providers
+   - Refresh tokens are used to obtain new access tokens when expired
+   - Tokens are encrypted using AES-256-GCM before storage
+   - Token refresh is handled automatically when API calls fail with 401
+
+3. **Required Scopes**
+   - **GitHub**: `repo` (for private repos), `read:user`
+   - **GitLab**: `read_repository`, `read_user`
+
+### Database Schema
+
+```sql
+CREATE TABLE oauth_connections (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    provider VARCHAR(50) NOT NULL,  -- 'github' or 'gitlab'
+    provider_user_id VARCHAR(255) NOT NULL,
+    provider_username VARCHAR(255),
+    access_token_encrypted TEXT NOT NULL,
+    refresh_token_encrypted TEXT,
+    token_expires_at TIMESTAMP WITH TIME ZONE,
+    scopes TEXT[],
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    UNIQUE(user_id, provider)
+);
+
+CREATE INDEX idx_oauth_connections_user_id ON oauth_connections(user_id);
+CREATE INDEX idx_oauth_connections_provider ON oauth_connections(provider);
+```
+
+### Repository Access
+
+When accessing repositories:
+
+1. Look up user's OAuth connection for the repository's provider
+2. Use the stored access token to make API calls
+3. If token is expired, use refresh token to obtain new access token
+4. If refresh fails, prompt user to re-authenticate
 
 ## Consequences
 
-* **Pros:**
-  * **Access Keys:** Relatively straightforward for users to generate for a single repository; simpler initial implementation for OpsCore.
-  * **Application Method:** More secure (least privilege, no user key sharing); easier credential management (rotation/revocation handled by the platform/app); better audit trails; centralized control for organizations.
-* **Cons:**
-  * **Access Keys:** Requires secure storage and management of keys within OpsCore; potential for keys to have overly broad permissions if not carefully created (especially classic PATs); users need to manage key lifecycle (rotation, revocation).
-  * **Application Method:** More complex initial implementation for OpsCore (OAuth flows, app registration); potentially slightly more complex setup for users the first time they authorize the application.
+### Pros
+
+- **User-friendly**: Standard OAuth flow familiar to users
+- **Secure**: No manual token handling by users
+- **Automatic refresh**: Token lifecycle managed by application
+- **Audit trail**: All actions associated with authenticated user
+- **Granular permissions**: Users explicitly grant permissions
+
+### Cons
+
+- **Complexity**: Requires OAuth flow implementation
+- **Provider registration**: Need to register OpsCore as OAuth app with each provider
+- **Token expiry**: Need to handle token refresh and re-authentication

@@ -23,6 +23,15 @@ func NewOAuthHandler(oauthService *service.OAuthService, logger domain.Logger) *
 	}
 }
 
+// OAuthConnectionResponse represents an OAuth connection in API responses
+type OAuthConnectionResponse struct {
+	ID               string   `json:"id"`
+	Provider         string   `json:"provider"`
+	ProviderUsername string   `json:"provider_username"`
+	Scopes           []string `json:"scopes"`
+	ConnectedAt      string   `json:"connected_at"`
+}
+
 // HandleCallback handles OAuth callback request
 // @Summary OAuth callback endpoint
 // @Description Exchanges OAuth authorization code for access token
@@ -80,4 +89,194 @@ func (h *OAuthHandler) HandleCallback(c *gin.Context) {
 
 	h.logger.Info("OAuth token exchanged successfully", "provider", req.Provider)
 	c.JSON(http.StatusOK, tokenResp)
+}
+
+// HandleCallbackWithSave handles OAuth callback and saves tokens to database
+// @Summary OAuth callback endpoint with token storage
+// @Description Exchanges OAuth authorization code for access token and saves to database
+// @Tags OAuth
+// @Accept json
+// @Produce json
+// @Param request body domain.OAuthCallbackRequest true "OAuth callback request"
+// @Success 200 {object} OAuthConnectionResponse
+// @Failure 400 {object} map[string]interface{} "Invalid request"
+// @Failure 401 {object} map[string]interface{} "Unauthorized"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /auth/oauth/connect [post]
+func (h *OAuthHandler) HandleCallbackWithSave(c *gin.Context) {
+	var req domain.OAuthCallbackRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		h.logger.Error("Failed to bind request", "error", err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   "invalid_request",
+			"message": "Invalid request format",
+		})
+		return
+	}
+
+	// Validate provider
+	if !req.Provider.IsValid() {
+		h.logger.Error("Invalid provider", "provider", req.Provider)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   "invalid_provider",
+			"message": "Unsupported Git provider",
+		})
+		return
+	}
+
+	// Get user ID from context (requires authentication middleware)
+	userID, exists := c.Get("user_id")
+	if !exists {
+		h.logger.Error("User ID not found in context")
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error":   "unauthorized",
+			"message": "Authentication required",
+		})
+		return
+	}
+
+	// Exchange code for token and save
+	conn, err := h.oauthService.ExchangeAndSaveToken(c.Request.Context(), userID.(string), req)
+	if err != nil {
+		h.logger.Error("Failed to exchange and save token", "error", err, "provider", req.Provider)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "token_exchange_failed",
+			"message": err.Error(),
+		})
+		return
+	}
+
+	h.logger.Info("OAuth connection saved successfully", "provider", req.Provider, "user_id", userID)
+	c.JSON(http.StatusOK, OAuthConnectionResponse{
+		ID:               conn.ID(),
+		Provider:         string(conn.Provider()),
+		ProviderUsername: conn.ProviderUsername(),
+		Scopes:           conn.Scopes(),
+		ConnectedAt:      conn.CreatedAt().Format("2006-01-02T15:04:05Z07:00"),
+	})
+}
+
+// ListConnections lists all OAuth connections for the current user
+// @Summary List OAuth connections
+// @Description List all OAuth connections for the authenticated user
+// @Tags OAuth
+// @Produce json
+// @Success 200 {object} map[string]interface{}
+// @Failure 401 {object} map[string]interface{} "Unauthorized"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /auth/oauth/connections [get]
+func (h *OAuthHandler) ListConnections(c *gin.Context) {
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error":   "unauthorized",
+			"message": "Authentication required",
+		})
+		return
+	}
+
+	connections, err := h.oauthService.ListConnections(c.Request.Context(), userID.(string))
+	if err != nil {
+		h.logger.Error("Failed to list connections", "error", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "internal_error",
+			"message": err.Error(),
+		})
+		return
+	}
+
+	response := make([]OAuthConnectionResponse, len(connections))
+	for i, conn := range connections {
+		response[i] = OAuthConnectionResponse{
+			ID:               conn.ID(),
+			Provider:         string(conn.Provider()),
+			ProviderUsername: conn.ProviderUsername(),
+			Scopes:           conn.Scopes(),
+			ConnectedAt:      conn.CreatedAt().Format("2006-01-02T15:04:05Z07:00"),
+		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"connections": response,
+	})
+}
+
+// DisconnectProvider removes an OAuth connection
+// @Summary Disconnect OAuth provider
+// @Description Remove an OAuth connection for the authenticated user
+// @Tags OAuth
+// @Param provider path string true "Provider name (github, gitlab)"
+// @Success 204 "No Content"
+// @Failure 400 {object} map[string]interface{} "Invalid provider"
+// @Failure 401 {object} map[string]interface{} "Unauthorized"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /auth/oauth/connections/{provider} [delete]
+func (h *OAuthHandler) DisconnectProvider(c *gin.Context) {
+	providerStr := c.Param("provider")
+
+	provider := domain.Provider(providerStr)
+	if !provider.IsValid() {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   "invalid_provider",
+			"message": "Invalid provider",
+		})
+		return
+	}
+
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error":   "unauthorized",
+			"message": "Authentication required",
+		})
+		return
+	}
+
+	if err := h.oauthService.DisconnectProvider(c.Request.Context(), userID.(string), provider); err != nil {
+		h.logger.Error("Failed to disconnect provider", "error", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "internal_error",
+			"message": err.Error(),
+		})
+		return
+	}
+
+	c.Status(http.StatusNoContent)
+}
+
+// GetAccessToken returns the access token for a provider (internal use)
+func (h *OAuthHandler) GetAccessToken(c *gin.Context) {
+	providerStr := c.Param("provider")
+
+	provider := domain.Provider(providerStr)
+	if !provider.IsValid() {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   "invalid_provider",
+			"message": "Invalid provider",
+		})
+		return
+	}
+
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error":   "unauthorized",
+			"message": "Authentication required",
+		})
+		return
+	}
+
+	token, err := h.oauthService.GetAccessToken(c.Request.Context(), userID.(string), provider)
+	if err != nil {
+		h.logger.Error("Failed to get access token", "error", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "internal_error",
+			"message": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"access_token": token,
+	})
 }

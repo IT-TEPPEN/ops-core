@@ -32,6 +32,7 @@ import (
 
 	oauthservice "opscore/backend/internal/oauth/application/service"
 	oauthdomain "opscore/backend/internal/oauth/domain"
+	oauthpersistence "opscore/backend/internal/oauth/infrastructure/persistence"
 	oauthhandlers "opscore/backend/internal/oauth/interfaces/api/handlers"
 
 	authservice "opscore/backend/internal/auth/application/service"
@@ -160,13 +161,14 @@ func InitializeAPI(db *pgxpool.Pool) (*repohandlers.RepositoryHandler,
 	*viewhistoryhandlers.ViewHistoryHandler,
 	*viewstatshandlers.ViewStatisticsHandler,
 	*oauthhandlers.OAuthHandler,
+	*oauthhandlers.GitProviderHandler,
 	*authhandlers.AuthHandler,
 	error,
 ) {
 	// Create encryptor
 	encryptor, err := provideEncryptor()
 	if err != nil {
-		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, err
+		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, err
 	}
 
 	// Create repository (persistence layer)
@@ -175,7 +177,7 @@ func InitializeAPI(db *pgxpool.Pool) (*repohandlers.RepositoryHandler,
 	// Create git manager
 	gitManager, err := provideGitManager()
 	if err != nil {
-		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, err
+		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, err
 	}
 
 	// Create use case
@@ -225,7 +227,7 @@ func InitializeAPI(db *pgxpool.Pool) (*repohandlers.RepositoryHandler,
 	}
 	storageManager, err := storage.NewLocalStorageManager(storageBasePath)
 	if err != nil {
-		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, err
+		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, err
 	}
 
 	// Create attachment use case
@@ -279,14 +281,23 @@ func InitializeAPI(db *pgxpool.Pool) (*repohandlers.RepositoryHandler,
 	// Create view statistics handler
 	viewStatsHandler := viewstatshandlers.NewViewStatisticsHandler(viewStatsUseCase, viewStatsLogger)
 
-	// Create OAuth service
-	oauthService := oauthservice.NewOAuthService()
+	// Create OAuth connection repository
+	oauthConnectionRepo := oauthpersistence.NewPostgresOAuthConnectionRepository(db, encryptor)
+
+	// Create OAuth service with repository
+	oauthService := oauthservice.NewOAuthServiceWithRepository(oauthConnectionRepo)
 
 	// Create OAuth logger
 	oauthLogger := provideOAuthHandlerLogger()
 
 	// Create OAuth handler
 	oauthHandler := oauthhandlers.NewOAuthHandler(oauthService, oauthLogger)
+
+	// Create Git provider service
+	gitProviderService := oauthservice.NewGitProviderService(oauthService)
+
+	// Create Git provider handler
+	gitProviderHandler := oauthhandlers.NewGitProviderHandler(gitProviderService, oauthLogger)
 
 	// Create auth user repository
 	authUserRepository := authpersistence.NewPostgresUserRepository(db)
@@ -379,5 +390,5 @@ func InitializeAPI(db *pgxpool.Pool) (*repohandlers.RepositoryHandler,
 	// Create auth handler
 	authHandler := authhandlers.NewAuthHandler(providerFactory, jwtService, authUserRepository, userIdentityRepository, authLogger)
 
-	return repositoryHandler, documentHandler, variableHandler, executionRecordHandler, attachmentHandler, userHandler, groupHandler, viewHistoryHandler, viewStatsHandler, oauthHandler, authHandler, nil
+	return repositoryHandler, documentHandler, variableHandler, executionRecordHandler, attachmentHandler, userHandler, groupHandler, viewHistoryHandler, viewStatsHandler, oauthHandler, gitProviderHandler, authHandler, nil
 }

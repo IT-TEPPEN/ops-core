@@ -58,7 +58,7 @@ func main() {
 	fmt.Println("Successfully connected to the database.")
 	// --- End Database Connection ---
 
-	repoHandler, docHandler, varHandler, execHandler, attachHandler, userHandler, groupHandler, viewHistoryHandler, viewStatsHandler, oauthHandler, authHandler, err := InitializeAPI(dbpool) // Pass dbpool and handle error
+	repoHandler, docHandler, varHandler, execHandler, attachHandler, userHandler, groupHandler, viewHistoryHandler, viewStatsHandler, oauthHandler, gitProviderHandler, authHandler, err := InitializeAPI(dbpool) // Pass dbpool and handle error
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to initialize API dependencies: %v\n", err)
 		os.Exit(1)
@@ -94,17 +94,29 @@ func main() {
 			// Provider-specific login and callback
 			authGroup.GET("/:provider/login", authHandler.ProviderLogin)
 			authGroup.POST("/:provider/callback", authHandler.ProviderCallback)
-			
+
 			// User info and session management
 			authGroup.GET("/me", authHandler.GetMe)       // Protected route
 			authGroup.POST("/logout", authHandler.Logout) // Protected route
-			
-			// Identity management
-			authGroup.GET("/identities", authHandler.GetIdentities)             // Protected route
-			authGroup.DELETE("/identities/:id", authHandler.UnlinkIdentity)     // Protected route
 
-			// Legacy OAuth routes for repository access
+			// Identity management
+			authGroup.GET("/identities", authHandler.GetIdentities)         // Protected route
+			authGroup.DELETE("/identities/:id", authHandler.UnlinkIdentity) // Protected route
+
+			// Legacy OAuth routes for repository access (returns token without saving)
 			authGroup.POST("/oauth/callback", oauthHandler.HandleCallback)
+
+			// New OAuth routes for Git provider connections (saves token to database)
+			authGroup.POST("/oauth/connect", oauthHandler.HandleCallbackWithSave)             // Exchange code and save token
+			authGroup.GET("/oauth/connections", oauthHandler.ListConnections)                 // List connected providers
+			authGroup.DELETE("/oauth/connections/:provider", oauthHandler.DisconnectProvider) // Disconnect provider
+		}
+
+		// Git provider routes - access repositories using OAuth tokens
+		gitProviders := v1.Group("/git-providers")
+		{
+			gitProviders.GET("/:provider/repositories", gitProviderHandler.ListUserRepositories)
+			gitProviders.GET("/:provider/repos/:owner/:repo/contents", gitProviderHandler.GetRepositoryContent)
 		}
 
 		// Repository routes - use methods from the initialized handler

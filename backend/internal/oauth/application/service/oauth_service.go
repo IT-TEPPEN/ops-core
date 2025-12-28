@@ -2,25 +2,50 @@ package service
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
+	"time"
 
 	"opscore/backend/internal/oauth/domain"
+
+	"github.com/google/uuid"
 )
+
+// GitHubUserResponse represents GitHub's user API response
+type GitHubUserResponse struct {
+	ID    int64  `json:"id"`
+	Login string `json:"login"`
+}
 
 // OAuthService handles OAuth2.0 token exchange
 type OAuthService struct {
 	httpClient *http.Client
+	repo       domain.OAuthConnectionRepository
 }
 
 // NewOAuthService creates a new OAuthService
 func NewOAuthService() *OAuthService {
 	return &OAuthService{
-		httpClient: &http.Client{},
+		httpClient: &http.Client{
+			Timeout: 30 * time.Second,
+		},
+		repo: nil,
+	}
+}
+
+// NewOAuthServiceWithRepository creates a new OAuthService with a repository
+func NewOAuthServiceWithRepository(repo domain.OAuthConnectionRepository) *OAuthService {
+	return &OAuthService{
+		httpClient: &http.Client{
+			Timeout: 30 * time.Second,
+		},
+		repo: repo,
 	}
 }
 
@@ -131,4 +156,311 @@ func (s *OAuthService) exchangeCodeForToken(config *domain.OAuthConfig, code str
 	}
 
 	return &tokenResp, nil
+}
+
+// ExchangeAndSaveToken exchanges authorization code for tokens and saves them to the database
+func (s *OAuthService) ExchangeAndSaveToken(ctx context.Context, userID string, req domain.OAuthCallbackRequest) (*domain.OAuthConnection, error) {
+	if s.repo == nil {
+		return nil, fmt.Errorf("repository not configured")
+	}
+
+	// Exchange code for token
+	tokenResp, err := s.ExchangeToken(req)
+	if err != nil {
+		return nil, err
+	}
+
+	// Get user info from provider
+	providerUserID, providerUsername, err := s.getProviderUserInfo(ctx, req.Provider, tokenResp.AccessToken, req.GitLabURL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get provider user info: %w", err)
+	}
+
+	// Calculate token expiration
+	var expiresAt *time.Time
+	if tokenResp.ExpiresIn > 0 {
+		t := time.Now().Add(time.Duration(tokenResp.ExpiresIn) * time.Second)
+		expiresAt = &t
+	}
+
+	// Parse scopes
+	var scopes []string
+	if tokenResp.Scope != "" {
+		scopes = strings.Split(tokenResp.Scope, ",")
+	}
+
+	// Create OAuth connection
+	conn, err := domain.NewOAuthConnection(
+		uuid.New().String(),
+		userID,
+		req.Provider,
+		providerUserID,
+		providerUsername,
+		tokenResp.AccessToken,
+		tokenResp.RefreshToken,
+		expiresAt,
+		scopes,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	// Save to database
+	if err := s.repo.Save(ctx, conn); err != nil {
+		return nil, fmt.Errorf("failed to save oauth connection: %w", err)
+	}
+
+	return conn, nil
+}
+
+// getProviderUserInfo fetches user info from the OAuth provider
+func (s *OAuthService) getProviderUserInfo(ctx context.Context, provider domain.Provider, accessToken string, gitlabURL string) (string, string, error) {
+	switch provider {
+	case domain.ProviderGitHub:
+		return s.getGitHubUserInfo(ctx, accessToken)
+	case domain.ProviderGitLab, domain.ProviderGitLabSelfHosted:
+		baseURL := "https://gitlab.com"
+		if provider == domain.ProviderGitLabSelfHosted && gitlabURL != "" {
+			baseURL = strings.TrimSuffix(gitlabURL, "/")
+		}
+		return s.getGitLabUserInfo(ctx, accessToken, baseURL)
+	default:
+		return "", "", fmt.Errorf("unsupported provider: %s", provider)
+	}
+}
+
+// getGitHubUserInfo fetches user info from GitHub
+func (s *OAuthService) getGitHubUserInfo(ctx context.Context, accessToken string) (string, string, error) {
+	req, err := http.NewRequestWithContext(ctx, "GET", "https://api.github.com/user", nil)
+	if err != nil {
+		return "", "", err
+	}
+	req.Header.Set("Authorization", "Bearer "+accessToken)
+	req.Header.Set("Accept", "application/vnd.github+json")
+
+	resp, err := s.httpClient.Do(req)
+	if err != nil {
+		return "", "", err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return "", "", fmt.Errorf("github api error: %s - %s", resp.Status, string(body))
+	}
+
+	var user GitHubUserResponse
+	if err := json.NewDecoder(resp.Body).Decode(&user); err != nil {
+		return "", "", err
+	}
+
+	return fmt.Sprintf("%d", user.ID), user.Login, nil
+}
+
+// GitLabUserResponse represents GitLab's user API response
+type GitLabUserResponse struct {
+	ID       int64  `json:"id"`
+	Username string `json:"username"`
+}
+
+// getGitLabUserInfo fetches user info from GitLab
+func (s *OAuthService) getGitLabUserInfo(ctx context.Context, accessToken string, baseURL string) (string, string, error) {
+	req, err := http.NewRequestWithContext(ctx, "GET", baseURL+"/api/v4/user", nil)
+	if err != nil {
+		return "", "", err
+	}
+	req.Header.Set("Authorization", "Bearer "+accessToken)
+
+	resp, err := s.httpClient.Do(req)
+	if err != nil {
+		return "", "", err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return "", "", fmt.Errorf("gitlab api error: %s - %s", resp.Status, string(body))
+	}
+
+	var user GitLabUserResponse
+	if err := json.NewDecoder(resp.Body).Decode(&user); err != nil {
+		return "", "", err
+	}
+
+	return fmt.Sprintf("%d", user.ID), user.Username, nil
+}
+
+// GetConnection retrieves a user's OAuth connection for a provider
+func (s *OAuthService) GetConnection(ctx context.Context, userID string, provider domain.Provider) (*domain.OAuthConnection, error) {
+	if s.repo == nil {
+		return nil, fmt.Errorf("repository not configured")
+	}
+	return s.repo.FindByUserAndProvider(ctx, userID, provider)
+}
+
+// GetAccessToken retrieves a valid access token for a user and provider
+// If the token is expired, it will attempt to refresh it
+func (s *OAuthService) GetAccessToken(ctx context.Context, userID string, provider domain.Provider) (string, error) {
+	conn, err := s.GetConnection(ctx, userID, provider)
+	if err != nil {
+		return "", err
+	}
+	if conn == nil {
+		return "", fmt.Errorf("no oauth connection found for provider %s", provider)
+	}
+
+	// Check if token is expired
+	if conn.IsTokenExpired() {
+		// Try to refresh the token
+		refreshedConn, err := s.RefreshToken(ctx, conn)
+		if err != nil {
+			return "", fmt.Errorf("token expired and refresh failed: %w", err)
+		}
+		return refreshedConn.AccessToken(), nil
+	}
+
+	return conn.AccessToken(), nil
+}
+
+// RefreshToken refreshes an expired access token
+func (s *OAuthService) RefreshToken(ctx context.Context, conn *domain.OAuthConnection) (*domain.OAuthConnection, error) {
+	if conn.RefreshToken() == "" {
+		return nil, fmt.Errorf("no refresh token available")
+	}
+
+	switch conn.Provider() {
+	case domain.ProviderGitHub:
+		return s.refreshGitHubToken(ctx, conn)
+	case domain.ProviderGitLab, domain.ProviderGitLabSelfHosted:
+		return s.refreshGitLabToken(ctx, conn)
+	default:
+		return nil, fmt.Errorf("unsupported provider: %s", conn.Provider())
+	}
+}
+
+func (s *OAuthService) refreshGitHubToken(ctx context.Context, conn *domain.OAuthConnection) (*domain.OAuthConnection, error) {
+	clientID := os.Getenv("GITHUB_CLIENT_ID")
+	clientSecret := os.Getenv("GITHUB_CLIENT_SECRET")
+	if clientID == "" || clientSecret == "" {
+		return nil, fmt.Errorf("GitHub OAuth credentials not configured")
+	}
+
+	data := url.Values{}
+	data.Set("client_id", clientID)
+	data.Set("client_secret", clientSecret)
+	data.Set("grant_type", "refresh_token")
+	data.Set("refresh_token", conn.RefreshToken())
+
+	req, err := http.NewRequestWithContext(ctx, "POST", "https://github.com/login/oauth/access_token", bytes.NewBufferString(data.Encode()))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("Accept", "application/json")
+
+	resp, err := s.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	var tokenResp domain.OAuthTokenResponse
+	if err := json.NewDecoder(resp.Body).Decode(&tokenResp); err != nil {
+		return nil, err
+	}
+
+	if tokenResp.AccessToken == "" {
+		return nil, fmt.Errorf("failed to refresh github token")
+	}
+
+	var expiresAt *time.Time
+	if tokenResp.ExpiresIn > 0 {
+		t := time.Now().Add(time.Duration(tokenResp.ExpiresIn) * time.Second)
+		expiresAt = &t
+	}
+
+	if err := conn.UpdateTokens(tokenResp.AccessToken, tokenResp.RefreshToken, expiresAt); err != nil {
+		return nil, err
+	}
+
+	if s.repo != nil {
+		if err := s.repo.Save(ctx, conn); err != nil {
+			return nil, err
+		}
+	}
+
+	return conn, nil
+}
+
+func (s *OAuthService) refreshGitLabToken(ctx context.Context, conn *domain.OAuthConnection) (*domain.OAuthConnection, error) {
+	clientID := os.Getenv("GITLAB_CLIENT_ID")
+	clientSecret := os.Getenv("GITLAB_CLIENT_SECRET")
+	if clientID == "" || clientSecret == "" {
+		return nil, fmt.Errorf("GitLab OAuth credentials not configured")
+	}
+
+	tokenURL := "https://gitlab.com/oauth/token"
+	// TODO: Handle self-hosted GitLab URLs
+
+	data := url.Values{}
+	data.Set("client_id", clientID)
+	data.Set("client_secret", clientSecret)
+	data.Set("grant_type", "refresh_token")
+	data.Set("refresh_token", conn.RefreshToken())
+
+	req, err := http.NewRequestWithContext(ctx, "POST", tokenURL, bytes.NewBufferString(data.Encode()))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("Accept", "application/json")
+
+	resp, err := s.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	var tokenResp domain.OAuthTokenResponse
+	if err := json.NewDecoder(resp.Body).Decode(&tokenResp); err != nil {
+		return nil, err
+	}
+
+	if tokenResp.AccessToken == "" {
+		return nil, fmt.Errorf("failed to refresh gitlab token")
+	}
+
+	var expiresAt *time.Time
+	if tokenResp.ExpiresIn > 0 {
+		t := time.Now().Add(time.Duration(tokenResp.ExpiresIn) * time.Second)
+		expiresAt = &t
+	}
+
+	if err := conn.UpdateTokens(tokenResp.AccessToken, tokenResp.RefreshToken, expiresAt); err != nil {
+		return nil, err
+	}
+
+	if s.repo != nil {
+		if err := s.repo.Save(ctx, conn); err != nil {
+			return nil, err
+		}
+	}
+
+	return conn, nil
+}
+
+// DisconnectProvider removes a user's OAuth connection
+func (s *OAuthService) DisconnectProvider(ctx context.Context, userID string, provider domain.Provider) error {
+	if s.repo == nil {
+		return fmt.Errorf("repository not configured")
+	}
+	return s.repo.DeleteByUserAndProvider(ctx, userID, provider)
+}
+
+// ListConnections lists all OAuth connections for a user
+func (s *OAuthService) ListConnections(ctx context.Context, userID string) ([]*domain.OAuthConnection, error) {
+	if s.repo == nil {
+		return nil, fmt.Errorf("repository not configured")
+	}
+	return s.repo.FindByUser(ctx, userID)
 }
