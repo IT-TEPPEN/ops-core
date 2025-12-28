@@ -2,7 +2,7 @@ import { useContext } from "react";
 import {
   NotificationsActionsContext,
   NotificationsStateContext,
-} from "../contexts";
+} from "../contexts/NotificationContexts";
 
 export function useNotificationsState() {
   return useContext(NotificationsStateContext);

@@ -1,3 +1,11 @@
+export interface Repository {
+  getId(): string;
+  getName(): string;
+  getUrl(): string;
+  getCreatedAt(): Date;
+  getUpdatedAt(): Date;
+}
+
 export interface DocumentVariableBase<T extends string> {
   name: string;
   label: string;

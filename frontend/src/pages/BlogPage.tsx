@@ -1,11 +1,11 @@
 import { Link, useParams } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
-import { useRepositoryManagementAdapter } from "../features/repository/contexts";
+import { useRepositoryManagementAdapter } from "../features/repository/hooks";
 import { useQuery } from "@tanstack/react-query";
-import {
+import type {
   DocumentKnowledgeMeta,
   DocumentProcedureMeta,
-} from "../features/repository/data-types";
+} from "../features/repository/types";
 
 function ProcedureMetaComponent(props: { meta: DocumentProcedureMeta }) {
   return (

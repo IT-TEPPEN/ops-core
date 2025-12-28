@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { useAuth } from "../contexts/AuthContext";
+import { useEffect, useReducer } from "react";
+import { useAuth } from "../hooks/useAuth";
 
 const providerDisplayNames: Record<string, string> = {
   google: "Google",
@@ -8,20 +8,48 @@ const providerDisplayNames: Record<string, string> = {
   microsoft: "Microsoft",
 };
 
+interface AccountSettingsState {
+  loading: boolean;
+  error: string | null;
+}
+
+type AccountSettingsAction =
+  | { type: "SET_LOADING"; payload: boolean }
+  | { type: "SET_ERROR"; payload: string | null };
+
+function accountSettingsReducer(
+  state: AccountSettingsState,
+  action: AccountSettingsAction
+): AccountSettingsState {
+  switch (action.type) {
+    case "SET_LOADING":
+      return { ...state, loading: action.payload };
+    case "SET_ERROR":
+      return { ...state, error: action.payload };
+    default:
+      return state;
+  }
+}
+
 export default function AccountSettingsPage() {
   const { user, identities, refreshIdentities, linkProvider, unlinkIdentity } =
     useAuth();
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [state, dispatch] = useReducer(accountSettingsReducer, {
+    loading: true,
+    error: null,
+  });
 
   useEffect(() => {
     const loadIdentities = async () => {
       try {
         await refreshIdentities();
       } catch {
-        setError("Failed to load linked accounts");
+        dispatch({
+          type: "SET_ERROR",
+          payload: "Failed to load linked accounts",
+        });
       } finally {
-        setLoading(false);
+        dispatch({ type: "SET_LOADING", payload: false });
       }
     };
 
@@ -30,18 +58,24 @@ export default function AccountSettingsPage() {
 
   const handleLinkProvider = async (provider: string) => {
     try {
-      setError(null);
+      dispatch({ type: "SET_ERROR", payload: null });
       await linkProvider(provider);
     } catch {
-      setError(
-        `Failed to link ${providerDisplayNames[provider] || provider} account`
-      );
+      dispatch({
+        type: "SET_ERROR",
+        payload: `Failed to link ${
+          providerDisplayNames[provider] || provider
+        } account`,
+      });
     }
   };
 
   const handleUnlinkIdentity = async (identityId: string) => {
     if (identities.length <= 1) {
-      setError("Cannot unlink your last identity");
+      dispatch({
+        type: "SET_ERROR",
+        payload: "Cannot unlink your last identity",
+      });
       return;
     }
 
@@ -50,11 +84,11 @@ export default function AccountSettingsPage() {
     }
 
     try {
-      setError(null);
+      dispatch({ type: "SET_ERROR", payload: null });
       await unlinkIdentity(identityId);
       await refreshIdentities();
     } catch {
-      setError("Failed to unlink account");
+      dispatch({ type: "SET_ERROR", payload: "Failed to unlink account" });
     }
   };
 
@@ -62,7 +96,7 @@ export default function AccountSettingsPage() {
     (provider) => !identities.some((id) => id.provider === provider)
   );
 
-  if (loading) {
+  if (state.loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
@@ -102,9 +136,9 @@ export default function AccountSettingsPage() {
             </div>
 
             {/* Error Message */}
-            {error && (
+            {state.error && (
               <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-                {error}
+                {state.error}
               </div>
             )}
 

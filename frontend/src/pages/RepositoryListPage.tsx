@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { RepositoryList } from "../features/repository/components/RepositoryList";
+import { RepositoryList } from "../features/repository";
 
 /**
  * リポジトリ一覧ページ

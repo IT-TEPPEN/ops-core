@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 // import axios from "axios";
 import { Link } from "react-router-dom";
-import { useRepositoryManagementAdapter } from "../contexts";
+import { useRepositoryManagementAdapter } from "../hooks";
 
 // const listRepositories = async (): Promise<Repository[]> => {
 //   const apiHost = import.meta.env.VITE_API_HOST || window.location.host;

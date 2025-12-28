@@ -1,15 +1,50 @@
-import { useState } from "react";
-import { RepositoryList } from "../features/repository/components/RepositoryList";
+import { useReducer } from "react";
+import { RepositoryList } from "../features/repository";
 import { UI_Form_Input, UI_Form_Submit } from "../ui/form";
 import { UI_Form_Field } from "../components";
 
-function RepositoriesPage() {
-  const [newRepoUrl, setNewRepoUrl] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitMessage, setSubmitMessage] = useState<{
+interface RepositoryFormState {
+  newRepoUrl: string;
+  isSubmitting: boolean;
+  submitMessage: {
     type: "success" | "error";
     text: string;
-  } | null>(null);
+  } | null;
+}
+
+type RepositoryFormAction =
+  | { type: "SET_REPO_URL"; payload: string }
+  | { type: "SET_SUBMITTING"; payload: boolean }
+  | {
+      type: "SET_SUBMIT_MESSAGE";
+      payload: { type: "success" | "error"; text: string } | null;
+    }
+  | { type: "RESET_FORM" };
+
+function repositoryFormReducer(
+  state: RepositoryFormState,
+  action: RepositoryFormAction
+): RepositoryFormState {
+  switch (action.type) {
+    case "SET_REPO_URL":
+      return { ...state, newRepoUrl: action.payload };
+    case "SET_SUBMITTING":
+      return { ...state, isSubmitting: action.payload };
+    case "SET_SUBMIT_MESSAGE":
+      return { ...state, submitMessage: action.payload };
+    case "RESET_FORM":
+      return { ...state, newRepoUrl: "", submitMessage: null };
+    default:
+      return state;
+  }
+}
+
+function RepositoriesPage() {
+  const [state, dispatch] = useReducer(repositoryFormReducer, {
+    newRepoUrl: "",
+    isSubmitting: false,
+    submitMessage: null,
+  });
 
   // API base URL - directly use the base URL to avoid recalculation
   const apiHost = import.meta.env.VITE_API_HOST || window.location.host;
@@ -17,8 +52,8 @@ function RepositoriesPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
-    setSubmitMessage(null);
+    dispatch({ type: "SET_SUBMITTING", payload: true });
+    dispatch({ type: "SET_SUBMIT_MESSAGE", payload: null });
 
     try {
       const response = await fetch(`${apiUrl}/repositories`, {
@@ -26,7 +61,7 @@ function RepositoriesPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ url: newRepoUrl }),
+        body: JSON.stringify({ url: state.newRepoUrl }),
       });
 
       const data = await response.json();
@@ -35,17 +70,23 @@ function RepositoriesPage() {
         throw new Error(data.message || "Failed to register repository");
       }
 
-      setSubmitMessage({
-        type: "success",
-        text: "Repository registered successfully!",
+      dispatch({
+        type: "SET_SUBMIT_MESSAGE",
+        payload: {
+          type: "success",
+          text: "Repository registered successfully!",
+        },
       });
-      setNewRepoUrl("");
+      dispatch({ type: "RESET_FORM" });
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "An unknown error occurred";
-      setSubmitMessage({ type: "error", text: message });
+      dispatch({
+        type: "SET_SUBMIT_MESSAGE",
+        payload: { type: "error", text: message },
+      });
     } finally {
-      setIsSubmitting(false);
+      dispatch({ type: "SET_SUBMITTING", payload: false });
     }
   };
 
@@ -63,26 +104,28 @@ function RepositoriesPage() {
               id="repoUrl"
               type="text"
               placeholder="https://github.com/username/repo.git"
-              value={newRepoUrl}
-              onChange={(e) => setNewRepoUrl(e.target.value)}
+              value={state.newRepoUrl}
+              onChange={(e) =>
+                dispatch({ type: "SET_REPO_URL", payload: e.target.value })
+              }
               required
             />
           </UI_Form_Field>
           <UI_Form_Submit
-            isSubmitting={isSubmitting}
+            isSubmitting={state.isSubmitting}
             label="Register Repository"
           />
         </form>
 
-        {submitMessage && (
+        {state.submitMessage && (
           <div
             className={`mt-4 p-3 rounded ${
-              submitMessage.type === "success"
+              state.submitMessage.type === "success"
                 ? "bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100"
                 : "bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100"
             }`}
           >
-            {submitMessage.text}
+            {state.submitMessage.text}
           </div>
         )}
       </div>

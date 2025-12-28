@@ -1,15 +1,17 @@
-import { useEffect, useMemo, useReducer, type Reducer } from "react";
+import { ReactNode, useEffect, useMemo, useReducer, type Reducer } from "react";
+import { NotificationsAction, NotificationsState } from "../types";
+import { NotificationInfoImpl } from "../models";
 import {
-  NotificationsAction,
-  NotificationsState,
-  NotificationInfoImpl,
-} from "../data-types";
-import { ReturnReducerHooks } from "../../../types/ReturnReducerHooks";
-import {
-  NotificationsActionContextType,
-  NotificationsStateContextType,
-} from "../data-types/NotificationsContext";
+  NotificationsStateContext,
+  NotificationsActionsContext,
+} from "./NotificationContexts";
 
+export type {
+  NotificationsStateContextType,
+  NotificationsActionContextType,
+} from "./NotificationContexts";
+
+// Reducer
 const reducer: Reducer<NotificationsState, NotificationsAction> = (
   state,
   action
@@ -63,10 +65,8 @@ const reducer: Reducer<NotificationsState, NotificationsAction> = (
   }
 };
 
-export function useNotificationHandler(): ReturnReducerHooks<
-  NotificationsStateContextType,
-  NotificationsActionContextType
-> {
+// Provider component
+export function NotificationsProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, { notifications: [] });
 
   useEffect(() => {
@@ -103,11 +103,14 @@ export function useNotificationHandler(): ReturnReducerHooks<
         dispatch({ type: "HIDE_TOP" });
       },
     }),
-    [dispatch]
+    []
   );
 
-  return {
-    state: state.notifications,
-    actions: notificationActions,
-  };
+  return (
+    <NotificationsStateContext.Provider value={state.notifications}>
+      <NotificationsActionsContext.Provider value={notificationActions}>
+        {children}
+      </NotificationsActionsContext.Provider>
+    </NotificationsStateContext.Provider>
+  );
 }

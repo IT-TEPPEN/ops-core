@@ -1,2 +1,5 @@
-export * from "./NotificationHandler";
-export * from "./UseNotificationContext";
+export {
+  useNotifications,
+  useNotificationsState,
+  useNotificationsActions,
+} from "./useNotifications";

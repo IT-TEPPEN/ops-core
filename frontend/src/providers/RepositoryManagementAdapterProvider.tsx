@@ -1,5 +1,5 @@
 import { RepositoryApi } from "../api/repositoryApi";
-import { RepositoryManagementAdapterContext } from "../features/repository/contexts";
+import { RepositoryManagementAdapterContext } from "../features/repository";
 
 export function RepositoryManagementAdapterProvider(props: {
   children: React.ReactNode;

@@ -17,7 +17,7 @@ import GroupDetailPage from "./pages/GroupDetailPage";
 import { Header } from "./components/Layout/Header";
 import { HomePage } from "./pages/Home";
 import { DiProviders } from "./providers";
-import { NotificationCard } from "./features/notification/components";
+import { NotificationCard } from "./features/notification";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 

@@ -1,10 +1,5 @@
-import {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  ReactNode,
-} from "react";
+import { useReducer, useEffect, ReactNode } from "react";
+import { AuthContext } from "./AuthContextDefinition";
 
 interface User {
   id: string;
@@ -22,21 +17,6 @@ interface Identity {
   lastUsedAt: string;
 }
 
-interface AuthContextType {
-  user: User | null;
-  token: string | null;
-  identities: Identity[];
-  isAuthenticated: boolean;
-  isLoading: boolean;
-  login: (token: string, user: User) => void;
-  logout: () => void;
-  linkProvider: (provider: string) => void;
-  unlinkIdentity: (identityId: string) => Promise<void>;
-  refreshIdentities: () => Promise<void>;
-}
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
 const TOKEN_KEY = "auth_token";
 const USER_KEY = "auth_user";
 
@@ -44,11 +24,59 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
+// State type
+interface AuthState {
+  user: User | null;
+  token: string | null;
+  identities: Identity[];
+  isLoading: boolean;
+}
+
+// Action types
+type AuthAction =
+  | { type: "SET_TOKEN"; payload: string | null }
+  | { type: "SET_USER"; payload: User | null }
+  | { type: "SET_IDENTITIES"; payload: Identity[] }
+  | { type: "SET_LOADING"; payload: boolean }
+  | { type: "LOGIN"; payload: { token: string; user: User } }
+  | { type: "LOGOUT" };
+
+// Reducer
+function authReducer(state: AuthState, action: AuthAction): AuthState {
+  switch (action.type) {
+    case "SET_TOKEN":
+      return { ...state, token: action.payload };
+    case "SET_USER":
+      return { ...state, user: action.payload };
+    case "SET_IDENTITIES":
+      return { ...state, identities: action.payload };
+    case "SET_LOADING":
+      return { ...state, isLoading: action.payload };
+    case "LOGIN":
+      return {
+        ...state,
+        token: action.payload.token,
+        user: action.payload.user,
+      };
+    case "LOGOUT":
+      return {
+        ...state,
+        token: null,
+        user: null,
+        identities: [],
+      };
+    default:
+      return state;
+  }
+}
+
 export function AuthProvider({ children }: AuthProviderProps) {
-  const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
-  const [identities, setIdentities] = useState<Identity[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [state, dispatch] = useReducer(authReducer, {
+    user: null,
+    token: null,
+    identities: [],
+    isLoading: true,
+  });
 
   // Initialize auth state from localStorage
   useEffect(() => {
@@ -58,8 +86,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     if (storedToken && storedUser) {
       try {
         const parsedUser = JSON.parse(storedUser);
-        setToken(storedToken);
-        setUser(parsedUser);
+        dispatch({ type: "SET_TOKEN", payload: storedToken });
+        dispatch({ type: "SET_USER", payload: parsedUser });
       } catch (error) {
         console.error("Failed to parse stored user data:", error);
         localStorage.removeItem(TOKEN_KEY);
@@ -67,32 +95,33 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
     }
 
-    setIsLoading(false);
+    dispatch({ type: "SET_LOADING", payload: false });
   }, []);
 
   // Fetch identities when authenticated
   useEffect(() => {
-    if (token) {
+    if (state.token) {
       refreshIdentities();
     }
-  }, [token]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.token]);
 
   const refreshIdentities = async () => {
-    if (!token) return;
+    if (!state.token) return;
 
     try {
       const response = await fetch(
         "http://localhost:8080/api/v1/auth/identities",
         {
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${state.token}`,
           },
         }
       );
 
       if (response.ok) {
         const data = await response.json();
-        setIdentities(data.identities || []);
+        dispatch({ type: "SET_IDENTITIES", payload: data.identities || [] });
       }
     } catch (error) {
       console.error("Failed to fetch identities:", error);
@@ -102,8 +131,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const login = (newToken: string, newUser: User) => {
     localStorage.setItem(TOKEN_KEY, newToken);
     localStorage.setItem(USER_KEY, JSON.stringify(newUser));
-    setToken(newToken);
-    setUser(newUser);
+    dispatch({ type: "LOGIN", payload: { token: newToken, user: newUser } });
   };
 
   const logout = () => {
@@ -111,9 +139,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     localStorage.removeItem(USER_KEY);
     // Also remove OAuth token if it exists
     localStorage.removeItem("oauth_token");
-    setToken(null);
-    setUser(null);
-    setIdentities([]);
+    dispatch({ type: "LOGOUT" });
   };
 
   const linkProvider = async (provider: string) => {
@@ -134,7 +160,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   const unlinkIdentity = async (identityId: string) => {
-    if (!token) return;
+    if (!state.token) return;
 
     try {
       const response = await fetch(
@@ -142,7 +168,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         {
           method: "DELETE",
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${state.token}`,
           },
         }
       );
@@ -158,16 +184,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
-  const isAuthenticated = !!token && !!user;
+  const isAuthenticated = !!state.token && !!state.user;
 
   return (
     <AuthContext.Provider
       value={{
-        user,
-        token,
-        identities,
+        user: state.user,
+        token: state.token,
+        identities: state.identities,
         isAuthenticated,
-        isLoading,
+        isLoading: state.isLoading,
         login,
         logout,
         linkProvider,
@@ -178,12 +204,4 @@ export function AuthProvider({ children }: AuthProviderProps) {
       {children}
     </AuthContext.Provider>
   );
-}
-
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
-  return context;
 }

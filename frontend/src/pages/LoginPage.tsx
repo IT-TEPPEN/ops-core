@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useAuth } from "../contexts/AuthContext";
+import { useAuth } from "../hooks/useAuth";
 
 type Provider = "google" | "github" | "gitlab" | "microsoft";
 
@@ -85,7 +85,9 @@ export default function LoginPage() {
   const { isAuthenticated, isLoading } = useAuth();
   const [error, setError] = useState<string | null>(null);
 
-  const from = (location.state as any)?.from?.pathname || "/";
+  const from =
+    (location.state as { from?: { pathname: string } } | null)?.from
+      ?.pathname || "/";
 
   // Redirect if already authenticated
   useEffect(() => {

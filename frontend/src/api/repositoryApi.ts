@@ -1,11 +1,13 @@
 import matter from "gray-matter";
-import { RepositoryManagementAdapter } from "../features/repository/adapters/RepositoryManagementAdapter";
+import {
+  RepositoryManagementAdapter,
+  Repositories,
+} from "../features/repository/api";
 import {
   Document,
   DocumentMeta,
-  Repositories,
   Repository,
-} from "../features/repository/data-types";
+} from "../features/repository/types";
 import { Pagenation } from "../shared/data-types";
 import { V1ApiClient } from "./client";
 

@@ -1,4 +1,4 @@
-import { NotificationInfo } from "./Notification";
+import { NotificationInfo } from "../types/notification";
 
 export class NotificationInfoImpl implements NotificationInfo {
   private constructor(
