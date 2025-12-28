@@ -1,8 +1,4 @@
 import { Routes, Route } from "react-router-dom";
-import BlogPage from "../pages/BlogPage";
-import RepositoryListPage from "../pages/RepositoryListPage";
-import RepositoryCreatePage from "../pages/RepositoryCreatePage";
-import RepositoryDetailPage from "../pages/RepositoryDetailPage";
 import OAuthCallbackPage from "../pages/OAuthCallbackPage";
 import AuthCallbackPage from "../pages/AuthCallbackPage";
 import LoginPage from "../pages/LoginPage";
@@ -16,6 +12,7 @@ import { DiProviders } from "./providers";
 import { NotificationCard } from "../features/notification";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ProtectedRoute } from "../features/common/components/ProtectedRoute";
+import { RepositoryRoutes } from "@/pages/repositories";
 
 function App() {
   return (
@@ -50,42 +47,7 @@ function App() {
                   </ProtectedRoute>
                 }
               />
-              <Route path="repositories">
-                <Route
-                  index
-                  element={
-                    <ProtectedRoute>
-                      <RepositoryListPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="new"
-                  element={
-                    <ProtectedRoute>
-                      <RepositoryCreatePage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route path=":repoId">
-                  <Route
-                    index
-                    element={
-                      <ProtectedRoute>
-                        <RepositoryDetailPage />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="files/:filePath"
-                    element={
-                      <ProtectedRoute>
-                        <BlogPage />
-                      </ProtectedRoute>
-                    }
-                  />
-                </Route>
-              </Route>
+              {RepositoryRoutes()}
               {DocumentRoutes()}
               <Route
                 path="/groups"

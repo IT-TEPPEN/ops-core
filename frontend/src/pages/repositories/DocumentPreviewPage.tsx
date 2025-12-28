@@ -1,11 +1,12 @@
-import { Link, useParams } from "react-router-dom";
+import { Link } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
-import { useRepositoryManagementAdapter } from "../features/repository/hooks";
+import { useRepositoryManagementAdapter } from "@/features/repository/hooks";
 import { useQuery } from "@tanstack/react-query";
 import type {
   DocumentKnowledgeMeta,
   DocumentProcedureMeta,
-} from "../features/repository/types";
+} from "@/features/repository/types";
+import { Page } from "@/shared/types/Page";
 
 function ProcedureMetaComponent(props: { meta: DocumentProcedureMeta }) {
   return (
@@ -75,27 +76,14 @@ function KnowledgeMetaComponent(props: { meta: DocumentKnowledgeMeta }) {
   );
 }
 
-function BlogPage() {
-  const { repoId, filePath } = useParams<{
-    repoId: string;
-    filePath: string;
-  }>();
+export const DocumentPreviewPage: Page<"repoId" | "filePath"> = ({
+  path: { repoId, filePath },
+}) => {
   const adapter = useRepositoryManagementAdapter();
   const query = useQuery({
     queryKey: ["repositories", repoId, "files", filePath],
     queryFn: () => adapter.getFileContent(repoId!, filePath!),
   });
-
-  if (!filePath) {
-    return (
-      <div className="p-8 bg-white dark:bg-gray-800 rounded-lg shadow-md">
-        <p className="text-gray-500">
-          No file path provided. Please select a markdown file from the
-          repository management page.
-        </p>
-      </div>
-    );
-  }
 
   if (query.isLoading) {
     return (
@@ -155,6 +143,4 @@ function BlogPage() {
       </div>
     </div>
   );
-}
-
-export default BlogPage;
+};

@@ -2,9 +2,9 @@ import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useRepositoryRegistration } from "../features/repository/hooks/useRepositoryRegistration";
-import { OAuthConnection } from "../features/repository/components/OAuthConnection";
-import { RepositoryRegistrationForm } from "../features/repository/components/RepositoryRegistrationForm";
+import { useRepositoryRegistration } from "@/features/repository/hooks/useRepositoryRegistration";
+import { OAuthConnection } from "@/features/repository/components/OAuthConnection";
+import { RepositoryRegistrationForm } from "@/features/repository/components/RepositoryRegistrationForm";
 
 // GitプロバイダーのタイプLiteral型定義
 const gitProviders = ["github", "gitlab", "gitlab-self-hosted"] as const;
@@ -44,7 +44,7 @@ type RepositoryFormData = z.infer<typeof repositorySchema>;
  * リポジトリ新規登録ページ
  * 新しいリポジトリをシステムに登録する
  */
-function RepositoryCreatePage() {
+export function RepositoryCreatePage() {
   const navigate = useNavigate();
   const {
     isAuthenticating,
@@ -109,5 +109,3 @@ function RepositoryCreatePage() {
     </div>
   );
 }
-
-export default RepositoryCreatePage;

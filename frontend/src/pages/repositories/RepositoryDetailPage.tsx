@@ -1,27 +1,10 @@
-import { useParams, Link } from "react-router-dom";
-import { useRepositoryDetail } from "../features/repository/hooks/useRepositoryDetail";
-import { AccessTokenForm } from "../features/repository/components/AccessTokenForm";
-import { FileList } from "../features/repository/components/FileList";
+import { Link } from "react-router-dom";
+import { useRepositoryDetail } from "@/features/repository/hooks/useRepositoryDetail";
+import { AccessTokenForm } from "@/features/repository/components/AccessTokenForm";
+import { FileList } from "@/features/repository/components/FileList";
+import { Page } from "@/shared/types/Page";
 
-function RepositoryDetailPage() {
-  const { repoId } = useParams<{ repoId: string }>();
-
-  if (!repoId) {
-    return (
-      <div className="space-y-4">
-        <div className="p-4 bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100 rounded">
-          Repository ID is required
-        </div>
-        <Link
-          to="/repositories"
-          className="inline-block px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200"
-        >
-          Back to Repositories
-        </Link>
-      </div>
-    );
-  }
-
+export const RepositoryDetailPage: Page<"repoId"> = ({ path: { repoId } }) => {
   const {
     repository,
     isLoading,
@@ -90,6 +73,4 @@ function RepositoryDetailPage() {
       />
     </div>
   );
-}
-
-export default RepositoryDetailPage;
+};

@@ -86,10 +86,10 @@ export function TypedParamsGuard<
   }
 
   // Type-safe assertion since we've validated all params
-  const validatedPath = pathResult as TPath extends never
+  const validatedPath = pathResult as [TPath] extends [never]
     ? never
     : Record<TPath, string>;
-  const validatedQuery = queryResult as TQuery extends never
+  const validatedQuery = queryResult as [TQuery] extends [never]
     ? never
     : Record<TQuery, string>;
 

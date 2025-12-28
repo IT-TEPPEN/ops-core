@@ -1,11 +1,11 @@
 import { Link } from "react-router-dom";
-import { RepositoryList } from "../features/repository";
+import { RepositoryList } from "@/features/repository";
 
 /**
  * リポジトリ一覧ページ
  * 登録済みリポジトリの一覧を表示する
  */
-function RepositoryListPage() {
+export function RepositoryListPage() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -22,5 +22,3 @@ function RepositoryListPage() {
     </div>
   );
 }
-
-export default RepositoryListPage;
