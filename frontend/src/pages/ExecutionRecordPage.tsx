@@ -1,25 +1,13 @@
-import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
+import { useState } from "react";
 import ReactMarkdown from "react-markdown";
-import { ThreePaneLayout } from "../features/common/components/Layout/ThreePaneLayout";
-import { VariableForm } from "../features/common/components/Form/VariableForm";
-import { ExecutionStepPanel } from "../features/common/components/Form/ExecutionStepPanel";
 import {
-  Document,
-  VariableDefinition,
-  ExecutionRecord,
-} from "../shared/types/domain";
-import { substituteVariables } from "../shared/utils/variableSubstitution";
-import {
-  createExecutionRecord,
-  getExecutionRecord,
-  updateExecutionRecordTitle,
-  updateExecutionRecordNotes,
-  addExecutionStep,
-  updateStepNotes,
-  completeExecutionRecord,
-  failExecutionRecord,
-} from "@/shared/api";
+  ThreePaneLayout,
+  VariableForm,
+  ExecutionStepPanel,
+} from "@/features/common/components";
+import { useExecutionRecord } from "@/features/execution/hooks/useExecutionRecord";
+import { useDocumentExecution } from "@/features/document/hooks/useDocumentExecution";
 
 function ExecutionRecordPage() {
   const { docId, recordId } = useParams<{
@@ -27,247 +15,66 @@ function ExecutionRecordPage() {
     recordId?: string;
   }>();
 
-  const [document, setDocument] = useState<Document | null>(null);
-  const [executionRecord, setExecutionRecord] =
-    useState<ExecutionRecord | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [variableValues, setVariableValues] = useState<
-    Record<string, string | number | boolean>
-  >({});
-  const [processedContent, setProcessedContent] = useState<string>("");
-  const [executionTitle, setExecutionTitle] = useState<string>("");
-  const [executionNotes, setExecutionNotes] = useState<string>("");
-  const [isCreating, setIsCreating] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
+  // Use custom hooks for business logic - must be called before any conditional returns
+  const {
+    document,
+    isLoading: isDocumentLoading,
+    error: documentError,
+    variableValues,
+    processedContent,
+    handleVariableChange,
+  } = useDocumentExecution({ docId, recordId });
 
-  // API base URL
-  const apiHost = import.meta.env.VITE_API_HOST;
-  const apiUrl = apiHost ? `http://${apiHost}/api/v1` : "/api/v1";
+  const {
+    executionRecord,
+    error: executionError,
+    isCreating,
+    isSaving,
+    handleStartExecution,
+    handleUpdateTitle,
+    handleUpdateNotes,
+    handleAddStep,
+    handleUpdateStepNotes,
+    handleComplete,
+    handleFail,
+  } = useExecutionRecord({
+    docId,
+    recordId,
+    documentVersionId: document?.current_version?.id,
+    variableValues,
+    executionTitle: document?.current_version?.title
+      ? `Execution of ${
+          document.current_version.title
+        } - ${new Date().toLocaleString()}`
+      : `Execution - ${new Date().toLocaleString()}`,
+  });
 
-  // Fetch document on component mount
-  useEffect(() => {
-    if (!docId) return;
+  // Local state for title and notes editing
+  // Initialize with empty strings, sync with executionRecord when available
+  const [localTitle, setLocalTitle] = useState("");
+  const [localNotes, setLocalNotes] = useState("");
+  const [hasInitialized, setHasInitialized] = useState(false);
 
-    const fetchDocument = async () => {
-      setIsLoading(true);
-      setError(null);
+  // Sync local state when executionRecord first loads or changes ID
+  if (executionRecord && !hasInitialized) {
+    setLocalTitle(executionRecord.title);
+    setLocalNotes(executionRecord.notes);
+    setHasInitialized(true);
+  }
 
-      try {
-        const response = await fetch(`${apiUrl}/documents/${docId}`);
-        if (!response.ok) {
-          if (response.status === 404) {
-            setError("Document not found");
-          } else {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-          return;
-        }
-        const data = await response.json();
-        setDocument(data);
-
-        // Set default title
-        if (!executionTitle) {
-          setExecutionTitle(
-            `Execution of ${
-              data.current_version?.title || "Document"
-            } - ${new Date().toLocaleString()}`
-          );
-        }
-      } catch (err) {
-        setError("Failed to load document. Please try again later.");
-        console.error("Error fetching document:", err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchDocument();
-  }, [docId, apiUrl]);
-
-  // Fetch execution record if recordId is provided
-  useEffect(() => {
-    if (!recordId) return;
-
-    const fetchRecord = async () => {
-      try {
-        const record = await getExecutionRecord(recordId);
-        setExecutionRecord(record);
-        setExecutionTitle(record.title);
-        setExecutionNotes(record.notes);
-
-        // Populate variable values from record
-        const values: Record<string, string | number | boolean> = {};
-        record.variable_values.forEach((vv) => {
-          values[vv.name] = vv.value;
-        });
-        setVariableValues(values);
-      } catch (err) {
-        console.error("Error fetching execution record:", err);
-        setError("Failed to load execution record");
-      }
-    };
-
-    fetchRecord();
-  }, [recordId]);
-
-  // Initialize variable values when document is loaded
-  useEffect(() => {
-    if (document?.current_version?.variables && !recordId) {
-      const initialValues: Record<string, string | number | boolean> = {};
-      document.current_version.variables.forEach((v: VariableDefinition) => {
-        // Use type-specific defaults
-        if (v.default_value !== undefined && v.default_value !== null) {
-          initialValues[v.name] = v.default_value;
-        } else {
-          switch (v.type) {
-            case "number":
-              initialValues[v.name] = 0;
-              break;
-            case "boolean":
-              initialValues[v.name] = false;
-              break;
-            default:
-              initialValues[v.name] = "";
-          }
-        }
-      });
-      setVariableValues(initialValues);
-    }
-  }, [document, recordId]);
-
-  // Process content with variable substitution when variables change
-  useEffect(() => {
-    if (document?.current_version?.content) {
-      const substituted = substituteVariables(
-        document.current_version.content,
-        variableValues
-      );
-      setProcessedContent(substituted);
-    }
-  }, [document, variableValues]);
-
-  const handleVariableChange = (
-    name: string,
-    value: string | number | boolean
-  ) => {
-    setVariableValues((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const handleStartExecution = async () => {
-    if (!docId || !document?.current_version) return;
-
-    setIsCreating(true);
-    try {
-      const variableValuesList = Object.entries(variableValues).map(
-        ([name, value]) => ({ name, value })
-      );
-
-      const record = await createExecutionRecord({
-        document_id: docId,
-        document_version_id: document.current_version.id,
-        title: executionTitle,
-        variable_values: variableValuesList,
-      });
-
-      setExecutionRecord(record);
-      setError(null);
-    } catch (err) {
-      console.error("Failed to create execution record:", err);
-      setError("Failed to start execution");
-    } finally {
-      setIsCreating(false);
-    }
-  };
-
-  const handleUpdateTitle = async () => {
-    if (!executionRecord) return;
-
-    setIsSaving(true);
-    try {
-      const updated = await updateExecutionRecordTitle(
-        executionRecord.id,
-        executionTitle
-      );
-      setExecutionRecord(updated);
-    } catch (err) {
-      console.error("Failed to update title:", err);
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleUpdateNotes = async () => {
-    if (!executionRecord) return;
-
-    setIsSaving(true);
-    try {
-      const updated = await updateExecutionRecordNotes(
-        executionRecord.id,
-        executionNotes
-      );
-      setExecutionRecord(updated);
-    } catch (err) {
-      console.error("Failed to update notes:", err);
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleAddStep = async (stepNumber: number, description: string) => {
-    if (!executionRecord) return;
-
-    const updated = await addExecutionStep(
-      executionRecord.id,
-      stepNumber,
-      description
+  if (!docId) {
+    return (
+      <div className="p-8">
+        <p className="text-red-500">Document ID is required</p>
+        <Link to="/documents" className="text-blue-500 hover:underline">
+          Back to Documents
+        </Link>
+      </div>
     );
-    setExecutionRecord(updated);
-  };
+  }
 
-  const handleUpdateStepNotes = async (stepNumber: number, notes: string) => {
-    if (!executionRecord) return;
-
-    const updated = await updateStepNotes(
-      executionRecord.id,
-      stepNumber,
-      notes
-    );
-    setExecutionRecord(updated);
-  };
-
-  const handleComplete = async () => {
-    if (!executionRecord) return;
-
-    setIsSaving(true);
-    try {
-      const updated = await completeExecutionRecord(executionRecord.id);
-      setExecutionRecord(updated);
-    } catch (err) {
-      console.error("Failed to complete execution:", err);
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleFail = async () => {
-    if (!executionRecord) return;
-
-    setIsSaving(true);
-    try {
-      const updated = await failExecutionRecord(executionRecord.id);
-      setExecutionRecord(updated);
-    } catch (err) {
-      console.error("Failed to mark as failed:", err);
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  if (isLoading) {
+  // Loading state
+  if (isDocumentLoading) {
     return (
       <div
         className="flex items-center justify-center h-screen"
@@ -279,6 +86,8 @@ function ExecutionRecordPage() {
     );
   }
 
+  // Error state
+  const error = documentError || executionError;
   if (error) {
     return (
       <div className="p-8 space-y-4">
@@ -362,13 +171,13 @@ function ExecutionRecordPage() {
             </label>
             <input
               type="text"
-              value={executionTitle}
-              onChange={(e) => setExecutionTitle(e.target.value)}
+              value={localTitle}
+              onChange={(e) => setLocalTitle(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
             />
           </div>
           <button
-            onClick={handleStartExecution}
+            onClick={() => handleStartExecution()}
             disabled={isCreating}
             className="w-full px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
           >
@@ -398,14 +207,14 @@ function ExecutionRecordPage() {
             <div className="flex gap-2">
               <input
                 type="text"
-                value={executionTitle}
-                onChange={(e) => setExecutionTitle(e.target.value)}
+                value={localTitle}
+                onChange={(e) => setLocalTitle(e.target.value)}
                 disabled={executionRecord.status !== "in_progress"}
                 className="flex-1 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white disabled:opacity-50"
               />
               {executionRecord.status === "in_progress" && (
                 <button
-                  onClick={handleUpdateTitle}
+                  onClick={() => handleUpdateTitle(localTitle)}
                   disabled={isSaving}
                   className="px-3 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
                 >
@@ -421,15 +230,15 @@ function ExecutionRecordPage() {
               Overall Notes
             </label>
             <textarea
-              value={executionNotes}
-              onChange={(e) => setExecutionNotes(e.target.value)}
+              value={localNotes}
+              onChange={(e) => setLocalNotes(e.target.value)}
               disabled={executionRecord.status !== "in_progress"}
               className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white disabled:opacity-50"
               rows={3}
             />
             {executionRecord.status === "in_progress" && (
               <button
-                onClick={handleUpdateNotes}
+                onClick={() => handleUpdateNotes(localNotes)}
                 disabled={isSaving}
                 className="mt-2 px-3 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
               >

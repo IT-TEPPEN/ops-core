@@ -1,5 +1,5 @@
 import { Document, Repository } from "../types";
-import { Pagenation } from "../../../shared/data-types";
+import { Pagenation } from "@/shared/data-types";
 
 export interface Repositories {
   data: Repository[];

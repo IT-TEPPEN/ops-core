@@ -7,11 +7,7 @@ import OAuthCallbackPage from "../pages/OAuthCallbackPage";
 import AuthCallbackPage from "../pages/AuthCallbackPage";
 import LoginPage from "../pages/LoginPage";
 import AccountSettingsPage from "../pages/AccountSettingsPage";
-import DocumentListPage from "../pages/DocumentListPage";
-import DocumentDetailPage from "../pages/DocumentDetailPage";
-import DocumentViewPage from "../pages/DocumentViewPage";
-import DocumentVersionHistoryPage from "../pages/DocumentVersionHistoryPage";
-import ExecutionRecordPage from "../pages/ExecutionRecordPage";
+import { DocumentRoutes } from "@/pages/documents";
 import GroupListPage from "../pages/GroupListPage";
 import GroupDetailPage from "../pages/GroupDetailPage";
 import { Header } from "../features/common/components/Layout/Header";
@@ -90,52 +86,7 @@ function App() {
                   />
                 </Route>
               </Route>
-              <Route path="documents">
-                <Route
-                  index
-                  element={
-                    <ProtectedRoute>
-                      <DocumentListPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route path=":docId">
-                  <Route
-                    index
-                    element={
-                      <ProtectedRoute>
-                        <DocumentDetailPage />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="view"
-                    element={
-                      <ProtectedRoute>
-                        <DocumentViewPage />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route path="execute">
-                    <Route
-                      path=":recordId"
-                      element={
-                        <ProtectedRoute>
-                          <ExecutionRecordPage />
-                        </ProtectedRoute>
-                      }
-                    />
-                  </Route>
-                  <Route
-                    path="versions"
-                    element={
-                      <ProtectedRoute>
-                        <DocumentVersionHistoryPage />
-                      </ProtectedRoute>
-                    }
-                  ></Route>
-                </Route>
-              </Route>
+              {DocumentRoutes()}
               <Route
                 path="/groups"
                 element={
