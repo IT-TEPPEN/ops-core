@@ -33,6 +33,11 @@ import (
 	oauthservice "opscore/backend/internal/oauth/application/service"
 	oauthdomain "opscore/backend/internal/oauth/domain"
 	oauthhandlers "opscore/backend/internal/oauth/interfaces/api/handlers"
+
+	authservice "opscore/backend/internal/auth/application/service"
+	authdomain "opscore/backend/internal/auth/domain"
+	authpersistence "opscore/backend/internal/auth/infrastructure/persistence"
+	authhandlers "opscore/backend/internal/auth/interfaces/api/handlers"
 )
 
 // Base path for cloning repositories
@@ -123,6 +128,11 @@ func provideOAuthHandlerLogger() oauthdomain.Logger {
 	return &SlogLoggerAdapter{logger: provideAppLogger()}
 }
 
+// provideAuthHandlerLogger adapts slog.Logger to the auth handlers.Logger interface.
+func provideAuthHandlerLogger() authhandlers.Logger {
+	return &SlogLoggerAdapter{logger: provideAppLogger()}
+}
+
 // provideEncryptor creates an Encryptor from the environment variable.
 func provideEncryptor() (*encryption.Encryptor, error) {
 	keyStr := os.Getenv("ENCRYPTION_KEY")
@@ -150,12 +160,13 @@ func InitializeAPI(db *pgxpool.Pool) (*repohandlers.RepositoryHandler,
 	*viewhistoryhandlers.ViewHistoryHandler,
 	*viewstatshandlers.ViewStatisticsHandler,
 	*oauthhandlers.OAuthHandler,
+	*authhandlers.AuthHandler,
 	error,
 ) {
 	// Create encryptor
 	encryptor, err := provideEncryptor()
 	if err != nil {
-		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, err
+		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, err
 	}
 
 	// Create repository (persistence layer)
@@ -164,7 +175,7 @@ func InitializeAPI(db *pgxpool.Pool) (*repohandlers.RepositoryHandler,
 	// Create git manager
 	gitManager, err := provideGitManager()
 	if err != nil {
-		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, err
+		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, err
 	}
 
 	// Create use case
@@ -214,7 +225,7 @@ func InitializeAPI(db *pgxpool.Pool) (*repohandlers.RepositoryHandler,
 	}
 	storageManager, err := storage.NewLocalStorageManager(storageBasePath)
 	if err != nil {
-		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, err
+		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, err
 	}
 
 	// Create attachment use case
@@ -277,5 +288,96 @@ func InitializeAPI(db *pgxpool.Pool) (*repohandlers.RepositoryHandler,
 	// Create OAuth handler
 	oauthHandler := oauthhandlers.NewOAuthHandler(oauthService, oauthLogger)
 
-	return repositoryHandler, documentHandler, variableHandler, executionRecordHandler, attachmentHandler, userHandler, groupHandler, viewHistoryHandler, viewStatsHandler, oauthHandler, nil
+	// Create auth user repository
+	authUserRepository := authpersistence.NewPostgresUserRepository(db)
+
+	// Create user identity repository
+	userIdentityRepository := authpersistence.NewPostgresUserIdentityRepository(db)
+
+	// Configure OIDC providers
+	providerConfigs := make(map[string]authdomain.ProviderConfig)
+
+	// Google provider
+	googleClientID := os.Getenv("GOOGLE_CLIENT_ID")
+	googleClientSecret := os.Getenv("GOOGLE_CLIENT_SECRET")
+	googleRedirectURI := os.Getenv("GOOGLE_REDIRECT_URI")
+	if googleRedirectURI == "" {
+		googleRedirectURI = "http://localhost:3000/auth/google/callback"
+	}
+	if googleClientID != "" && googleClientSecret != "" {
+		providerConfigs["google"] = authdomain.ProviderConfig{
+			ClientID:     googleClientID,
+			ClientSecret: googleClientSecret,
+			RedirectURL:  googleRedirectURI,
+		}
+	}
+
+	// GitHub provider (placeholder)
+	githubClientID := os.Getenv("GITHUB_CLIENT_ID")
+	githubClientSecret := os.Getenv("GITHUB_CLIENT_SECRET")
+	githubRedirectURI := os.Getenv("GITHUB_REDIRECT_URI")
+	if githubRedirectURI == "" {
+		githubRedirectURI = "http://localhost:3000/auth/github/callback"
+	}
+	if githubClientID != "" && githubClientSecret != "" {
+		providerConfigs["github"] = authdomain.ProviderConfig{
+			ClientID:     githubClientID,
+			ClientSecret: githubClientSecret,
+			RedirectURL:  githubRedirectURI,
+		}
+	}
+
+	// GitLab provider (placeholder)
+	gitlabClientID := os.Getenv("GITLAB_CLIENT_ID")
+	gitlabClientSecret := os.Getenv("GITLAB_CLIENT_SECRET")
+	gitlabRedirectURI := os.Getenv("GITLAB_REDIRECT_URI")
+	if gitlabRedirectURI == "" {
+		gitlabRedirectURI = "http://localhost:3000/auth/gitlab/callback"
+	}
+	if gitlabClientID != "" && gitlabClientSecret != "" {
+		providerConfigs["gitlab"] = authdomain.ProviderConfig{
+			ClientID:     gitlabClientID,
+			ClientSecret: gitlabClientSecret,
+			RedirectURL:  gitlabRedirectURI,
+		}
+	}
+
+	// Microsoft provider (placeholder)
+	microsoftClientID := os.Getenv("MICROSOFT_CLIENT_ID")
+	microsoftClientSecret := os.Getenv("MICROSOFT_CLIENT_SECRET")
+	microsoftRedirectURI := os.Getenv("MICROSOFT_REDIRECT_URI")
+	if microsoftRedirectURI == "" {
+		microsoftRedirectURI = "http://localhost:3000/auth/microsoft/callback"
+	}
+	if microsoftClientID != "" && microsoftClientSecret != "" {
+		providerConfigs["microsoft"] = authdomain.ProviderConfig{
+			ClientID:     microsoftClientID,
+			ClientSecret: microsoftClientSecret,
+			RedirectURL:  microsoftRedirectURI,
+		}
+	}
+
+	// Create provider factory
+	providerFactory := authservice.NewProviderFactory(providerConfigs)
+
+	// Create JWT service
+	jwtSecret := os.Getenv("JWT_SECRET")
+	if jwtSecret == "" {
+		slog.Warn("JWT_SECRET not set, using development default. DO NOT USE IN PRODUCTION!")
+		jwtSecret = "dev-jwt-secret-key-at-least-32-chars-long"
+	}
+	jwtIssuer := os.Getenv("JWT_ISSUER")
+	if jwtIssuer == "" {
+		jwtIssuer = "opscore"
+	}
+	jwtExpirationHours := 24
+	jwtService := authservice.NewJWTService(jwtSecret, jwtIssuer, time.Duration(jwtExpirationHours)*time.Hour)
+
+	// Create auth logger
+	authLogger := provideAuthHandlerLogger()
+
+	// Create auth handler
+	authHandler := authhandlers.NewAuthHandler(providerFactory, jwtService, authUserRepository, userIdentityRepository, authLogger)
+
+	return repositoryHandler, documentHandler, variableHandler, executionRecordHandler, attachmentHandler, userHandler, groupHandler, viewHistoryHandler, viewStatsHandler, oauthHandler, authHandler, nil
 }

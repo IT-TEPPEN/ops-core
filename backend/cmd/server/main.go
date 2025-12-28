@@ -58,7 +58,7 @@ func main() {
 	fmt.Println("Successfully connected to the database.")
 	// --- End Database Connection ---
 
-	repoHandler, docHandler, varHandler, execHandler, attachHandler, userHandler, groupHandler, viewHistoryHandler, viewStatsHandler, oauthHandler, err := InitializeAPI(dbpool) // Pass dbpool and handle error
+	repoHandler, docHandler, varHandler, execHandler, attachHandler, userHandler, groupHandler, viewHistoryHandler, viewStatsHandler, oauthHandler, authHandler, err := InitializeAPI(dbpool) // Pass dbpool and handle error
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to initialize API dependencies: %v\n", err)
 		os.Exit(1)
@@ -88,9 +88,22 @@ func main() {
 	// API v1 routes group
 	v1 := r.Group("/api/v1")
 	{
-		// OAuth routes
+		// Authentication routes (Multi-provider OIDC)
 		authGroup := v1.Group("/auth")
 		{
+			// Provider-specific login and callback
+			authGroup.GET("/:provider/login", authHandler.ProviderLogin)
+			authGroup.POST("/:provider/callback", authHandler.ProviderCallback)
+			
+			// User info and session management
+			authGroup.GET("/me", authHandler.GetMe)       // Protected route
+			authGroup.POST("/logout", authHandler.Logout) // Protected route
+			
+			// Identity management
+			authGroup.GET("/identities", authHandler.GetIdentities)             // Protected route
+			authGroup.DELETE("/identities/:id", authHandler.UnlinkIdentity)     // Protected route
+
+			// Legacy OAuth routes for repository access
 			authGroup.POST("/oauth/callback", oauthHandler.HandleCallback)
 		}
 
