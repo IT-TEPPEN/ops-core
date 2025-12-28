@@ -5,7 +5,7 @@ import {
   useLocation,
   useParams,
 } from "react-router-dom";
-import { useAuth } from "../hooks/useAuth";
+import { useAuth } from "../app/hooks/useAuth";
 
 export default function AuthCallbackPage() {
   const navigate = useNavigate();

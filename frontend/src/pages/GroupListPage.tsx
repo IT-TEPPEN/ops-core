@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import type { Group } from "../types/domain";
-import { listGroups, createGroup } from "../api";
-import GroupList from "../components/Display/GroupList";
-import GroupForm from "../components/Form/GroupForm";
+import { createGroup, listGroups } from "@/shared/api";
+import { GroupForm, GroupList } from "@/features/common/components";
+import { Group } from "@/shared/types/domain";
 
 /**
  * GroupListPage displays all groups and allows creating new ones

@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
-import { ThreePaneLayout } from "../components/Layout/ThreePaneLayout";
-import { VariableForm } from "../components/Form/VariableForm";
-import { Document, VariableDefinition } from "../types/domain";
-import { substituteVariables } from "../utils/variableSubstitution";
+import { ThreePaneLayout } from "../features/common/components/Layout/ThreePaneLayout";
+import { VariableForm } from "../features/common/components/Form/VariableForm";
+import { Document, VariableDefinition } from "../shared/types/domain";
+import { substituteVariables } from "../shared/utils/variableSubstitution";
 
 function DocumentViewPage() {
   const { docId } = useParams<{ docId: string }>();
@@ -113,7 +113,11 @@ function DocumentViewPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-screen" role="status" aria-live="polite">
+      <div
+        className="flex items-center justify-center h-screen"
+        role="status"
+        aria-live="polite"
+      >
         <p className="text-gray-500">Loading document...</p>
       </div>
     );
@@ -122,7 +126,11 @@ function DocumentViewPage() {
   if (error) {
     return (
       <div className="p-8 space-y-4">
-        <div className="p-4 bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100 rounded" role="alert" aria-live="assertive">
+        <div
+          className="p-4 bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100 rounded"
+          role="alert"
+          aria-live="assertive"
+        >
           {error}
         </div>
         <Link

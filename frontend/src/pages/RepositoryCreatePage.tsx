@@ -3,13 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { UI_Form_Input, UI_Form_Submit } from "../ui/form";
-import { UI_Form_Field } from "../components";
-import {
-  initiateOAuthFlow,
-  type GitProvider,
-  type SelfHostedOAuthParams,
-} from "../utils/oauth";
+import { initiateOAuthFlow, SelfHostedOAuthParams } from "@/shared/utils/oauth";
+import { UI_Form_Field, UI_Form_Input, UI_Form_Submit } from "@/ui";
 
 // GitプロバイダーのタイプLiteral型定義
 const gitProviders = ["github", "gitlab", "gitlab-self-hosted"] as const;

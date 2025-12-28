@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
-import { Document, VariableDefinition } from "../types/domain";
+import { Document, VariableDefinition } from "../shared/types/domain";
 
 function DocumentDetailPage() {
   const { docId } = useParams<{ docId: string }>();

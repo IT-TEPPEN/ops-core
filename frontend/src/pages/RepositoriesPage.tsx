@@ -1,7 +1,7 @@
 import { useReducer } from "react";
 import { RepositoryList } from "../features/repository";
 import { UI_Form_Input, UI_Form_Submit } from "../ui/form";
-import { UI_Form_Field } from "../components";
+import { UI_Form_Field } from "../features/common/components";
 
 interface RepositoryFormState {
   newRepoUrl: string;

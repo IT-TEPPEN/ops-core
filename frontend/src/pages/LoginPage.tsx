@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useAuth } from "../hooks/useAuth";
+import { useAuth } from "../app/hooks/useAuth";
 
 type Provider = "google" | "github" | "gitlab" | "microsoft";
 

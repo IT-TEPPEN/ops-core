@@ -2,7 +2,7 @@
  * Date input component
  */
 
-import type { BaseInputProps } from "../types/ui";
+import type { BaseInputProps } from "../shared/types/ui";
 
 export interface DateInputProps extends BaseInputProps {
   /** Input value (ISO date string) */

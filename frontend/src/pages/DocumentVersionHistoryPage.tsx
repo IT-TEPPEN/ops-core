@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { DocumentVersion } from "../types/domain";
+import { DocumentVersion } from "../shared/types/domain";
 
 interface VersionHistoryResponse {
   document_id: string;

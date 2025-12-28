@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { PopularDocumentsList } from "../components/Display/PopularDocumentsList";
-import { RecentViewsList } from "../components/Display/RecentViewsList";
-import { StatisticsChart } from "../components/Display/StatisticsChart";
-import type { PopularDocument, RecentDocument } from "../types/domain";
+import { PopularDocumentsList } from "../features/common/components/Display/PopularDocumentsList";
+import { RecentViewsList } from "../features/common/components/Display/RecentViewsList";
+import { StatisticsChart } from "../features/common/components/Display/StatisticsChart";
+import type { PopularDocument, RecentDocument } from "../shared/types/domain";
 
 /**
  * StatisticsPage
@@ -51,9 +51,7 @@ const StatisticsPage: React.FC = () => {
           },
           {
             document_id: "doc-4",
-            last_viewed_at: new Date(
-              Date.now() - 3600000
-            ).toISOString(),
+            last_viewed_at: new Date(Date.now() - 3600000).toISOString(),
             total_views: 30,
           },
         ]);
@@ -103,7 +101,10 @@ const StatisticsPage: React.FC = () => {
 
         {/* Lists Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <PopularDocumentsList items={popularDocuments} isLoading={isLoading} />
+          <PopularDocumentsList
+            items={popularDocuments}
+            isLoading={isLoading}
+          />
           <RecentViewsList items={recentDocuments} isLoading={isLoading} />
         </div>
       </div>

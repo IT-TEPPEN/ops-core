@@ -1,18 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import type { Group, User } from "../types/domain";
-import {
-  getGroup,
-  updateGroup,
-  deleteGroup,
-  addMember,
-  removeMember,
-  listUsers,
-} from "../api";
-import GroupForm from "../components/Form/GroupForm";
-import GroupMemberList from "../components/Display/GroupMemberList";
-import GroupMemberSelector from "../components/Form/GroupMemberSelector";
-import { formatDateLocale } from "../utils/date";
+import GroupForm from "../features/common/components/Form/GroupForm";
+import GroupMemberList from "../features/common/components/Display/GroupMemberList";
+import GroupMemberSelector from "../features/common/components/Form/GroupMemberSelector";
+import { formatDateLocale } from "../shared/utils/date";
+import { Group, User } from "@/shared/types/domain";
+import { deleteGroup, getGroup, listUsers, removeMember } from "@/shared/api";
 
 /**
  * GroupDetailPage displays group details and allows editing
@@ -68,7 +61,10 @@ const GroupDetailPage: React.FC = () => {
   };
 
   const handleDelete = async () => {
-    if (!groupId || !window.confirm("Are you sure you want to delete this group?")) {
+    if (
+      !groupId ||
+      !window.confirm("Are you sure you want to delete this group?")
+    ) {
       return;
     }
 
@@ -87,7 +83,7 @@ const GroupDetailPage: React.FC = () => {
       const updated = await addMember(groupId, { user_id: userId });
       setGroup(updated);
       setShowMemberSelector(false);
-      
+
       // Update member list with newly added user
       const allUsers = await listUsers();
       const groupMembers = allUsers.filter((user) =>
@@ -100,14 +96,17 @@ const GroupDetailPage: React.FC = () => {
   };
 
   const handleRemoveMember = async (userId: string) => {
-    if (!groupId || !window.confirm("Are you sure you want to remove this member?")) {
+    if (
+      !groupId ||
+      !window.confirm("Are you sure you want to remove this member?")
+    ) {
       return;
     }
 
     try {
       const updated = await removeMember(groupId, { user_id: userId });
       setGroup(updated);
-      
+
       // Update member list by filtering out removed user
       setMembers(members.filter((member) => member.id !== userId));
     } catch (err) {

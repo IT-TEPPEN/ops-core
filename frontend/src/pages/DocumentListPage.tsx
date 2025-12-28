@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { DocumentListItem } from "../types/domain";
+import { DocumentListItem } from "../shared/types/domain";
 
 function DocumentListPage() {
   const [documents, setDocuments] = useState<DocumentListItem[]>([]);

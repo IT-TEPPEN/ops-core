@@ -2,7 +2,7 @@
  * Text input component
  */
 
-import type { BaseInputProps } from "../types/ui";
+import type { BaseInputProps } from "../shared/types/ui";
 
 export interface TextInputProps extends BaseInputProps {
   /** Input value */

@@ -1,5 +1,5 @@
 import { useEffect, useReducer } from "react";
-import { useAuth } from "../hooks/useAuth";
+import { useAuth } from "../app/hooks/useAuth";
 
 const providerDisplayNames: Record<string, string> = {
   google: "Google",

@@ -2,7 +2,7 @@
  * Select input component
  */
 
-import type { BaseInputProps, SelectOption } from "../types/ui";
+import type { BaseInputProps, SelectOption } from "../shared/types/ui";
 
 export interface SelectInputProps extends BaseInputProps {
   /** Selected value */

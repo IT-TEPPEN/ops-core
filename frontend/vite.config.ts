@@ -28,4 +28,9 @@ export default defineConfig({
       plugins: [NodeGlobalsPolyfillPlugin({ buffer: true })],
     },
   },
+  resolve: {
+    alias: {
+      "@": "/src",
+    },
+  },
 });

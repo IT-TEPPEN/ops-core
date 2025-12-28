@@ -2,7 +2,7 @@
  * Number input component
  */
 
-import type { BaseInputProps } from "../types/ui";
+import type { BaseInputProps } from "../shared/types/ui";
 
 export interface NumberInputProps extends BaseInputProps {
   /** Input value */

@@ -1,15 +1,15 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
-import { ThreePaneLayout } from "../components/Layout/ThreePaneLayout";
-import { VariableForm } from "../components/Form/VariableForm";
-import { ExecutionStepPanel } from "../components/Form/ExecutionStepPanel";
+import { ThreePaneLayout } from "../features/common/components/Layout/ThreePaneLayout";
+import { VariableForm } from "../features/common/components/Form/VariableForm";
+import { ExecutionStepPanel } from "../features/common/components/Form/ExecutionStepPanel";
 import {
   Document,
   VariableDefinition,
   ExecutionRecord,
-} from "../types/domain";
-import { substituteVariables } from "../utils/variableSubstitution";
+} from "../shared/types/domain";
+import { substituteVariables } from "../shared/utils/variableSubstitution";
 import {
   createExecutionRecord,
   getExecutionRecord,
@@ -19,7 +19,7 @@ import {
   updateStepNotes,
   completeExecutionRecord,
   failExecutionRecord,
-} from "../api";
+} from "@/shared/api";
 
 function ExecutionRecordPage() {
   const { docId, recordId } = useParams<{
@@ -32,7 +32,9 @@ function ExecutionRecordPage() {
     useState<ExecutionRecord | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [variableValues, setVariableValues] = useState<Record<string, string | number | boolean>>({});
+  const [variableValues, setVariableValues] = useState<
+    Record<string, string | number | boolean>
+  >({});
   const [processedContent, setProcessedContent] = useState<string>("");
   const [executionTitle, setExecutionTitle] = useState<string>("");
   const [executionNotes, setExecutionNotes] = useState<string>("");
@@ -67,7 +69,9 @@ function ExecutionRecordPage() {
         // Set default title
         if (!executionTitle) {
           setExecutionTitle(
-            `Execution of ${data.current_version?.title || "Document"} - ${new Date().toLocaleString()}`
+            `Execution of ${
+              data.current_version?.title || "Document"
+            } - ${new Date().toLocaleString()}`
           );
         }
       } catch (err) {
@@ -143,7 +147,10 @@ function ExecutionRecordPage() {
     }
   }, [document, variableValues]);
 
-  const handleVariableChange = (name: string, value: string | number | boolean) => {
+  const handleVariableChange = (
+    name: string,
+    value: string | number | boolean
+  ) => {
     setVariableValues((prev) => ({
       ...prev,
       [name]: value,
@@ -377,8 +384,8 @@ function ExecutionRecordPage() {
                 executionRecord.status === "completed"
                   ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
                   : executionRecord.status === "failed"
-                    ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
-                    : "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+                  ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+                  : "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
               }`}
             >
               {executionRecord.status}
@@ -462,7 +469,9 @@ function ExecutionRecordPage() {
 
           {/* Timestamps */}
           <div className="text-xs text-gray-500 dark:text-gray-400 space-y-1 pt-4 border-t border-gray-200 dark:border-gray-700">
-            <p>Started: {new Date(executionRecord.started_at).toLocaleString()}</p>
+            <p>
+              Started: {new Date(executionRecord.started_at).toLocaleString()}
+            </p>
             {executionRecord.completed_at && (
               <p>
                 Completed:{" "}
