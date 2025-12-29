@@ -1,5 +1,4 @@
 import { Link } from "react-router-dom";
-import ReactMarkdown from "react-markdown";
 import { useRepositoryManagementAdapter } from "@/features/repository/hooks";
 import { useQuery } from "@tanstack/react-query";
 import type {
@@ -7,6 +6,8 @@ import type {
   DocumentProcedureMeta,
 } from "@/features/repository/types";
 import { Page } from "@/shared/types/Page";
+import { useEffect, useState } from "react";
+import { MarkdownProcessor } from "@/features/markdown/processor";
 
 function ProcedureMetaComponent(props: { meta: DocumentProcedureMeta }) {
   return (
@@ -79,11 +80,22 @@ function KnowledgeMetaComponent(props: { meta: DocumentKnowledgeMeta }) {
 export const DocumentPreviewPage: Page<"repoId" | "filePath"> = ({
   path: { repoId, filePath },
 }) => {
+  const [Component, setComponent] = useState<React.ReactElement | null>(null);
   const adapter = useRepositoryManagementAdapter();
   const query = useQuery({
     queryKey: ["repositories", repoId, "files", filePath],
     queryFn: () => adapter.getFileContent(repoId!, filePath!),
   });
+
+  useEffect(() => {
+    if (!query.isLoading && !query.error && query.data) {
+      MarkdownProcessor.process(query.data.getContent()).then(
+        (file: { result: unknown }) => {
+          setComponent(file.result as React.ReactElement);
+        }
+      );
+    }
+  }, [query]);
 
   if (query.isLoading) {
     return (
@@ -137,7 +149,7 @@ export const DocumentPreviewPage: Page<"repoId" | "filePath"> = ({
 
         <div className="p-6 md:p-8">
           <article className="prose lg:prose-xl dark:prose-invert max-w-none">
-            <ReactMarkdown>{query.data.getContent()}</ReactMarkdown>
+            {Component}
           </article>
         </div>
       </div>

@@ -3,7 +3,7 @@
  */
 
 import { useState, useCallback, useMemo } from "react";
-import type { PaginationState } from "../types/ui";
+import type { PaginationState } from "@/shared/types/ui";
 
 export interface UsePaginationOptions {
   /** Initial page (1-indexed) */
@@ -44,8 +44,15 @@ export interface UsePaginationResult extends PaginationState {
 /**
  * Hook for managing pagination state
  */
-export function usePagination(options: UsePaginationOptions): UsePaginationResult {
-  const { initialPage = 1, pageSize: initialPageSize = 10, totalItems, onPageChange } = options;
+export function usePagination(
+  options: UsePaginationOptions
+): UsePaginationResult {
+  const {
+    initialPage = 1,
+    pageSize: initialPageSize = 10,
+    totalItems,
+    onPageChange,
+  } = options;
 
   const [currentPage, setCurrentPage] = useState(initialPage);
   const [pageSize, setPageSizeState] = useState(initialPageSize);
@@ -98,7 +105,7 @@ export function usePagination(options: UsePaginationOptions): UsePaginationResul
   );
 
   const getPageItems = useCallback(
-    <T,>(items: T[]): T[] => {
+    <T>(items: T[]): T[] => {
       const start = (currentPage - 1) * pageSize;
       const end = start + pageSize;
       return items.slice(start, end);

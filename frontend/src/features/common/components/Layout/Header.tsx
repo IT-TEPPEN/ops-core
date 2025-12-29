@@ -2,9 +2,9 @@ import { Link } from "react-router-dom";
 
 export function Header() {
   return (
-    <nav className="bg-white dark:bg-gray-800 shadow-md sticky top-0 z-10">
-      <div className="max-w-5xl mx-auto px-4">
-        <div className="flex justify-center items-center h-16">
+    <nav className="bg-white dark:bg-gray-800 shadow-md h-full">
+      <div className="max-w-5xl mx-auto px-4 h-full">
+        <div className="flex justify-center items-center h-full">
           <ul className="flex space-x-6">
             <li>
               <Link

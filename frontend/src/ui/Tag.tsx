@@ -3,6 +3,7 @@
  */
 
 import type { ReactNode } from "react";
+import { XIcon } from "./Icon";
 
 export interface TagProps {
   /** Tag content */

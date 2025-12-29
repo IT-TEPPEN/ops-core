@@ -13,17 +13,21 @@ import { NotificationCard } from "../features/notification";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ProtectedRoute } from "../features/common/components/ProtectedRoute";
 import { RepositoryRoutes } from "@/pages/repositories";
+import { MarkdownTestEditor } from "@/features/markdown";
 
 function App() {
   return (
     <AuthProvider>
       <DiProviders>
         <div className="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
-          <Header />
+          <div className="h-16">
+            <Header />
+          </div>
 
           {/* Page Content Area */}
-          <main className="max-w-5xl mx-auto p-4">
+          <main className="h-[calc(100vh-4rem)] p-4">
             <Routes>
+              <Route path="/markdown-test" element={<MarkdownTestEditor />} />
               <Route path="/login" element={<LoginPage />} />
               <Route
                 path="/auth/:provider/callback"
