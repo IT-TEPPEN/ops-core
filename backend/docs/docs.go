@@ -5132,8 +5132,8 @@ var SwaggerInfo = &swag.Spec{
 	Description:      "This is the API documentation for the OpsCore backend service.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
-	LeftDelim:        "{{",
-	RightDelim:       "}}",
+	// LeftDelim:        "{{",
+	// RightDelim:       "}}",
 }
 
 func init() {
