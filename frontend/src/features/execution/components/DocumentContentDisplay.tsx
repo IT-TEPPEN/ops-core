@@ -1,5 +1,6 @@
-import ReactMarkdown from "react-markdown";
-import { DocumentVariable } from "@/shared/types/domain";
+import { MarkdownProcessor } from "@/features/markdown";
+import { DocumentVariable } from "@/features/repository";
+import { useEffect, useState } from "react";
 
 interface DocumentContentDisplayProps {
   documentTitle: string;
@@ -18,6 +19,16 @@ export function DocumentContentDisplay({
   onVariableChange,
   isExecutionStarted,
 }: DocumentContentDisplayProps) {
+  const [Component, setComponent] = useState<React.ReactElement | null>(null);
+
+  useEffect(() => {
+    MarkdownProcessor.process(processedContent).then(
+      (file: { result: unknown }) => {
+        setComponent(file.result as React.ReactElement);
+      }
+    );
+  }, [processedContent]);
+
   return (
     <div className="bg-white p-6 rounded-lg shadow-md">
       <h2 className="text-xl font-bold mb-4">{documentTitle}</h2>
@@ -54,9 +65,7 @@ export function DocumentContentDisplay({
       )}
 
       {/* Document Content */}
-      <div className="prose max-w-none">
-        <ReactMarkdown>{processedContent}</ReactMarkdown>
-      </div>
+      <div className="prose max-w-none">{Component}</div>
     </div>
   );
 }

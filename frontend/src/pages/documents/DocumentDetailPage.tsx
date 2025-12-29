@@ -1,9 +1,10 @@
 import { Link } from "react-router-dom";
-import ReactMarkdown from "react-markdown";
 import { useDocumentExecution } from "@/features/document/hooks/useDocumentExecution";
 import { DocumentMetadata } from "@/features/document/components/DocumentMetadata";
 import { VariableInputPanel } from "@/features/document/components/VariableInputPanel";
 import { Page } from "@/shared/types/Page";
+import { useEffect, useState } from "react";
+import { MarkdownProcessor } from "@/features/markdown";
 
 export const DocumentDetailPage: Page<"docId"> = ({ path: { docId } }) => {
   const {
@@ -14,6 +15,16 @@ export const DocumentDetailPage: Page<"docId"> = ({ path: { docId } }) => {
     processedContent,
     handleVariableChange,
   } = useDocumentExecution(docId);
+
+  const [Component, setComponent] = useState<React.ReactElement | null>(null);
+
+  useEffect(() => {
+    MarkdownProcessor.process(processedContent).then(
+      (file: { result: unknown }) => {
+        setComponent(file.result as React.ReactElement);
+      }
+    );
+  }, [processedContent]);
 
   if (isLoading) {
     return (
@@ -93,7 +104,7 @@ export const DocumentDetailPage: Page<"docId"> = ({ path: { docId } }) => {
         {/* Document Content */}
         <div className="flex-1">
           <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow prose dark:prose-invert max-w-none">
-            <ReactMarkdown>{processedContent}</ReactMarkdown>
+            {Component}
           </div>
         </div>
       </div>

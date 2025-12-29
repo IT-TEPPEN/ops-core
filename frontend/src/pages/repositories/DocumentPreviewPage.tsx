@@ -8,6 +8,7 @@ import type {
 import { Page } from "@/shared/types/Page";
 import { useEffect, useState } from "react";
 import { MarkdownProcessor } from "@/features/markdown/processor";
+import "@/features/markdown/markdown.css";
 
 function ProcedureMetaComponent(props: { meta: DocumentProcedureMeta }) {
   return (
@@ -147,10 +148,8 @@ export const DocumentPreviewPage: Page<"repoId" | "filePath"> = ({
           {meta.type === "knowledge" && <KnowledgeMetaComponent meta={meta} />}
         </div>
 
-        <div className="p-6 md:p-8">
-          <article className="prose lg:prose-xl dark:prose-invert max-w-none">
-            {Component}
-          </article>
+        <div className="p-6 md:p-8 bg-white dark:bg-gray-800 rounded-lg shadow-md">
+          <article className="markdown-content max-w-none">{Component}</article>
         </div>
       </div>
     </div>

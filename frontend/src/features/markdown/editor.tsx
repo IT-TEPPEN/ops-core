@@ -18,7 +18,7 @@ export const MarkdownTestEditor = () => {
           onChange={(event) => setTestText(event.target.value)}
         />
       </div>
-      <div className="w-full p-4">{resultText ?? ""}</div>
+      <div className="w-full p-4 markdown-content">{resultText ?? ""}</div>
     </div>
   );
 };

@@ -1,6 +1,5 @@
 import { useParams, Link } from "react-router-dom";
-import { useState } from "react";
-import ReactMarkdown from "react-markdown";
+import { useEffect, useState } from "react";
 import {
   ThreePaneLayout,
   VariableForm,
@@ -8,12 +7,14 @@ import {
 } from "@/features/common/components";
 import { useExecutionRecord } from "@/features/execution/hooks/useExecutionRecord";
 import { useDocumentExecution } from "@/features/document/hooks/useDocumentExecution";
+import { MarkdownProcessor } from "@/features/markdown";
 
 function ExecutionRecordPage() {
   const { docId, recordId } = useParams<{
     docId: string;
     recordId?: string;
   }>();
+  const [Component, setComponent] = useState<React.ReactElement | null>(null);
 
   // Use custom hooks for business logic - must be called before any conditional returns
   const {
@@ -24,6 +25,14 @@ function ExecutionRecordPage() {
     processedContent,
     handleVariableChange,
   } = useDocumentExecution({ docId, recordId });
+
+  useEffect(() => {
+    MarkdownProcessor.process(processedContent).then(
+      (file: { result: unknown }) => {
+        setComponent(file.result as React.ReactElement);
+      }
+    );
+  }, [processedContent]);
 
   const {
     executionRecord,
@@ -153,7 +162,7 @@ function ExecutionRecordPage() {
 
       {/* Document Content */}
       <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow prose dark:prose-invert max-w-none">
-        <ReactMarkdown>{processedContent}</ReactMarkdown>
+        {Component}
       </div>
     </div>
   );

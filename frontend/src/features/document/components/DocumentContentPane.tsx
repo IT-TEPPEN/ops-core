@@ -1,6 +1,7 @@
-import ReactMarkdown from "react-markdown";
 import { Link } from "react-router-dom";
 import { Document } from "@/shared/types/domain";
+import { useEffect, useState } from "react";
+import { MarkdownProcessor } from "@/features/markdown";
 
 interface DocumentContentPaneProps {
   document: Document;
@@ -11,6 +12,16 @@ export function DocumentContentPane({
   document,
   processedContent,
 }: DocumentContentPaneProps) {
+  const [Component, setComponent] = useState<React.ReactElement | null>(null);
+
+  useEffect(() => {
+    MarkdownProcessor.process(processedContent).then(
+      (file: { result: unknown }) => {
+        setComponent(file.result as React.ReactElement);
+      }
+    );
+  }, [processedContent]);
+
   const currentVersion = document.current_version;
 
   return (
@@ -82,7 +93,7 @@ export function DocumentContentPane({
 
       {/* Document Content */}
       <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow prose dark:prose-invert max-w-none">
-        <ReactMarkdown>{processedContent}</ReactMarkdown>
+        {Component}
       </div>
     </div>
   );
