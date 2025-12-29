@@ -20,10 +20,10 @@ export function DocumentListPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Documents</h1>
         <Link
-          to="/documents/new"
+          to="/repositories"
           className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
         >
-          Create Document
+          Add File from Repository
         </Link>
       </div>
 
@@ -52,10 +52,10 @@ export function DocumentListPage() {
           </p>
           {documents.length === 0 && (
             <Link
-              to="/documents/new"
+              to="/repositories"
               className="inline-block px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
             >
-              Create Document
+              Add File from Repository
             </Link>
           )}
         </div>
