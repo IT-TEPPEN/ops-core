@@ -1,5 +1,70 @@
 basePath: /api/v1
 definitions:
+  internal_auth_interfaces_api_handlers.AuthResponse:
+    properties:
+      token:
+        type: string
+      user:
+        $ref: '#/definitions/internal_auth_interfaces_api_handlers.UserProfile'
+    type: object
+  internal_auth_interfaces_api_handlers.IdentityResponse:
+    properties:
+      email:
+        type: string
+      id:
+        type: string
+      last_used_at:
+        type: string
+      linked_at:
+        type: string
+      name:
+        type: string
+      provider:
+        type: string
+    type: object
+  internal_auth_interfaces_api_handlers.ProviderCallbackRequest:
+    properties:
+      code:
+        type: string
+      state:
+        type: string
+    required:
+    - code
+    - state
+    type: object
+  internal_auth_interfaces_api_handlers.ProviderLoginResponse:
+    properties:
+      auth_url:
+        type: string
+      state:
+        type: string
+    type: object
+  internal_auth_interfaces_api_handlers.UserProfile:
+    properties:
+      email:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      picture:
+        type: string
+    type: object
+  internal_oauth_interfaces_api_handlers.OAuthConnectionResponse:
+    properties:
+      connected_at:
+        type: string
+      id:
+        type: string
+      provider:
+        type: string
+      provider_username:
+        type: string
+      scopes:
+        items:
+          type: string
+        type: array
+    type: object
   opscore_backend_internal_document_interfaces_api_schema.CreateDocumentRequest:
     properties:
       access_scope:
@@ -580,6 +645,48 @@ definitions:
     required:
     - accessToken
     type: object
+  opscore_backend_internal_oauth_domain.OAuthCallbackRequest:
+    properties:
+      clientId:
+        type: string
+      clientSecret:
+        type: string
+      code:
+        type: string
+      gitlabUrl:
+        type: string
+      provider:
+        $ref: '#/definitions/opscore_backend_internal_oauth_domain.Provider'
+      state:
+        type: string
+    required:
+    - code
+    - provider
+    - state
+    type: object
+  opscore_backend_internal_oauth_domain.OAuthTokenResponse:
+    properties:
+      access_token:
+        type: string
+      expires_in:
+        type: integer
+      refresh_token:
+        type: string
+      scope:
+        type: string
+      token_type:
+        type: string
+    type: object
+  opscore_backend_internal_oauth_domain.Provider:
+    enum:
+    - github
+    - gitlab
+    - gitlab-self-hosted
+    type: string
+    x-enum-varnames:
+    - ProviderGitHub
+    - ProviderGitLab
+    - ProviderGitLabSelfHosted
   opscore_backend_internal_user_interfaces_api_schema.AddMemberRequest:
     properties:
       userId:
@@ -1265,6 +1372,299 @@ paths:
       summary: Get signed URL for attachment
       tags:
       - attachments
+  /auth/{provider}/callback:
+    post:
+      consumes:
+      - application/json
+      description: Exchanges authorization code for JWT token and creates/updates
+        user
+      parameters:
+      - description: Provider name (google, github, gitlab, microsoft)
+        in: path
+        name: provider
+        required: true
+        type: string
+      - description: Authorization code and state
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_auth_interfaces_api_handlers.ProviderCallbackRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_auth_interfaces_api_handlers.AuthResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Handle OIDC provider callback
+      tags:
+      - auth
+  /auth/{provider}/login:
+    get:
+      description: Returns OIDC provider authorization URL for user to authenticate
+      parameters:
+      - description: Provider name (google, github, gitlab, microsoft)
+        in: path
+        name: provider
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_auth_interfaces_api_handlers.ProviderLoginResponse'
+      summary: Initiate OIDC login
+      tags:
+      - auth
+  /auth/identities:
+    get:
+      description: Returns all provider identities linked to the current user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              items:
+                $ref: '#/definitions/internal_auth_interfaces_api_handlers.IdentityResponse'
+              type: array
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get user's linked identities
+      tags:
+      - auth
+  /auth/identities/{id}:
+    delete:
+      description: Removes a provider identity from the user's account
+      parameters:
+      - description: Identity ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Unlink a provider identity
+      tags:
+      - auth
+  /auth/logout:
+    post:
+      description: Logout endpoint (client-side token deletion primarily)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Logout user
+      tags:
+      - auth
+  /auth/me:
+    get:
+      description: Returns the currently authenticated user's profile
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_auth_interfaces_api_handlers.UserProfile'
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get current user information
+      tags:
+      - auth
+  /auth/oauth/callback:
+    post:
+      consumes:
+      - application/json
+      description: Exchanges OAuth authorization code for access token
+      parameters:
+      - description: OAuth callback request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/opscore_backend_internal_oauth_domain.OAuthCallbackRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_oauth_domain.OAuthTokenResponse'
+        "400":
+          description: Invalid request
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: OAuth callback endpoint
+      tags:
+      - OAuth
+  /auth/oauth/connect:
+    post:
+      consumes:
+      - application/json
+      description: Exchanges OAuth authorization code for access token and saves to
+        database
+      parameters:
+      - description: OAuth callback request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/opscore_backend_internal_oauth_domain.OAuthCallbackRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_oauth_interfaces_api_handlers.OAuthConnectionResponse'
+        "400":
+          description: Invalid request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: OAuth callback endpoint with token storage
+      tags:
+      - OAuth
+  /auth/oauth/connections:
+    get:
+      description: List all OAuth connections for the authenticated user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: List OAuth connections
+      tags:
+      - OAuth
+  /auth/oauth/connections/{provider}:
+    delete:
+      description: Remove an OAuth connection for the authenticated user
+      parameters:
+      - description: Provider name (github, gitlab)
+        in: path
+        name: provider
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Invalid provider
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Disconnect OAuth provider
+      tags:
+      - OAuth
   /documents:
     get:
       description: Retrieves a list of all published documents
@@ -2228,6 +2628,96 @@ paths:
       summary: Update execution record title
       tags:
       - execution-records
+  /git-providers/{provider}/repos/{owner}/{repo}/contents:
+    get:
+      description: Get the content of a file from a repository using OAuth token
+      parameters:
+      - description: Provider name (github, gitlab)
+        in: path
+        name: provider
+        required: true
+        type: string
+      - description: Repository owner
+        in: path
+        name: owner
+        required: true
+        type: string
+      - description: Repository name
+        in: path
+        name: repo
+        required: true
+        type: string
+      - description: File path
+        in: query
+        name: path
+        required: true
+        type: string
+      - description: Branch or commit ref
+        in: query
+        name: ref
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Get file content from a repository
+      tags:
+      - GitProvider
+  /git-providers/{provider}/repositories:
+    get:
+      description: List all repositories accessible to the authenticated user from
+        a Git provider
+      parameters:
+      - description: Provider name (github, gitlab)
+        in: path
+        name: provider
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid provider
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: List user repositories from Git provider
+      tags:
+      - GitProvider
   /groups:
     get:
       description: Retrieves a list of all groups in the system
@@ -2562,6 +3052,10 @@ paths:
           description: Invalid repository ID format or access token missing
           schema:
             $ref: '#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse'
+        "401":
+          description: Authentication required
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse'
         "404":
           description: Repository not found
           schema:
@@ -2570,22 +3064,24 @@ paths:
           description: Internal server error
           schema:
             $ref: '#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: List files in a repository
       tags:
       - repositories
-  /repositories/{repoId}/files/{filePath}:
+  /repositories/{repoId}/files/content:
     get:
       description: Retrieves the content of a specific file from a repository by its
-        URL-encoded file path.
+        file path provided as a query parameter.
       parameters:
       - description: Repository ID
         in: path
         name: repoId
         required: true
         type: string
-      - description: URL-encoded file path
-        in: path
-        name: filePath
+      - description: File path in the repository
+        in: query
+        name: path
         required: true
         type: string
       produces:
@@ -2599,6 +3095,10 @@ paths:
           description: Invalid repository ID or file path
           schema:
             $ref: '#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse'
+        "401":
+          description: Authentication required
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse'
         "404":
           description: Repository or file not found
           schema:
@@ -2607,6 +3107,8 @@ paths:
           description: Internal server error
           schema:
             $ref: '#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: Get file contents from a repository
       tags:
       - repositories

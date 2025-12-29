@@ -567,6 +567,451 @@ const docTemplate = `{
                 }
             }
         },
+        "/auth/identities": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns all provider identities linked to the current user",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Get user's linked identities",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/definitions/internal_auth_interfaces_api_handlers.IdentityResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/identities/{id}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Removes a provider identity from the user's account",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Unlink a provider identity",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Identity ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/logout": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Logout endpoint (client-side token deletion primarily)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Logout user",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/me": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns the currently authenticated user's profile",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Get current user information",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_auth_interfaces_api_handlers.UserProfile"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/oauth/callback": {
+            "post": {
+                "description": "Exchanges OAuth authorization code for access token",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "OAuth"
+                ],
+                "summary": "OAuth callback endpoint",
+                "parameters": [
+                    {
+                        "description": "OAuth callback request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_oauth_domain.OAuthCallbackRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_oauth_domain.OAuthTokenResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/oauth/connect": {
+            "post": {
+                "description": "Exchanges OAuth authorization code for access token and saves to database",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "OAuth"
+                ],
+                "summary": "OAuth callback endpoint with token storage",
+                "parameters": [
+                    {
+                        "description": "OAuth callback request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_oauth_domain.OAuthCallbackRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_oauth_interfaces_api_handlers.OAuthConnectionResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/oauth/connections": {
+            "get": {
+                "description": "List all OAuth connections for the authenticated user",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "OAuth"
+                ],
+                "summary": "List OAuth connections",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/oauth/connections/{provider}": {
+            "delete": {
+                "description": "Remove an OAuth connection for the authenticated user",
+                "tags": [
+                    "OAuth"
+                ],
+                "summary": "Disconnect OAuth provider",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Provider name (github, gitlab)",
+                        "name": "provider",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Invalid provider",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/{provider}/callback": {
+            "post": {
+                "description": "Exchanges authorization code for JWT token and creates/updates user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Handle OIDC provider callback",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Provider name (google, github, gitlab, microsoft)",
+                        "name": "provider",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Authorization code and state",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_auth_interfaces_api_handlers.ProviderCallbackRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_auth_interfaces_api_handlers.AuthResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/{provider}/login": {
+            "get": {
+                "description": "Returns OIDC provider authorization URL for user to authenticate",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Initiate OIDC login",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Provider name (google, github, gitlab, microsoft)",
+                        "name": "provider",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_auth_interfaces_api_handlers.ProviderLoginResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/documents": {
             "get": {
                 "description": "Retrieves a list of all published documents",
@@ -1999,6 +2444,135 @@ const docTemplate = `{
                 }
             }
         },
+        "/git-providers/{provider}/repos/{owner}/{repo}/contents": {
+            "get": {
+                "description": "Get the content of a file from a repository using OAuth token",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "GitProvider"
+                ],
+                "summary": "Get file content from a repository",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Provider name (github, gitlab)",
+                        "name": "provider",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Repository owner",
+                        "name": "owner",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Repository name",
+                        "name": "repo",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "File path",
+                        "name": "path",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Branch or commit ref",
+                        "name": "ref",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/git-providers/{provider}/repositories": {
+            "get": {
+                "description": "List all repositories accessible to the authenticated user from a Git provider",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "GitProvider"
+                ],
+                "summary": "List user repositories from Git provider",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Provider name (github, gitlab)",
+                        "name": "provider",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid provider",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
         "/groups": {
             "get": {
                 "description": "Retrieves a list of all groups in the system",
@@ -2474,6 +3048,11 @@ const docTemplate = `{
         },
         "/repositories/{repoId}/files": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Retrieves a list of files and directories within a specified repository.",
                 "produces": [
                     "application/json"
@@ -2504,6 +3083,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse"
                         }
                     },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse"
+                        }
+                    },
                     "404": {
                         "description": "Repository not found",
                         "schema": {
@@ -2519,9 +3104,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/repositories/{repoId}/files/{filePath}": {
+        "/repositories/{repoId}/files/content": {
             "get": {
-                "description": "Retrieves the content of a specific file from a repository by its URL-encoded file path.",
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieves the content of a specific file from a repository by its file path provided as a query parameter.",
                 "produces": [
                     "application/json"
                 ],
@@ -2539,9 +3129,9 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "URL-encoded file path",
-                        "name": "filePath",
-                        "in": "path",
+                        "description": "File path in the repository",
+                        "name": "path",
+                        "in": "query",
                         "required": true
                     }
                 ],
@@ -2554,6 +3144,12 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Invalid repository ID or file path",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
                         "schema": {
                             "$ref": "#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse"
                         }
@@ -3103,6 +3699,106 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "internal_auth_interfaces_api_handlers.AuthResponse": {
+            "type": "object",
+            "properties": {
+                "token": {
+                    "type": "string"
+                },
+                "user": {
+                    "$ref": "#/definitions/internal_auth_interfaces_api_handlers.UserProfile"
+                }
+            }
+        },
+        "internal_auth_interfaces_api_handlers.IdentityResponse": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "last_used_at": {
+                    "type": "string"
+                },
+                "linked_at": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "provider": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_auth_interfaces_api_handlers.ProviderCallbackRequest": {
+            "type": "object",
+            "required": [
+                "code",
+                "state"
+            ],
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "state": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_auth_interfaces_api_handlers.ProviderLoginResponse": {
+            "type": "object",
+            "properties": {
+                "auth_url": {
+                    "type": "string"
+                },
+                "state": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_auth_interfaces_api_handlers.UserProfile": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "picture": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_oauth_interfaces_api_handlers.OAuthConnectionResponse": {
+            "type": "object",
+            "properties": {
+                "connected_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "provider": {
+                    "type": "string"
+                },
+                "provider_username": {
+                    "type": "string"
+                },
+                "scopes": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
         "opscore_backend_internal_document_interfaces_api_schema.CreateDocumentRequest": {
             "type": "object",
             "required": [
@@ -3920,6 +4616,67 @@ const docTemplate = `{
                 }
             }
         },
+        "opscore_backend_internal_oauth_domain.OAuthCallbackRequest": {
+            "type": "object",
+            "required": [
+                "code",
+                "provider",
+                "state"
+            ],
+            "properties": {
+                "clientId": {
+                    "type": "string"
+                },
+                "clientSecret": {
+                    "type": "string"
+                },
+                "code": {
+                    "type": "string"
+                },
+                "gitlabUrl": {
+                    "type": "string"
+                },
+                "provider": {
+                    "$ref": "#/definitions/opscore_backend_internal_oauth_domain.Provider"
+                },
+                "state": {
+                    "type": "string"
+                }
+            }
+        },
+        "opscore_backend_internal_oauth_domain.OAuthTokenResponse": {
+            "type": "object",
+            "properties": {
+                "access_token": {
+                    "type": "string"
+                },
+                "expires_in": {
+                    "type": "integer"
+                },
+                "refresh_token": {
+                    "type": "string"
+                },
+                "scope": {
+                    "type": "string"
+                },
+                "token_type": {
+                    "type": "string"
+                }
+            }
+        },
+        "opscore_backend_internal_oauth_domain.Provider": {
+            "type": "string",
+            "enum": [
+                "github",
+                "gitlab",
+                "gitlab-self-hosted"
+            ],
+            "x-enum-varnames": [
+                "ProviderGitHub",
+                "ProviderGitLab",
+                "ProviderGitLabSelfHosted"
+            ]
+        },
         "opscore_backend_internal_user_interfaces_api_schema.AddMemberRequest": {
             "type": "object",
             "required": [
@@ -4375,6 +5132,8 @@ var SwaggerInfo = &swag.Spec{
 	Description:      "This is the API documentation for the OpsCore backend service.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
+	LeftDelim:        "{{",
+	RightDelim:       "}}",
 }
 
 func init() {

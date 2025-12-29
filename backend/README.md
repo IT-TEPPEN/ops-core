@@ -286,12 +286,17 @@ go run ./cmd/migrate down
 ### API仕様書の生成
 
 ```bash
+# swagツールのインストール（初回のみ）
+go install github.com/swaggo/swag/cmd/swag@latest
+
 # Swagger仕様の生成
-swag init -g cmd/server/main.go -o docs
+swag init -g cmd/server/main.go -o docs --parseDependency --parseInternal
 
 # API仕様書の確認
 http://localhost:8080/swagger/index.html
 ```
+
+詳細は [ADR 0010: API Definition Generation and Specification](../adr/0010-api-definition-generation-specification.md) を参照してください。
 
 ## 関連ドキュメント
 
