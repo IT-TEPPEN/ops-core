@@ -123,7 +123,7 @@ export function RepositorySelector({
                 </div>
                 {selectedRepository?.id === repo.id && (
                   <svg
-                    className="w-5 h-5 text-blue-600 flex-shrink-0"
+                    className="w-5 h-5 text-blue-600 shrink-0"
                     fill="currentColor"
                     viewBox="0 0 20 20"
                   >

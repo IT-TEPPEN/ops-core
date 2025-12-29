@@ -194,12 +194,14 @@ To maintain proper separation of concerns and unidirectional dependency flow, th
   * Convert to/from application DTOs within the interfaces layer
 
 * **Conversion Flow:**
-  ```
-  API Request → Schema (interfaces) → DTO (application) → Use Case
-  Use Case → DTO (application) → Schema (interfaces) → API Response
-  ```
+
+    ```text
+    API Request → Schema (interfaces) → DTO (application) → Use Case
+    Use Case → DTO (application) → Schema (interfaces) → API Response
+    ```
 
 This separation ensures:
+
 * Application layer remains independent of API specifications
 * API format changes don't require modifying use case logic
 * DTOs can evolve based on business needs without breaking API contracts

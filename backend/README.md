@@ -8,7 +8,7 @@ OpsCoreバックエンドは、Go言語で実装された、運用手順書管�
 
 本システムは、Onion Architecture（オニオンアーキテクチャ）に基づいて設計されています。詳細は [ADR 0007](../adr/0007-backend-architecture-onion.md) を参照してください。
 
-```
+```text
 backend/
 ├── cmd/                    # エントリーポイント
 │   ├── server/            # APIサーバー
@@ -30,24 +30,30 @@ backend/
 ドメイン駆動設計（DDD）の考え方に基づき、以下のコンテキストに分割されています：
 
 #### 1. Git Repository Context
+
 外部Gitリポジトリとの連携を担当。
 
 **主要エンティティ:**
+
 - Repository（集約ルート）: Gitリポジトリ情報の管理
 
 **主要機能:**
+
 - リポジトリの登録・更新・削除
 - アクセストークンの暗号化管理
 - Gitファイル一覧の取得
 
 #### 2. Document Context
+
 ドキュメントのライフサイクル管理を担当。
 
 **主要エンティティ:**
+
 - Document（集約ルート）: ドキュメント情報とバージョン管理
 - DocumentVersion: ドキュメントの特定バージョン
 
 **主要値オブジェクト:**
+
 - DocumentID, VersionID, RepositoryID
 - DocumentSource（FilePath + CommitHash）
 - DocumentType（procedure/knowledge）
@@ -55,6 +61,7 @@ backend/
 - AccessScope（public/private + 共有設定）
 
 **主要機能:**
+
 - ドキュメントの公開・非公開
 - バージョン管理とロールバック
 - 変数定義の管理
@@ -62,24 +69,29 @@ backend/
 - 自動更新設定
 
 **参考ADR:**
+
 - [ADR 0013: Document Variable Definition](../adr/0013-document-variable-definition.md)
 - [ADR 0016: Document Domain Model Design](../adr/0016-document-domain-model-design.md)
 - [ADR 0017: Application Data Validation](../adr/0017-application-data-validation.md)
 
 #### 3. Execution Record Context
+
 手順書実行の作業証跡を管理。
 
 **主要エンティティ:**
+
 - ExecutionRecord（集約ルート）: 作業証跡の管理
 - ExecutionStep: 作業ステップの記録
 - Attachment: 画面キャプチャなどの添付ファイル
 
 **主要値オブジェクト:**
+
 - ExecutionRecordID, AttachmentID
 - VariableValue（変数の入力値）
 - StorageType（local/s3/minio）
 
 **主要機能:**
+
 - 作業証跡の作成・更新
 - 作業ステップの記録
 - 画面キャプチャの添付
@@ -88,41 +100,52 @@ backend/
 - 作業証跡の検索・フィルタリング
 
 **参考ADR:**
+
 - [ADR 0014: Execution Record and Evidence Management](../adr/0014-execution-record-and-evidence-management.md)
 
 #### 4. User Context
+
 ユーザーとグループの管理を担当。
 
 **主要エンティティ:**
+
 - User（集約ルート）: ユーザー情報
 - Group（集約ルート）: グループ情報
 
 **主要値オブジェクト:**
+
 - UserID, GroupID
 
 **主要機能:**
+
 - ユーザーのCRUD操作
 - グループのCRUD操作
 - グループメンバーシップ管理
 - ロールベース認可（admin/user）
 
 #### 5. View History Context
+
 ドキュメントの閲覧履歴を記録。
 
 **主要エンティティ:**
+
 - ViewHistory: 閲覧履歴レコード
 
 **主要機能:**
+
 - 閲覧履歴の記録
 - 閲覧履歴の取得
 
 #### 6. View Statistics Context
+
 ドキュメントの閲覧統計を管理。
 
 **主要エンティティ:**
+
 - ViewStatistics（集約ルート）: 閲覧統計情報
 
 **主要機能:**
+
 - 閲覧数の集計
 - ユニークユーザー数の管理
 - 最終閲覧日時の記録
@@ -131,7 +154,7 @@ backend/
 
 各コンテキストは以下のレイヤーで構成されています：
 
-```
+```text
 context/
 ├── domain/              # ドメイン層（ビジネスロジック）
 │   ├── entity/         # エンティティ
@@ -171,6 +194,7 @@ context/
 詳細は [ADR 0015: Backend Custom Error Design](../adr/0015-backend-custom-error-design.md) を参照してください。
 
 **エラーコード体系:**
+
 - `DOMAIN_XXX`: ドメイン層エラー
 - `APP_XXX`: アプリケーション層エラー
 - `INFRA_XXX`: インフラストラクチャ層エラー

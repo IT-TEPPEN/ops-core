@@ -24,19 +24,19 @@ OpsCoreのデータベースは、PostgreSQL 14+を使用し、以下のテー�
 
 ## テーブル一覧
 
-| テーブル名 | 説明 | レコード数（想定） |
-|-----------|------|------------------|
-| `repositories` | Gitリポジトリ情報 | 〜100 |
-| `documents` | ドキュメント情報 | 〜10,000 |
-| `document_versions` | ドキュメントバージョン履歴 | 〜100,000 |
-| `execution_records` | 作業証跡 | 〜100,000 |
-| `execution_steps` | 作業ステップ | 〜1,000,000 |
-| `attachments` | 添付ファイル情報 | 〜500,000 |
-| `users` | ユーザー情報 | 〜1,000 |
-| `groups` | グループ情報 | 〜100 |
-| `user_groups` | ユーザー・グループ関連 | 〜5,000 |
-| `view_histories` | 閲覧履歴 | 〜1,000,000 |
-| `view_statistics` | 閲覧統計 | 〜10,000 |
+| テーブル名          | 説明                       | レコード数（想定） |
+| ------------------- | -------------------------- | ------------------ |
+| `repositories`      | Gitリポジトリ情報          | 〜100              |
+| `documents`         | ドキュメント情報           | 〜10,000           |
+| `document_versions` | ドキュメントバージョン履歴 | 〜100,000          |
+| `execution_records` | 作業証跡                   | 〜100,000          |
+| `execution_steps`   | 作業ステップ               | 〜1,000,000        |
+| `attachments`       | 添付ファイル情報           | 〜500,000          |
+| `users`             | ユーザー情報               | 〜1,000            |
+| `groups`            | グループ情報               | 〜100              |
+| `user_groups`       | ユーザー・グループ関連     | 〜5,000            |
+| `view_histories`    | 閲覧履歴                   | 〜1,000,000        |
+| `view_statistics`   | 閲覧統計                   | 〜10,000           |
 
 ## ER図
 
@@ -197,6 +197,7 @@ CREATE INDEX idx_repositories_name ON repositories(name);
 ```
 
 **主要カラム**:
+
 - `encrypted_token`: アクセストークンを暗号化して保存
 
 ### documents
@@ -224,6 +225,7 @@ CREATE INDEX idx_documents_owner ON documents(owner);
 ```
 
 **主要カラム**:
+
 - `access_scope_type`: "public" または "private"
 - `access_scope_shared_with`: 共有先のユーザーID・グループIDの配列（JSONB）
 
@@ -254,6 +256,7 @@ CREATE INDEX idx_document_versions_is_current ON document_versions(is_current_ve
 ```
 
 **主要カラム**:
+
 - `version_number`: ドキュメントごとに1から連番
 - `variables`: 変数定義（JSONB配列）
 - `is_current_version`: 現在公開中のバージョンか
@@ -288,6 +291,7 @@ CREATE INDEX idx_execution_records_started_at ON execution_records(started_at DE
 ```
 
 **主要カラム**:
+
 - `variable_values`: 使用した変数値（JSONB配列）
 - `status`: "in_progress", "completed", "failed"
 
@@ -333,6 +337,7 @@ CREATE INDEX idx_attachments_uploaded_by ON attachments(uploaded_by);
 ```
 
 **主要カラム**:
+
 - `storage_type`: "local", "s3", "minio"
 - `storage_path`: ストレージ上のファイルパス
 

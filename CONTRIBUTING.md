@@ -9,6 +9,7 @@ OpsCoreプロジェクトへのコントリビューションに興味をお持�
 **[開発ガイドライン（完全版）](docs/development/CONTRIBUTING.md)**
 
 上記のドキュメントには、以下の詳細情報が記載されています：
+
 - 開発環境のセットアップ
 - 開発フロー
 - コーディング規約（Go、TypeScript）
@@ -51,9 +52,10 @@ npm run dev
 ```
 
 アプリケーションへのアクセス：
-- フロントエンド: http://localhost:5173
-- バックエンドAPI: http://localhost:8080
-- Swagger UI: http://localhost:8080/swagger/index.html
+
+- フロントエンド: <http://localhost:5173>
+- バックエンドAPI: <http://localhost:8080>
+- Swagger UI: <http://localhost:8080/swagger/index.html>
 
 ## 📝 開発フロー（概要）
 
@@ -76,11 +78,12 @@ npm run dev
 
 ## ✅ コミットメッセージ規約
 
-```
+```text
 <type>(<scope>): <subject>
 ```
 
 **Type:**
+
 - `feat`: 新機能
 - `fix`: バグ修正
 - `docs`: ドキュメント
@@ -89,7 +92,8 @@ npm run dev
 - `chore`: ビルド・ツール変更
 
 **例:**
-```
+
+```text
 feat(document): 変数入力機能の追加
 
 ドキュメントに定義された変数を入力できるフォームを実装。

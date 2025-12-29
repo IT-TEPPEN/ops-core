@@ -38,6 +38,7 @@ kubectl create secret generic encryption-key \
 ### Step 3: Deploy Application
 
 Deploy the application with the encryption key configured. The application will:
+
 - Automatically encrypt all new access tokens on save
 - Automatically decrypt access tokens on retrieval
 
@@ -175,17 +176,20 @@ go run migrate_tokens.go
 ### Key Rotation Process
 
 1. **Generate New Key**:
+
    ```bash
    openssl rand -base64 32 > new_encryption_key.txt
    ```
 
 2. **Keep Old Key Available**:
+
    ```bash
    export OLD_ENCRYPTION_KEY=$(cat encryption_key.txt)
    export NEW_ENCRYPTION_KEY=$(cat new_encryption_key.txt)
    ```
 
 3. **Run Migration Script**:
+
    ```go
    package main
    
@@ -243,6 +247,7 @@ go run migrate_tokens.go
    ```
 
 4. **Update Environment**:
+
    ```bash
    export ENCRYPTION_KEY=$(cat new_encryption_key.txt)
    ```
@@ -255,6 +260,7 @@ go run migrate_tokens.go
    - Check application logs for errors
 
 7. **Secure Old Key**:
+
    - Keep the old key in secure backup for 30 days
    - After verification period, securely delete old key
 
@@ -269,6 +275,7 @@ go run migrate_tokens.go
    - Azure Key Vault
 
 2. **Example with AWS Secrets Manager**:
+
    ```bash
    # Store the key
    aws secretsmanager create-secret \
@@ -283,6 +290,7 @@ go run migrate_tokens.go
    ```
 
 3. **Example with HashiCorp Vault**:
+
    ```bash
    # Store the key
    vault kv put secret/opscore encryption_key="your-32-byte-key"
@@ -294,6 +302,7 @@ go run migrate_tokens.go
 ### Monitoring
 
 1. **Log Encryption Errors** (but never log keys or tokens):
+
    ```go
    if err != nil {
        log.Error("Failed to encrypt access token", "error", err, "repo_id", repoID)
@@ -335,6 +344,7 @@ go run migrate_tokens.go
 ### Issue: "invalid encryption key: must be 32 bytes"
 
 **Solution**: Ensure ENCRYPTION_KEY is exactly 32 bytes:
+
 ```bash
 echo -n "$ENCRYPTION_KEY" | wc -c  # Should output 32
 ```
@@ -342,11 +352,13 @@ echo -n "$ENCRYPTION_KEY" | wc -c  # Should output 32
 ### Issue: "failed to decrypt access token"
 
 **Possible causes**:
+
 1. Encryption key changed without migrating data
 2. Plaintext token in database (not yet encrypted)
 3. Database corruption
 
 **Solution**:
+
 1. Verify ENCRYPTION_KEY matches the key used to encrypt
 2. Check if token is plaintext and needs migration
 3. Restore from backup if corruption detected
@@ -354,6 +366,7 @@ echo -n "$ENCRYPTION_KEY" | wc -c  # Should output 32
 ### Issue: Application won't start
 
 **Check**:
+
 1. ENCRYPTION_KEY environment variable is set
 2. Key is exactly 32 bytes
 3. No special characters causing shell interpretation issues
