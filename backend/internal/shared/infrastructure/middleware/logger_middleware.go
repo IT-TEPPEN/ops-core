@@ -2,8 +2,10 @@ package middleware
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"net/url"
+	"os"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -20,6 +22,9 @@ const (
 
 // Logger provides a structured logger middleware for Gin
 func Logger(logger *slog.Logger) gin.HandlerFunc {
+	// Check if we're in development mode (non-JSON output)
+	isDevelopment := os.Getenv("ENV") != "production"
+
 	return func(c *gin.Context) {
 		// リクエスト開始時刻
 		start := time.Now()
@@ -64,6 +69,19 @@ func Logger(logger *slog.Logger) gin.HandlerFunc {
 		// センシティブデータをマスクする（URLクエリパラメータからのパスワードなど）
 		// セキュリティ強化: クエリパラメータからセンシティブデータを削除したURLを使用
 		sanitizedPath := sanitizeURL(c.Request.URL.String())
+
+		// Development mode: Print a colorized summary similar to Gin's default logger
+		if isDevelopment {
+			fmt.Printf("[%s] %s | %s | %13v | %15s | %-7s %s\n",
+				time.Now().Format("2006/01/02 - 15:04:05"),
+				colorizeMethod(c.Request.Method),
+				colorizeStatus(status),
+				latency,
+				c.ClientIP(),
+				c.Request.Method,
+				c.Request.URL.Path,
+			)
+		}
 
 		// リクエスト終了ログ
 		logFunc("Request completed",
@@ -134,4 +152,56 @@ func sanitizeURL(urlString string) string {
 	}
 
 	return u.String()
+}
+
+// ANSI color codes
+const (
+	green   = "\033[97;42m"
+	white   = "\033[90;47m"
+	yellow  = "\033[90;43m"
+	red     = "\033[97;41m"
+	blue    = "\033[97;44m"
+	magenta = "\033[97;45m"
+	cyan    = "\033[97;46m"
+	reset   = "\033[0m"
+)
+
+// colorizeStatus returns a colorized status code string
+func colorizeStatus(status int) string {
+	var color string
+	switch {
+	case status >= 200 && status < 300:
+		color = green
+	case status >= 300 && status < 400:
+		color = white
+	case status >= 400 && status < 500:
+		color = yellow
+	default:
+		color = red
+	}
+	return fmt.Sprintf("%s %d %s", color, status, reset)
+}
+
+// colorizeMethod returns a colorized HTTP method string
+func colorizeMethod(method string) string {
+	var color string
+	switch method {
+	case "GET":
+		color = blue
+	case "POST":
+		color = cyan
+	case "PUT":
+		color = yellow
+	case "DELETE":
+		color = red
+	case "PATCH":
+		color = green
+	case "HEAD":
+		color = magenta
+	case "OPTIONS":
+		color = white
+	default:
+		color = reset
+	}
+	return fmt.Sprintf("%s %-7s %s", color, method, reset)
 }

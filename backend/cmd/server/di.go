@@ -73,6 +73,8 @@ func provideGitManager() (git.GitManager, error) {
 }
 
 // provideAppLogger creates a structured logger based on ADR-0008.
+// In development, it uses a colorized console format for better readability.
+// In production, it uses JSON format for machine processing.
 func provideAppLogger() *slog.Logger {
 	logLevel := new(slog.LevelVar)
 	envLevel := os.Getenv("LOG_LEVEL")
@@ -87,18 +89,30 @@ func provideAppLogger() *slog.Logger {
 		logLevel.Set(slog.LevelInfo)
 	}
 
-	jsonHandler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
-		AddSource: true,
-		Level:     logLevel,
-		ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
-			if a.Key == slog.TimeKey {
-				a.Value = slog.StringValue(a.Value.Time().UTC().Format(time.RFC3339))
-			}
-			return a
-		},
-	})
+	env := os.Getenv("ENV")
+	var handler slog.Handler
 
-	return slog.New(jsonHandler)
+	if env == "production" {
+		// Production: JSON format for log aggregation tools
+		handler = slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+			AddSource: true,
+			Level:     logLevel,
+			ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
+				if a.Key == slog.TimeKey {
+					a.Value = slog.StringValue(a.Value.Time().UTC().Format(time.RFC3339))
+				}
+				return a
+			},
+		})
+	} else {
+		// Development: Human-readable text format with colors
+		handler = slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+			AddSource: false, // Less verbose for development
+			Level:     logLevel,
+		})
+	}
+
+	return slog.New(handler)
 }
 
 // provideHandlerLogger adapts slog.Logger to the handlers.Logger interface.
@@ -166,12 +180,13 @@ func InitializeAPI(db *pgxpool.Pool) (*repohandlers.RepositoryHandler,
 	*oauthhandlers.GitProviderHandler,
 	*authhandlers.AuthHandler,
 	*authservice.JWTService,
+	*slog.Logger,
 	error,
 ) {
 	// Create encryptor
 	encryptor, err := provideEncryptor()
 	if err != nil {
-		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, err
+		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, err
 	}
 
 	// Create OAuth connection repository (needed for repository use case)
@@ -189,7 +204,7 @@ func InitializeAPI(db *pgxpool.Pool) (*repohandlers.RepositoryHandler,
 	// Create git manager
 	gitManager, err := provideGitManager()
 	if err != nil {
-		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, err
+		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, err
 	}
 
 	// Create use case with OAuth token provider
@@ -239,7 +254,7 @@ func InitializeAPI(db *pgxpool.Pool) (*repohandlers.RepositoryHandler,
 	}
 	storageManager, err := storage.NewLocalStorageManager(storageBasePath)
 	if err != nil {
-		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, err
+		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, err
 	}
 
 	// Create attachment use case
@@ -398,5 +413,8 @@ func InitializeAPI(db *pgxpool.Pool) (*repohandlers.RepositoryHandler,
 	// Create auth handler
 	authHandler := authhandlers.NewAuthHandler(providerFactory, jwtService, authUserRepository, userIdentityRepository, authLogger)
 
-	return repositoryHandler, documentHandler, variableHandler, executionRecordHandler, attachmentHandler, userHandler, groupHandler, viewHistoryHandler, viewStatsHandler, oauthHandler, gitProviderHandler, authHandler, jwtService, nil
+	// Return the app logger for use in middleware
+	appLogger := provideAppLogger()
+
+	return repositoryHandler, documentHandler, variableHandler, executionRecordHandler, attachmentHandler, userHandler, groupHandler, viewHistoryHandler, viewStatsHandler, oauthHandler, gitProviderHandler, authHandler, jwtService, appLogger, nil
 }

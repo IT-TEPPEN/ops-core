@@ -14,7 +14,7 @@ export { RepositoryManagementAdapterContext } from "./contexts";
 export { useRepositoryManagementAdapter } from "./hooks";
 export { useRepositoryDetail } from "./hooks/useRepositoryDetail";
 export { useRepositoryRegistration } from "./hooks/useRepositoryRegistration";
-export { useRepositoryCreatePage } from "./hooks/useRepositoryCreatePage";
+export { useGitProvider } from "./hooks/useGitProvider";
 
 // Types
 export type {

@@ -1,21 +1,32 @@
-import { GitRepository } from "@/shared/api/gitProviderApi";
+import { GitRepository, GitProvider } from "@/shared/api/gitProviderApi";
 import { Card, Button } from "@/ui";
+import { useRepositoryRegistration } from "../hooks/useRepositoryRegistration";
 
 interface RepositoryConfirmationProps {
   repository: GitRepository;
-  isSubmitting: boolean;
-  message: { type: "success" | "error"; text: string } | null;
-  onRegister: () => void;
+  provider: GitProvider;
   onCancel: () => void;
+  onSuccess?: () => void;
 }
 
 export function RepositoryConfirmation({
   repository,
-  isSubmitting,
-  message,
-  onRegister,
+  provider,
   onCancel,
+  onSuccess,
 }: RepositoryConfirmationProps) {
+  const { isSubmitting, message, handleSubmitRepository } =
+    useRepositoryRegistration();
+
+  const handleRegister = async () => {
+    const success = await handleSubmitRepository({
+      provider,
+      url: repository.cloneUrl,
+    });
+    if (success) {
+      onSuccess?.();
+    }
+  };
   return (
     <Card>
       <h3 className="text-lg font-semibold mb-4">Confirm Registration</h3>
@@ -36,7 +47,11 @@ export function RepositoryConfirmation({
       </div>
 
       <div className="flex gap-3">
-        <Button variant="primary" onClick={onRegister} isLoading={isSubmitting}>
+        <Button
+          variant="primary"
+          onClick={handleRegister}
+          isLoading={isSubmitting}
+        >
           {isSubmitting ? "Registering..." : "Register Repository"}
         </Button>
         <Button variant="secondary" onClick={onCancel} disabled={isSubmitting}>

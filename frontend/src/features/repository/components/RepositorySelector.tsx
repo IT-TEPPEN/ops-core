@@ -1,10 +1,10 @@
-import { useState } from "react";
-import { GitRepository } from "@/shared/api/gitProviderApi";
+import { useState, useEffect } from "react";
+import { GitRepository, GitProvider } from "@/shared/api/gitProviderApi";
 import { SpinnerIcon, CheckCircleFilledIcon } from "@/ui";
+import { useGitProvider } from "../hooks/useGitProvider";
 
 interface RepositorySelectorProps {
-  repositories: GitRepository[];
-  isLoading: boolean;
+  provider: GitProvider;
   onSelect: (repository: GitRepository) => void;
   selectedRepository?: GitRepository | null;
 }
@@ -13,12 +13,24 @@ interface RepositorySelectorProps {
  * GitHubなどから取得したリポジトリ一覧から選択するコンポーネント
  */
 export function RepositorySelector({
-  repositories,
-  isLoading,
+  provider,
   onSelect,
   selectedRepository,
 }: RepositorySelectorProps) {
   const [searchQuery, setSearchQuery] = useState("");
+  const { repositories, isLoadingRepositories, isConnected, loadRepositories } =
+    useGitProvider();
+  const connected = isConnected(provider);
+
+  useEffect(() => {
+    if (connected) {
+      loadRepositories(provider);
+    }
+  }, [provider, connected, loadRepositories]);
+
+  if (!connected) {
+    return null;
+  }
 
   const filteredRepositories = repositories.filter(
     (repo) =>
@@ -28,7 +40,7 @@ export function RepositorySelector({
         repo.description.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
-  if (isLoading) {
+  if (isLoadingRepositories) {
     return (
       <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
         <h3 className="text-lg font-semibold mb-4">Select Repository</h3>

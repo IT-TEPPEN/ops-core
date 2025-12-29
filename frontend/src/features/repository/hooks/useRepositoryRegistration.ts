@@ -1,5 +1,4 @@
 import { useReducer } from "react";
-import { useNavigate } from "react-router-dom";
 import { initiateOAuthFlow, SelfHostedOAuthParams } from "@/shared/utils/oauth";
 
 type RegistrationState = {
@@ -60,7 +59,6 @@ function registrationReducer(
 }
 
 export function useRepositoryRegistration() {
-  const navigate = useNavigate();
   const [state, dispatch] = useReducer(registrationReducer, initialState);
 
   const apiHost = import.meta.env.VITE_API_HOST || window.location.host;
@@ -84,7 +82,7 @@ export function useRepositoryRegistration() {
   const handleSubmitRepository = async (data: {
     provider: string;
     url: string;
-  }) => {
+  }): Promise<boolean> => {
     dispatch({ type: "START_SUBMIT" });
 
     try {
@@ -109,14 +107,12 @@ export function useRepositoryRegistration() {
         message: "Repository registered successfully!",
       });
 
-      // 成功後、2秒待ってから一覧ページに遷移
-      setTimeout(() => {
-        navigate("/repositories");
-      }, 2000);
+      return true;
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "An unknown error occurred";
       dispatch({ type: "SUBMIT_ERROR", error: message });
+      return false;
     }
   };
 
