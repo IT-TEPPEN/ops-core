@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../app/hooks/useAuth";
+import { AuthApi } from "@/shared/api/authApi";
 
 type Provider = "google" | "github" | "gitlab" | "microsoft";
 
@@ -84,6 +85,7 @@ export default function LoginPage() {
   const location = useLocation();
   const { isAuthenticated, isLoading } = useAuth();
   const [error, setError] = useState<string | null>(null);
+  const authApi = useMemo(() => new AuthApi(), []);
 
   const from =
     (location.state as { from?: { pathname: string } } | null)?.from
@@ -99,15 +101,7 @@ export default function LoginPage() {
   const handleProviderLogin = async (provider: Provider) => {
     try {
       setError(null);
-      const response = await fetch(
-        `http://localhost:8080/api/v1/auth/${provider}/login`
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to initiate login");
-      }
-
-      const data = await response.json();
+      const data = await authApi.getProviderLoginUrl(provider);
 
       // Store state and provider for CSRF protection
       sessionStorage.setItem("auth_state", data.state);

@@ -6,7 +6,7 @@ type GitProvider = "github" | "gitlab" | "gitlab-self-hosted";
 
 interface OAuthConnectionFormData {
   provider: GitProvider;
-  url: string;
+  url?: string;
   gitlabUrl?: string;
   gitlabClientId?: string;
   gitlabClientSecret?: string;

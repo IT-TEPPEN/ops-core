@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import {
   useNavigate,
   useSearchParams,
@@ -6,6 +6,7 @@ import {
   useParams,
 } from "react-router-dom";
 import { useAuth } from "../app/hooks/useAuth";
+import { AuthApi } from "@/shared/api/authApi";
 
 export default function AuthCallbackPage() {
   const navigate = useNavigate();
@@ -13,6 +14,7 @@ export default function AuthCallbackPage() {
   const location = useLocation();
   const { provider } = useParams<{ provider: string }>();
   const { login } = useAuth();
+  const authApi = useMemo(() => new AuthApi(), []);
 
   useEffect(() => {
     const handleCallback = async () => {
@@ -37,22 +39,11 @@ export default function AuthCallbackPage() {
 
       try {
         // Exchange code for token
-        const response = await fetch(
-          `http://localhost:8080/api/v1/auth/${provider}/callback`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ code, state }),
-          }
+        const data = await authApi.handleProviderCallback(
+          provider,
+          code,
+          state
         );
-
-        if (!response.ok) {
-          throw new Error("Failed to authenticate");
-        }
-
-        const data = await response.json();
 
         // Store token and user info
         login(data.token, data.user);
@@ -62,7 +53,9 @@ export default function AuthCallbackPage() {
         sessionStorage.removeItem("auth_provider");
 
         // Get the originally requested page or default to home
-        const from = (location.state as any)?.from?.pathname || "/";
+        const from =
+          (location.state as { from?: { pathname: string } } | null)?.from
+            ?.pathname || "/";
         navigate(from, { replace: true });
       } catch (error) {
         console.error("Authentication error:", error);
@@ -71,7 +64,7 @@ export default function AuthCallbackPage() {
     };
 
     handleCallback();
-  }, [searchParams, navigate, location, login, provider]);
+  }, [searchParams, navigate, location, login, provider, authApi]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">

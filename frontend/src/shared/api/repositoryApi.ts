@@ -2,13 +2,16 @@ import matter from "gray-matter";
 import {
   RepositoryManagementAdapter,
   Repositories,
-} from "../features/repository/api";
+  FileNode,
+  RepositoryDetail,
+  UpdateTokenResult,
+} from "@/features/repository/api";
 import {
   Document,
   DocumentMeta,
   Repository,
-} from "../features/repository/types";
-import { Pagenation } from "../shared/data-types";
+} from "@/features/repository/types";
+import { Pagenation } from "@/shared/types";
 import { V1ApiClient } from "./client";
 
 /**
@@ -167,6 +170,25 @@ class PagenationImpl implements Pagenation {
   }
 }
 
+// --- Additional Response Types ---
+
+interface ResponseGetRepository {
+  id: string;
+  name: string;
+  url: string;
+  created_at: string;
+  updated_at: string;
+}
+
+interface ResponseListFiles {
+  files: FileNode[];
+}
+
+interface ResponseUpdateToken {
+  message: string;
+  repoId: string;
+}
+
 export class RepositoryApi
   extends V1ApiClient
   implements RepositoryManagementAdapter
@@ -211,5 +233,37 @@ export class RepositoryApi
     );
 
     return new DocumentImpl(res);
+  }
+
+  /**
+   * リポジトリ詳細を取得
+   */
+  async getRepository(repoId: string): Promise<RepositoryDetail> {
+    const res = await this.get<ResponseGetRepository>(`/${repoId}`);
+    return {
+      id: res.id,
+      name: res.name,
+      url: res.url,
+      createdAt: res.created_at,
+      updatedAt: res.updated_at,
+    };
+  }
+
+  /**
+   * リポジトリのファイル一覧を取得
+   */
+  async listFiles(repoId: string): Promise<FileNode[]> {
+    const res = await this.get<ResponseListFiles>(`/${repoId}/files`);
+    return res.files;
+  }
+
+  /**
+   * リポジトリのアクセストークンを更新
+   */
+  async updateAccessToken(
+    repoId: string,
+    accessToken: string
+  ): Promise<UpdateTokenResult> {
+    return this.put<ResponseUpdateToken>(`/${repoId}/token`, { accessToken });
   }
 }

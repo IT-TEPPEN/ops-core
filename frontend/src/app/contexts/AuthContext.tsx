@@ -1,5 +1,6 @@
-import { useReducer, useEffect, ReactNode } from "react";
+import { useReducer, useEffect, ReactNode, useMemo } from "react";
 import { AuthContext } from "./AuthContextDefinition";
+import { AuthApi } from "@/shared/api/authApi";
 
 interface User {
   id: string;
@@ -78,6 +79,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
     isLoading: true,
   });
 
+  // Create AuthApi instance
+  const authApi = useMemo(() => new AuthApi(), []);
+
   // Initialize auth state from localStorage
   useEffect(() => {
     const storedToken = localStorage.getItem(TOKEN_KEY);
@@ -110,19 +114,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     if (!state.token) return;
 
     try {
-      const response = await fetch(
-        "http://localhost:8080/api/v1/auth/identities",
-        {
-          headers: {
-            Authorization: `Bearer ${state.token}`,
-          },
-        }
-      );
-
-      if (response.ok) {
-        const data = await response.json();
-        dispatch({ type: "SET_IDENTITIES", payload: data.identities || [] });
-      }
+      const data = await authApi.getIdentities();
+      dispatch({ type: "SET_IDENTITIES", payload: data.identities || [] });
     } catch (error) {
       console.error("Failed to fetch identities:", error);
     }
@@ -144,10 +137,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const linkProvider = async (provider: string) => {
     try {
-      const response = await fetch(
-        `http://localhost:8080/api/v1/auth/${provider}/login`
-      );
-      const data = await response.json();
+      const data = await authApi.getProviderLoginUrl(provider);
 
       sessionStorage.setItem(`${provider}_auth_state`, data.state);
       sessionStorage.setItem("link_mode", "true");
@@ -163,20 +153,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     if (!state.token) return;
 
     try {
-      const response = await fetch(
-        `http://localhost:8080/api/v1/auth/identities/${identityId}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${state.token}`,
-          },
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to unlink identity");
-      }
-
+      await authApi.unlinkIdentity(identityId);
       await refreshIdentities();
     } catch (error) {
       console.error("Failed to unlink identity:", error);

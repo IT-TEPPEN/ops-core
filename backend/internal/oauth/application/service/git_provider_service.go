@@ -27,17 +27,24 @@ func NewGitProviderService(oauthService *OAuthService) *GitProviderService {
 	}
 }
 
+// GitRepositoryOwner represents the owner of a repository
+type GitRepositoryOwner struct {
+	Login     string `json:"login"`
+	AvatarURL string `json:"avatarUrl"`
+}
+
 // GitRepository represents a repository from a Git provider
 type GitRepository struct {
-	ID            int64  `json:"id"`
-	Name          string `json:"name"`
-	FullName      string `json:"full_name"`
-	Description   string `json:"description"`
-	Private       bool   `json:"private"`
-	HTMLURL       string `json:"html_url"`
-	CloneURL      string `json:"clone_url"`
-	DefaultBranch string `json:"default_branch"`
-	Provider      string `json:"provider"`
+	ID            int64              `json:"id"`
+	Name          string             `json:"name"`
+	FullName      string             `json:"fullName"`
+	Description   string             `json:"description"`
+	Private       bool               `json:"private"`
+	HTMLURL       string             `json:"htmlUrl"`
+	CloneURL      string             `json:"cloneUrl"`
+	DefaultBranch string             `json:"defaultBranch"`
+	Provider      string             `json:"provider"`
+	Owner         GitRepositoryOwner `json:"owner"`
 }
 
 // ListUserRepositories lists repositories accessible to the user for a given provider
@@ -65,7 +72,9 @@ func (s *GitProviderService) listGitHubRepositories(ctx context.Context, accessT
 	perPage := 100
 
 	for {
-		url := fmt.Sprintf("https://api.github.com/user/repos?per_page=%d&page=%d&sort=updated", perPage, page)
+		// visibility=all でプライベートリポジトリも含める
+		// affiliation でowner, collaborator, organization_member全て含める
+		url := fmt.Sprintf("https://api.github.com/user/repos?per_page=%d&page=%d&sort=updated&visibility=all&affiliation=owner,collaborator,organization_member", perPage, page)
 		req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 		if err != nil {
 			return nil, err
@@ -79,6 +88,10 @@ func (s *GitProviderService) listGitHubRepositories(ctx context.Context, accessT
 			return nil, err
 		}
 		defer resp.Body.Close()
+
+		// Debug: Log response headers to check OAuth scopes
+		xOAuthScopes := resp.Header.Get("X-OAuth-Scopes")
+		fmt.Printf("[DEBUG] GitHub API Response - Status: %s, X-OAuth-Scopes: %s\n", resp.Status, xOAuthScopes)
 
 		if resp.StatusCode != http.StatusOK {
 			body, _ := io.ReadAll(resp.Body)
@@ -94,11 +107,24 @@ func (s *GitProviderService) listGitHubRepositories(ctx context.Context, accessT
 			HTMLURL       string `json:"html_url"`
 			CloneURL      string `json:"clone_url"`
 			DefaultBranch string `json:"default_branch"`
+			Owner         struct {
+				Login     string `json:"login"`
+				AvatarURL string `json:"avatar_url"`
+			} `json:"owner"`
 		}
 
 		if err := json.NewDecoder(resp.Body).Decode(&repos); err != nil {
 			return nil, err
 		}
+
+		// Debug: Log repo count and private repos
+		privateCount := 0
+		for _, r := range repos {
+			if r.Private {
+				privateCount++
+			}
+		}
+		fmt.Printf("[DEBUG] GitHub API - Page %d: Total repos: %d, Private repos: %d\n", page, len(repos), privateCount)
 
 		for _, r := range repos {
 			allRepos = append(allRepos, GitRepository{
@@ -111,6 +137,10 @@ func (s *GitProviderService) listGitHubRepositories(ctx context.Context, accessT
 				CloneURL:      r.CloneURL,
 				DefaultBranch: r.DefaultBranch,
 				Provider:      string(domain.ProviderGitHub),
+				Owner: GitRepositoryOwner{
+					Login:     r.Owner.Login,
+					AvatarURL: r.Owner.AvatarURL,
+				},
 			})
 		}
 
@@ -158,6 +188,11 @@ func (s *GitProviderService) listGitLabRepositories(ctx context.Context, accessT
 			WebURL            string `json:"web_url"`
 			HTTPURLToRepo     string `json:"http_url_to_repo"`
 			DefaultBranch     string `json:"default_branch"`
+			Namespace         struct {
+				Name      string `json:"name"`
+				AvatarURL string `json:"avatar_url"`
+			} `json:"namespace"`
+			AvatarURL string `json:"avatar_url"`
 		}
 
 		if err := json.NewDecoder(resp.Body).Decode(&repos); err != nil {
@@ -165,6 +200,13 @@ func (s *GitProviderService) listGitLabRepositories(ctx context.Context, accessT
 		}
 
 		for _, r := range repos {
+			// GitLabではnamespaceからオーナー情報を取得
+			ownerName := r.Namespace.Name
+			avatarURL := r.Namespace.AvatarURL
+			if avatarURL == "" {
+				avatarURL = r.AvatarURL
+			}
+
 			allRepos = append(allRepos, GitRepository{
 				ID:            r.ID,
 				Name:          r.Name,
@@ -175,6 +217,10 @@ func (s *GitProviderService) listGitLabRepositories(ctx context.Context, accessT
 				CloneURL:      r.HTTPURLToRepo,
 				DefaultBranch: r.DefaultBranch,
 				Provider:      string(domain.ProviderGitLab),
+				Owner: GitRepositoryOwner{
+					Login:     ownerName,
+					AvatarURL: avatarURL,
+				},
 			})
 		}
 

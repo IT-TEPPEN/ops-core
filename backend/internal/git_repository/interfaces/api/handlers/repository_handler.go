@@ -133,9 +133,11 @@ func (h *RepositoryHandler) UpdateAccessToken(c *gin.Context) {
 // @Description Retrieves a list of files and directories within a specified repository.
 // @Tags repositories
 // @Produce  json
+// @Security BearerAuth
 // @Param   repoId path string true "Repository ID" example:"a1b2c3d4-e5f6-7890-1234-567890abcdef"
 // @Success 200 {object} schema.ListFilesResponse "Successfully retrieved file list"
 // @Failure 400 {object} schema.ErrorResponse "Invalid repository ID format or access token missing"
+// @Failure 401 {object} schema.ErrorResponse "Authentication required"
 // @Failure 404 {object} schema.ErrorResponse "Repository not found"
 // @Failure 500 {object} schema.ErrorResponse "Internal server error"
 // @Router /repositories/{repoId}/files [get]
@@ -149,9 +151,17 @@ func (h *RepositoryHandler) ListRepositoryFiles(c *gin.Context) {
 		return
 	}
 
-	h.logger.Info("Listing repository files", "request_id", requestID, "repo_id", repoId)
+	// Get user ID from context (requires authentication middleware)
+	userID, exists := c.Get("user_id")
+	if !exists {
+		h.logger.Error("User ID not found in context", "request_id", requestID)
+		c.JSON(http.StatusUnauthorized, schema.ErrorResponse{Code: "UNAUTHORIZED", Message: "Authentication required"})
+		return
+	}
+
+	h.logger.Info("Listing repository files", "request_id", requestID, "repo_id", repoId, "user_id", userID)
 	// Call the use case which now returns []entity.FileNode
-	domainFiles, err := h.repoUseCase.ListFiles(c.Request.Context(), repoId)
+	domainFiles, err := h.repoUseCase.ListFiles(c.Request.Context(), repoId, userID.(string))
 
 	if err != nil {
 		// Use error mapper to convert application errors to HTTP errors
@@ -174,10 +184,12 @@ func (h *RepositoryHandler) ListRepositoryFiles(c *gin.Context) {
 // @Description Retrieves the content of a specific file from a repository by its file path provided as a query parameter.
 // @Tags repositories
 // @Produce  json
+// @Security BearerAuth
 // @Param   repoId path string true "Repository ID" example:"a1b2c3d4-e5f6-7890-1234-567890abcdef"
 // @Param   path query string true "File path in the repository" example:"README.md" example:"docs/adr/0001.md"
 // @Success 200 {object} schema.GetFileContentsResponse "Successfully retrieved file contents"
 // @Failure 400 {object} schema.ErrorResponse "Invalid repository ID or file path"
+// @Failure 401 {object} schema.ErrorResponse "Authentication required"
 // @Failure 404 {object} schema.ErrorResponse "Repository or file not found"
 // @Failure 500 {object} schema.ErrorResponse "Internal server error"
 // @Router /repositories/{repoId}/files/content [get]
@@ -198,8 +210,16 @@ func (h *RepositoryHandler) GetFileContents(c *gin.Context) {
 		return
 	}
 
-	h.logger.Info("Getting file contents", "request_id", requestID, "repo_id", repoId, "file_path", filePath)
-	content, err := h.repoUseCase.GetFileContents(c.Request.Context(), repoId, filePath)
+	// Get user ID from context (requires authentication middleware)
+	userID, exists := c.Get("user_id")
+	if !exists {
+		h.logger.Error("User ID not found in context", "request_id", requestID)
+		c.JSON(http.StatusUnauthorized, schema.ErrorResponse{Code: "UNAUTHORIZED", Message: "Authentication required"})
+		return
+	}
+
+	h.logger.Info("Getting file contents", "request_id", requestID, "repo_id", repoId, "file_path", filePath, "user_id", userID)
+	content, err := h.repoUseCase.GetFileContents(c.Request.Context(), repoId, filePath, userID.(string))
 
 	if err != nil {
 		// Use error mapper to convert application errors to HTTP errors

@@ -33,6 +33,11 @@ var (
 	validGitURLPattern = regexp.MustCompile(`^https://(?:github\.com|gitlab\.com|bitbucket\.org)/[a-zA-Z0-9_.-]+/[a-zA-Z0-9_.-]+(?:\.git)?$`)
 )
 
+// OAuthTokenProvider provides OAuth access tokens for Git providers
+type OAuthTokenProvider interface {
+	GetAccessTokenForProvider(ctx context.Context, userID string, providerName string) (string, error)
+}
+
 // RepositoryUseCase defines the interface for repository related use cases.
 type RepositoryUseCase interface {
 	Register(ctx context.Context, repoURL string, accessToken string) (entity.Repository, error) // Return created repository
@@ -41,25 +46,37 @@ type RepositoryUseCase interface {
 	// ListRepositories retrieves all registered repositories
 	ListRepositories(ctx context.Context) ([]entity.Repository, error)
 	// ListFiles retrieves the file structure for a given repository ID.
-	ListFiles(ctx context.Context, repoID string) ([]entity.FileNode, error) // Use entity.FileNode
+	ListFiles(ctx context.Context, repoID string, userID string) ([]entity.FileNode, error) // Use entity.FileNode
 	// GetFileContents retrieves the content of a specific file from a repository.
-	GetFileContents(ctx context.Context, repoID string, filePath string) (string, error)
+	GetFileContents(ctx context.Context, repoID string, filePath string, userID string) (string, error)
 	// UpdateAccessToken updates the access token for a repository.
 	UpdateAccessToken(ctx context.Context, repoID string, accessToken string) error
 }
 
 // repositoryUseCase implements the RepositoryUseCase interface.
 type repositoryUseCase struct {
-	repo       repository.Repository // Persistence for repository metadata
-	gitManager git.GitManager        // For interacting with Git repositories
+	repo          repository.Repository // Persistence for repository metadata
+	gitManager    git.GitManager        // For interacting with Git repositories
+	oauthProvider OAuthTokenProvider    // For getting OAuth access tokens
 }
 
 // NewRepositoryUseCase creates a new instance of repositoryUseCase.
-func NewRepositoryUseCase(repo repository.Repository, gitManager git.GitManager) RepositoryUseCase {
+func NewRepositoryUseCase(repo repository.Repository, gitManager git.GitManager, oauthProvider OAuthTokenProvider) RepositoryUseCase {
 	return &repositoryUseCase{
-		repo:       repo,
-		gitManager: gitManager, // Initialize GitManager
+		repo:          repo,
+		gitManager:    gitManager,
+		oauthProvider: oauthProvider,
 	}
+}
+
+// getProviderFromURL extracts the Git provider name from a repository URL
+func getProviderFromURL(repoURL string) string {
+	if strings.Contains(repoURL, "github.com") {
+		return "github"
+	} else if strings.Contains(repoURL, "gitlab.com") {
+		return "gitlab"
+	}
+	return ""
 }
 
 // validateRepositoryURL validates that the URL is properly formatted and uses supported schemes
@@ -163,7 +180,7 @@ func (uc *repositoryUseCase) ListRepositories(ctx context.Context) ([]entity.Rep
 }
 
 // ListFiles implements the logic for listing files in a repository.
-func (uc *repositoryUseCase) ListFiles(ctx context.Context, repoID string) ([]entity.FileNode, error) {
+func (uc *repositoryUseCase) ListFiles(ctx context.Context, repoID string, userID string) ([]entity.FileNode, error) {
 	// 1. Find the repository by ID
 	repo, err := uc.repo.FindByID(ctx, repoID)
 	if err != nil {
@@ -173,20 +190,31 @@ func (uc *repositoryUseCase) ListFiles(ctx context.Context, repoID string) ([]en
 		return nil, apperror.NewNotFoundError("Repository", repoID, nil)
 	}
 
-	// Check if access token is set
-	if repo.AccessToken() == "" {
+	// 2. Get OAuth access token for the provider
+	provider := getProviderFromURL(repo.URL())
+	if provider == "" {
 		return nil, apperror.NewValidationFailedError([]apperror.FieldError{
-			{Field: "access_token", Message: "access token is required for this operation"},
+			{Field: "url", Message: "unsupported Git provider"},
 		})
 	}
 
-	// 2. List files directly from GitHub API (not from local cache)
+	accessToken, err := uc.oauthProvider.GetAccessTokenForProvider(ctx, userID, provider)
+	if err != nil {
+		return nil, apperror.NewValidationFailedError([]apperror.FieldError{
+			{Field: "oauth", Message: fmt.Sprintf("OAuth connection required for %s. Please connect your account.", provider)},
+		})
+	}
+
+	// Set the OAuth token on the repository for GitManager to use
+	repo.SetAccessToken(accessToken)
+
+	// 3. List files directly from GitHub API (not from local cache)
 	files, err := uc.gitManager.ListRepositoryFiles(ctx, "", repo)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list repository files: %w", err)
 	}
 
-	// 3. Map the output to []entity.FileNode (Basic mapping)
+	// 4. Map the output to []entity.FileNode (Basic mapping)
 	fileNodes := make([]entity.FileNode, 0, len(files))
 	for _, f := range files {
 		fileType := "file"
@@ -197,7 +225,7 @@ func (uc *repositoryUseCase) ListFiles(ctx context.Context, repoID string) ([]en
 }
 
 // GetFileContents implements the logic for retrieving a specific file's content.
-func (uc *repositoryUseCase) GetFileContents(ctx context.Context, repoID string, filePath string) (string, error) {
+func (uc *repositoryUseCase) GetFileContents(ctx context.Context, repoID string, filePath string, userID string) (string, error) {
 	// 1. Find the repository by ID to ensure it exists
 	repo, err := uc.repo.FindByID(ctx, repoID)
 	if err != nil {
@@ -207,14 +235,25 @@ func (uc *repositoryUseCase) GetFileContents(ctx context.Context, repoID string,
 		return "", apperror.NewNotFoundError("Repository", repoID, nil)
 	}
 
-	// Check if access token is set
-	if repo.AccessToken() == "" {
+	// 2. Get OAuth access token for the provider
+	provider := getProviderFromURL(repo.URL())
+	if provider == "" {
 		return "", apperror.NewValidationFailedError([]apperror.FieldError{
-			{Field: "access_token", Message: "access token is required for this operation"},
+			{Field: "url", Message: "unsupported Git provider"},
 		})
 	}
 
-	// 2. Read the file content (on-demand fetching with caching)
+	accessToken, err := uc.oauthProvider.GetAccessTokenForProvider(ctx, userID, provider)
+	if err != nil {
+		return "", apperror.NewValidationFailedError([]apperror.FieldError{
+			{Field: "oauth", Message: fmt.Sprintf("OAuth connection required for %s. Please connect your account.", provider)},
+		})
+	}
+
+	// Set the OAuth token on the repository for GitManager to use
+	repo.SetAccessToken(accessToken)
+
+	// 3. Read the file content (on-demand fetching with caching)
 	contentBytes, err := uc.gitManager.ReadManagedFileContent(ctx, "", filePath, repo)
 	if err != nil {
 		return "", fmt.Errorf("failed to read content of file '%s': %w", filePath, err)

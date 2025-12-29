@@ -15,9 +15,10 @@ func TestRepositoryUseCaseIntegration(t *testing.T) {
 	// インメモリリポジトリとモックGitマネージャを使用して統合テスト環境を設定
 	repo := NewInMemoryRepository()
 	gitManager := git.NewMockGitManager()
+	oauthProvider := new(MockOAuthTokenProvider)
 
 	// 実際のユースケース実装を使用（モックではなく）
-	useCase := NewRepositoryUseCase(repo, gitManager)
+	useCase := NewRepositoryUseCase(repo, gitManager, oauthProvider)
 	ctx := context.Background()
 
 	// テスト: Register と GetRepository メソッド

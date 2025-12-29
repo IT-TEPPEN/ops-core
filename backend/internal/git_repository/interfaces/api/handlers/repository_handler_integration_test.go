@@ -7,7 +7,7 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptest"
-	"opscore/backend/internal/git_repository/application/usecase"
+	repository "opscore/backend/internal/git_repository/application/usecase"
 	"opscore/backend/internal/git_repository/domain/entity"
 	"opscore/backend/internal/git_repository/infrastructure/git"
 	"opscore/backend/internal/git_repository/interfaces/api/schema"
@@ -15,6 +15,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -37,6 +38,17 @@ func (l *IntegrationTestLogger) Warn(msg string, args ...any) {
 	log.Printf("[WARN] %s %v", msg, args)
 }
 
+// MockOAuthTokenProvider is a mock implementation of the OAuthTokenProvider interface for testing
+type MockOAuthTokenProvider struct {
+	mock.Mock
+}
+
+// GetAccessTokenForProvider is a mock implementation
+func (m *MockOAuthTokenProvider) GetAccessTokenForProvider(ctx context.Context, userID string, providerName string) (string, error) {
+	args := m.Called(ctx, userID, providerName)
+	return args.String(0), args.Error(1)
+}
+
 // setupIntegrationTest creates a test environment with actual implementations
 // rather than mocks for integration testing
 func setupIntegrationTest() (*RepositoryHandler, *gin.Engine, *httptest.ResponseRecorder) {
@@ -56,8 +68,11 @@ func setupIntegrationTest() (*RepositoryHandler, *gin.Engine, *httptest.Response
 	// CLIの実装を避けてモックや簡易的な実装を使うことでテスト環境の依存を減らす
 	gitManager := git.NewMockGitManager() // 本来はCLIではなくAPIを使うとよい
 
+	// MockOAuthTokenProviderを作成
+	oauthProvider := new(MockOAuthTokenProvider)
+
 	// 実際のUseCaseを作成
-	useCase := repository.NewRepositoryUseCase(repo, gitManager)
+	useCase := repository.NewRepositoryUseCase(repo, gitManager, oauthProvider)
 
 	// テスト対象ハンドラーを作成（実際の実装を使用）
 	handler := NewRepositoryHandler(useCase, logger)
@@ -228,7 +243,7 @@ func TestRepositoryEndToEndFlow(t *testing.T) {
 // inMemoryRepository provides an in-memory implementation of the repository.Repository interface for testing
 type inMemoryRepository struct {
 	repositories map[string]entity.Repository // Map of repository ID to Repository
-	managedFiles map[string][]string         // Map of repository ID to managed file paths
+	managedFiles map[string][]string          // Map of repository ID to managed file paths
 }
 
 func NewInMemoryRepository() *inMemoryRepository {

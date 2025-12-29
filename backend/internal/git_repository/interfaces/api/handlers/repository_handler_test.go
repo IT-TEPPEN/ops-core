@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	apperror "opscore/backend/internal/git_repository/application/error"
-	"opscore/backend/internal/git_repository/application/usecase"
+	repository "opscore/backend/internal/git_repository/application/usecase"
 	"opscore/backend/internal/git_repository/domain/entity"
 	"opscore/backend/internal/git_repository/interfaces/api/schema"
 	"testing"
@@ -42,6 +42,8 @@ func setupTest() (*repository.MockRepositoryUseCase, *MockLogger, *RepositoryHan
 	router.Use(func(c *gin.Context) {
 		// リクエストIDをコンテキストに設定するミドルウェアをモック
 		c.Set("request_id", "test-request-id")
+		// ユーザーIDをコンテキストに設定（認証ミドルウェアをモック）
+		c.Set("user_id", "test-user-id")
 		c.Next()
 	})
 
@@ -505,7 +507,7 @@ func TestListRepositoryFiles(t *testing.T) {
 		}
 
 		// モックの振る舞いを定義
-		mockUseCase.On("ListFiles", mock.Anything, repoID).Return(fileNodes, nil)
+		mockUseCase.On("ListFiles", mock.Anything, repoID, "test-user-id").Return(fileNodes, nil)
 
 		// ルーターの設定
 		router.GET("/repositories/:repoId/files", handler.ListRepositoryFiles)
@@ -556,7 +558,7 @@ func TestListRepositoryFiles(t *testing.T) {
 		repoID := uuid.NewString()
 
 		// モックの振る舞いを定義
-		mockUseCase.On("ListFiles", mock.Anything, repoID).Return(nil, &apperror.NotFoundError{
+		mockUseCase.On("ListFiles", mock.Anything, repoID, "test-user-id").Return(nil, &apperror.NotFoundError{
 			Code:         apperror.CodeResourceNotFound,
 			ResourceType: "Repository",
 			ResourceID:   repoID,
@@ -589,7 +591,7 @@ func TestListRepositoryFiles(t *testing.T) {
 		repoID := uuid.NewString()
 
 		// モックの振る舞いを定義
-		mockUseCase.On("ListFiles", mock.Anything, repoID).Return(nil, &apperror.ValidationFailedError{
+		mockUseCase.On("ListFiles", mock.Anything, repoID, "test-user-id").Return(nil, &apperror.ValidationFailedError{
 			Code: apperror.CodeValidationFailed,
 			Errors: []apperror.FieldError{
 				{Field: "access_token", Message: "access token is required for this operation"},
@@ -623,7 +625,7 @@ func TestListRepositoryFiles(t *testing.T) {
 		repoID := uuid.NewString()
 
 		// モックの振る舞いを定義
-		mockUseCase.On("ListFiles", mock.Anything, repoID).Return(nil, errors.New("internal error"))
+		mockUseCase.On("ListFiles", mock.Anything, repoID, "test-user-id").Return(nil, errors.New("internal error"))
 
 		// ルーターの設定
 		router.GET("/repositories/:repoId/files", handler.ListRepositoryFiles)

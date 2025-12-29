@@ -1,20 +1,10 @@
-import { useReducer, useEffect } from "react";
-
-interface Repository {
-  id: string;
-  name: string;
-  url: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface FileNode {
-  path: string;
-  type: "file" | "dir";
-}
+import { useReducer, useEffect, useCallback } from "react";
+import { useRepositoryManagementAdapter } from "./useRepositoryManagementAdapter";
+import { FileNode, RepositoryDetail } from "../api";
+import { AxiosError } from "axios";
 
 type RepositoryDetailState = {
-  repository: Repository | null;
+  repository: RepositoryDetail | null;
   files: FileNode[];
   isLoading: boolean;
   error: string | null;
@@ -27,7 +17,7 @@ type RepositoryDetailState = {
 
 type RepositoryDetailAction =
   | { type: "FETCH_START" }
-  | { type: "FETCH_REPOSITORY_SUCCESS"; repository: Repository }
+  | { type: "FETCH_REPOSITORY_SUCCESS"; repository: RepositoryDetail }
   | { type: "FETCH_FILES_SUCCESS"; files: FileNode[] }
   | { type: "FETCH_ERROR"; error: string }
   | { type: "FETCH_FILE_ERROR"; error: string; needsToken?: boolean }
@@ -102,22 +92,16 @@ function repositoryDetailReducer(
 
 export function useRepositoryDetail(repoId: string | undefined) {
   const [state, dispatch] = useReducer(repositoryDetailReducer, initialState);
+  const repositoryApi = useRepositoryManagementAdapter();
 
-  const apiHost = import.meta.env.VITE_API_HOST;
-  const apiUrl = apiHost ? `http://${apiHost}/api/v1` : "/api";
-
-  const fetchRepository = async () => {
+  const fetchRepository = useCallback(async () => {
     if (!repoId) return;
 
     dispatch({ type: "FETCH_START" });
 
     try {
-      const response = await fetch(`${apiUrl}/repositories/${repoId}`);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
-      dispatch({ type: "FETCH_REPOSITORY_SUCCESS", repository: data });
+      const repository = await repositoryApi.getRepository(repoId);
+      dispatch({ type: "FETCH_REPOSITORY_SUCCESS", repository });
     } catch (err) {
       dispatch({
         type: "FETCH_ERROR",
@@ -125,48 +109,54 @@ export function useRepositoryDetail(repoId: string | undefined) {
       });
       console.error("Error fetching repository:", err);
     }
-  };
+  }, [repoId, repositoryApi]);
 
-  const fetchFiles = async () => {
+  const fetchFiles = useCallback(async () => {
     if (!repoId) return;
 
     dispatch({ type: "FETCH_START" });
 
     try {
-      const response = await fetch(`${apiUrl}/repositories/${repoId}/files`);
-
-      if (response.status === 400) {
-        const errorData = await response.json();
-        if (errorData.code === "ACCESS_TOKEN_REQUIRED") {
+      const files = await repositoryApi.listFiles(repoId);
+      dispatch({ type: "FETCH_FILES_SUCCESS", files });
+    } catch (err) {
+      // Handle Axios errors
+      if (err instanceof AxiosError) {
+        if (err.response?.status === 401) {
           dispatch({
             type: "FETCH_FILE_ERROR",
-            error: "Access token is required to list repository files",
-            needsToken: true,
+            error: "Authentication required. Please log in.",
+            needsToken: false,
           });
           return;
         }
+
+        if (err.response?.status === 400) {
+          const errorData = err.response?.data;
+          if (errorData?.code === "ACCESS_TOKEN_REQUIRED") {
+            dispatch({
+              type: "FETCH_FILE_ERROR",
+              error: "Access token is required to list repository files",
+              needsToken: true,
+            });
+            return;
+          }
+        }
       }
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      dispatch({ type: "FETCH_FILES_SUCCESS", files: data.files });
-    } catch (err) {
       dispatch({
         type: "FETCH_FILE_ERROR",
         error: "Failed to load repository files. Please try again later.",
       });
       console.error("Error fetching files:", err);
     }
-  };
+  }, [repoId, repositoryApi]);
 
   useEffect(() => {
     if (repoId) {
       Promise.all([fetchRepository(), fetchFiles()]);
     }
-  }, [repoId]);
+  }, [repoId, fetchRepository, fetchFiles]);
 
   const handleTokenSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -179,22 +169,12 @@ export function useRepositoryDetail(repoId: string | undefined) {
       return;
     }
 
+    if (!repoId) return;
+
     dispatch({ type: "UPDATE_TOKEN_START" });
 
     try {
-      const response = await fetch(`${apiUrl}/repositories/${repoId}/token`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ accessToken: state.accessToken }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Failed to update access token");
-      }
+      await repositoryApi.updateAccessToken(repoId, state.accessToken);
 
       dispatch({
         type: "UPDATE_TOKEN_SUCCESS",

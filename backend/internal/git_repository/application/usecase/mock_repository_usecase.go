@@ -40,8 +40,8 @@ func (m *MockRepositoryUseCase) ListRepositories(ctx context.Context) ([]entity.
 }
 
 // ListFiles is a mock implementation of the RepositoryUseCase.ListFiles method
-func (m *MockRepositoryUseCase) ListFiles(ctx context.Context, repoID string) ([]entity.FileNode, error) {
-	args := m.Called(ctx, repoID)
+func (m *MockRepositoryUseCase) ListFiles(ctx context.Context, repoID string, userID string) ([]entity.FileNode, error) {
+	args := m.Called(ctx, repoID, userID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
@@ -49,8 +49,8 @@ func (m *MockRepositoryUseCase) ListFiles(ctx context.Context, repoID string) ([
 }
 
 // GetFileContents is a mock implementation of the RepositoryUseCase.GetFileContents method
-func (m *MockRepositoryUseCase) GetFileContents(ctx context.Context, repoID string, filePath string) (string, error) {
-	args := m.Called(ctx, repoID, filePath)
+func (m *MockRepositoryUseCase) GetFileContents(ctx context.Context, repoID string, filePath string, userID string) (string, error) {
+	args := m.Called(ctx, repoID, filePath, userID)
 	return args.String(0), args.Error(1)
 }
 

@@ -183,10 +183,26 @@ func (s *OAuthService) ExchangeAndSaveToken(ctx context.Context, userID string, 
 		expiresAt = &t
 	}
 
-	// Parse scopes
+	// Parse scopes - GitHub returns space-separated scopes, GitLab uses comma-separated
 	var scopes []string
 	if tokenResp.Scope != "" {
-		scopes = strings.Split(tokenResp.Scope, ",")
+		// Handle both space and comma separators
+		scopeStr := strings.ReplaceAll(tokenResp.Scope, " ", ",")
+		for _, s := range strings.Split(scopeStr, ",") {
+			s = strings.TrimSpace(s)
+			if s != "" {
+				scopes = append(scopes, s)
+			}
+		}
+	}
+	// If no scopes returned, use default scopes based on provider
+	if len(scopes) == 0 {
+		switch req.Provider {
+		case domain.ProviderGitHub:
+			scopes = []string{"repo", "read:user", "user:email"}
+		case domain.ProviderGitLab, domain.ProviderGitLabSelfHosted:
+			scopes = []string{"api", "read_user", "read_repository"}
+		}
 	}
 
 	// Create OAuth connection

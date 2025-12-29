@@ -34,7 +34,7 @@ func TestRegister(t *testing.T) {
 		mockRepo.On("Save", contextMatcher, repoMatcher).Return(nil)
 
 		// テスト対象の UseCase を作成
-		uc := NewRepositoryUseCase(mockRepo, mockGitManager)
+		uc := NewRepositoryUseCase(mockRepo, mockGitManager, new(MockOAuthTokenProvider))
 
 		// テスト実行
 		repo, err := uc.Register(context.Background(), url, accessToken)
@@ -64,7 +64,7 @@ func TestRegister(t *testing.T) {
 		mockRepo.On("FindByURL", mock.Anything, url).Return(existingRepo, nil)
 
 		// テスト対象の UseCase を作成
-		uc := NewRepositoryUseCase(mockRepo, mockGitManager)
+		uc := NewRepositoryUseCase(mockRepo, mockGitManager, new(MockOAuthTokenProvider))
 
 		// テスト実行
 		repo, err := uc.Register(context.Background(), url, accessToken)
@@ -94,7 +94,7 @@ func TestRegister(t *testing.T) {
 		}
 
 		// テスト対象の UseCase を作成
-		uc := NewRepositoryUseCase(mockRepo, mockGitManager)
+		uc := NewRepositoryUseCase(mockRepo, mockGitManager, new(MockOAuthTokenProvider))
 
 		// 各無効URLでテスト
 		for _, url := range invalidURLs {
@@ -124,7 +124,7 @@ func TestRegister(t *testing.T) {
 		mockRepo.On("Save", mock.Anything, mock.Anything).Return(saveError)
 
 		// テスト対象の UseCase を作成
-		uc := NewRepositoryUseCase(mockRepo, mockGitManager)
+		uc := NewRepositoryUseCase(mockRepo, mockGitManager, new(MockOAuthTokenProvider))
 
 		// テスト実行
 		repo, err := uc.Register(context.Background(), url, accessToken)
@@ -155,7 +155,7 @@ func TestGetRepository(t *testing.T) {
 		mockRepo.On("FindByID", mock.Anything, repoID).Return(expectedRepo, nil)
 
 		// テスト対象の UseCase を作成
-		uc := NewRepositoryUseCase(mockRepo, mockGitManager)
+		uc := NewRepositoryUseCase(mockRepo, mockGitManager, new(MockOAuthTokenProvider))
 
 		// テスト実行
 		repo, err := uc.GetRepository(context.Background(), repoID)
@@ -181,7 +181,7 @@ func TestGetRepository(t *testing.T) {
 		mockRepo.On("FindByID", mock.Anything, repoID).Return(nil, nil)
 
 		// テスト対象の UseCase を作成
-		uc := NewRepositoryUseCase(mockRepo, mockGitManager)
+		uc := NewRepositoryUseCase(mockRepo, mockGitManager, new(MockOAuthTokenProvider))
 
 		// テスト実行
 		repo, err := uc.GetRepository(context.Background(), repoID)
@@ -209,7 +209,7 @@ func TestGetRepository(t *testing.T) {
 		mockRepo.On("FindByID", mock.Anything, repoID).Return(nil, findError)
 
 		// テスト対象の UseCase を作成
-		uc := NewRepositoryUseCase(mockRepo, mockGitManager)
+		uc := NewRepositoryUseCase(mockRepo, mockGitManager, new(MockOAuthTokenProvider))
 
 		// テスト実行
 		repo, err := uc.GetRepository(context.Background(), repoID)
@@ -242,7 +242,7 @@ func TestListRepositories(t *testing.T) {
 		mockRepo.On("FindAll", mock.Anything).Return(expectedRepos, nil)
 
 		// テスト対象の UseCase を作成
-		uc := NewRepositoryUseCase(mockRepo, mockGitManager)
+		uc := NewRepositoryUseCase(mockRepo, mockGitManager, new(MockOAuthTokenProvider))
 
 		// テスト実行
 		repos, err := uc.ListRepositories(context.Background())
@@ -269,7 +269,7 @@ func TestListRepositories(t *testing.T) {
 		mockRepo.On("FindAll", mock.Anything).Return(emptyRepos, nil)
 
 		// テスト対象の UseCase を作成
-		uc := NewRepositoryUseCase(mockRepo, mockGitManager)
+		uc := NewRepositoryUseCase(mockRepo, mockGitManager, new(MockOAuthTokenProvider))
 
 		// テスト実行
 		repos, err := uc.ListRepositories(context.Background())
@@ -295,7 +295,7 @@ func TestListRepositories(t *testing.T) {
 		mockRepo.On("FindAll", mock.Anything).Return(nil, findAllError)
 
 		// テスト対象の UseCase を作成
-		uc := NewRepositoryUseCase(mockRepo, mockGitManager)
+		uc := NewRepositoryUseCase(mockRepo, mockGitManager, new(MockOAuthTokenProvider))
 
 		// テスト実行
 		repos, err := uc.ListRepositories(context.Background())
@@ -335,10 +335,10 @@ func TestListFiles(t *testing.T) {
 		mockGitManager.On("ListRepositoryFiles", mock.Anything, localPath, testRepo).Return(fileList, nil)
 
 		// テスト対象の UseCase を作成
-		uc := NewRepositoryUseCase(mockRepo, mockGitManager)
+		uc := NewRepositoryUseCase(mockRepo, mockGitManager, new(MockOAuthTokenProvider))
 
 		// テスト実行
-		fileNodes, err := uc.ListFiles(context.Background(), repoID)
+		fileNodes, err := uc.ListFiles(context.Background(), repoID, "test-user-id")
 
 		// 検証
 		assert.NoError(t, err)
@@ -367,10 +367,10 @@ func TestListFiles(t *testing.T) {
 		mockRepo.On("FindByID", mock.Anything, repoID).Return(nil, nil)
 
 		// テスト対象の UseCase を作成
-		uc := NewRepositoryUseCase(mockRepo, mockGitManager)
+		uc := NewRepositoryUseCase(mockRepo, mockGitManager, new(MockOAuthTokenProvider))
 
 		// テスト実行
-		fileNodes, err := uc.ListFiles(context.Background(), repoID)
+		fileNodes, err := uc.ListFiles(context.Background(), repoID, "test-user-id")
 
 		// 検証
 		assert.Error(t, err)
@@ -395,10 +395,10 @@ func TestListFiles(t *testing.T) {
 		mockRepo.On("FindByID", mock.Anything, repoID).Return(testRepo, nil)
 
 		// テスト対象の UseCase を作成
-		uc := NewRepositoryUseCase(mockRepo, mockGitManager)
+		uc := NewRepositoryUseCase(mockRepo, mockGitManager, new(MockOAuthTokenProvider))
 
 		// テスト実行
-		fileNodes, err := uc.ListFiles(context.Background(), repoID)
+		fileNodes, err := uc.ListFiles(context.Background(), repoID, "test-user-id")
 
 		// 検証
 		assert.Error(t, err)
@@ -425,10 +425,10 @@ func TestListFiles(t *testing.T) {
 		mockGitManager.On("EnsureCloned", mock.Anything, testRepo).Return("", cloneError)
 
 		// テスト対象の UseCase を作成
-		uc := NewRepositoryUseCase(mockRepo, mockGitManager)
+		uc := NewRepositoryUseCase(mockRepo, mockGitManager, new(MockOAuthTokenProvider))
 
 		// テスト実行
-		fileNodes, err := uc.ListFiles(context.Background(), repoID)
+		fileNodes, err := uc.ListFiles(context.Background(), repoID, "test-user-id")
 
 		// 検証
 		assert.Error(t, err)
@@ -457,10 +457,10 @@ func TestListFiles(t *testing.T) {
 		mockGitManager.On("ListRepositoryFiles", mock.Anything, localPath, testRepo).Return(nil, listError)
 
 		// テスト対象の UseCase を作成
-		uc := NewRepositoryUseCase(mockRepo, mockGitManager)
+		uc := NewRepositoryUseCase(mockRepo, mockGitManager, new(MockOAuthTokenProvider))
 
 		// テスト実行
-		fileNodes, err := uc.ListFiles(context.Background(), repoID)
+		fileNodes, err := uc.ListFiles(context.Background(), repoID, "test-user-id")
 
 		// 検証
 		assert.Error(t, err)
@@ -490,7 +490,7 @@ func TestUpdateAccessToken(t *testing.T) {
 		mockRepo.On("UpdateAccessToken", mock.Anything, repoID, newToken).Return(nil)
 
 		// テスト対象の UseCase を作成
-		uc := NewRepositoryUseCase(mockRepo, mockGitManager)
+		uc := NewRepositoryUseCase(mockRepo, mockGitManager, new(MockOAuthTokenProvider))
 
 		// テスト実行
 		err := uc.UpdateAccessToken(context.Background(), repoID, newToken)
@@ -518,7 +518,7 @@ func TestUpdateAccessToken(t *testing.T) {
 		mockRepo.On("UpdateAccessToken", mock.Anything, repoID, emptyToken).Return(nil)
 
 		// テスト対象の UseCase を作成
-		uc := NewRepositoryUseCase(mockRepo, mockGitManager)
+		uc := NewRepositoryUseCase(mockRepo, mockGitManager, new(MockOAuthTokenProvider))
 
 		// テスト実行
 		err := uc.UpdateAccessToken(context.Background(), repoID, emptyToken)
@@ -543,7 +543,7 @@ func TestUpdateAccessToken(t *testing.T) {
 		mockRepo.On("FindByID", mock.Anything, repoID).Return(nil, nil)
 
 		// テスト対象の UseCase を作成
-		uc := NewRepositoryUseCase(mockRepo, mockGitManager)
+		uc := NewRepositoryUseCase(mockRepo, mockGitManager, new(MockOAuthTokenProvider))
 
 		// テスト実行
 		err := uc.UpdateAccessToken(context.Background(), repoID, "new-token")
@@ -573,7 +573,7 @@ func TestUpdateAccessToken(t *testing.T) {
 		mockRepo.On("UpdateAccessToken", mock.Anything, repoID, newToken).Return(updateError)
 
 		// テスト対象の UseCase を作成
-		uc := NewRepositoryUseCase(mockRepo, mockGitManager)
+		uc := NewRepositoryUseCase(mockRepo, mockGitManager, new(MockOAuthTokenProvider))
 
 		// テスト実行
 		err := uc.UpdateAccessToken(context.Background(), repoID, newToken)

@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { AuthApi, OAuthConnectRequest } from "@/shared/api/authApi";
 
 /**
  * OAuth2.0コールバックページ
@@ -12,6 +13,7 @@ function OAuthCallbackPage() {
     "loading"
   );
   const [message, setMessage] = useState<string>("");
+  const authApi = useMemo(() => new AuthApi(), []);
 
   useEffect(() => {
     const handleCallback = async () => {
@@ -57,18 +59,8 @@ function OAuthCallbackPage() {
           throw new Error("OAuth provider not found in session");
         }
 
-        // バックエンドにcodeを送信してトークンを取得
-        const apiHost = import.meta.env.VITE_API_HOST || window.location.host;
-        const apiUrl = `${window.location.protocol}//${apiHost}/api/v1`;
-
-        const requestBody: {
-          provider: string;
-          code: string;
-          state: string;
-          gitlabUrl?: string;
-          clientId?: string;
-          clientSecret?: string;
-        } = {
+        // リクエストボディを作成
+        const requestBody: OAuthConnectRequest = {
           provider: savedProvider,
           code,
           state,
@@ -91,23 +83,12 @@ function OAuthCallbackPage() {
           }
         }
 
-        const response = await fetch(`${apiUrl}/auth/oauth/callback`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(requestBody),
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.message || "Failed to exchange OAuth code");
-        }
+        // AuthApiを使用してOAuth接続を保存
+        await authApi.connectOAuth(requestBody);
 
         // 認証成功
         setStatus("success");
-        setMessage("Authentication successful! Redirecting...");
+        setMessage("Connected successfully! Redirecting...");
 
         // セッションストレージをクリーンアップ
         sessionStorage.removeItem("oauth_state");
@@ -116,13 +97,7 @@ function OAuthCallbackPage() {
         sessionStorage.removeItem("oauth_gitlab_client_id");
         sessionStorage.removeItem("oauth_gitlab_client_secret");
 
-        // トークンをlocalStorageに保存（必要に応じて）
-        if (data.access_token) {
-          localStorage.setItem(
-            `${savedProvider}_access_token`,
-            data.access_token
-          );
-        }
+        // トークンはバックエンドで管理されるため、localStorageへの保存は不要
 
         // リポジトリ登録ページにリダイレクト
         setTimeout(() => {
@@ -142,7 +117,7 @@ function OAuthCallbackPage() {
     };
 
     handleCallback();
-  }, [searchParams, navigate]);
+  }, [searchParams, navigate, authApi]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900">

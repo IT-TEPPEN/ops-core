@@ -3,7 +3,9 @@
  */
 
 import axios, { AxiosInstance, AxiosResponse } from "axios";
-import type { ApiResponse, ApiError, RequestConfig } from "../types/api";
+import type { ApiError } from "../types/api";
+
+const TOKEN_KEY = "auth_token";
 
 export class V1ApiClient {
   private client: AxiosInstance;
@@ -21,6 +23,15 @@ export class V1ApiClient {
       headers: {
         "Content-Type": "application/json",
       },
+    });
+
+    // Add request interceptor to include auth token
+    this.client.interceptors.request.use((config) => {
+      const token = localStorage.getItem(TOKEN_KEY);
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+      return config;
     });
   }
 
@@ -56,13 +67,17 @@ export class V1ApiClient {
     const response = await this.client.delete<ResponseData>(endpoint);
     return response.data;
   }
-}
 
-/** Base API URL */
-const getApiBaseUrl = (): string => {
-  const apiHost = import.meta.env.VITE_API_HOST;
-  return apiHost ? `http://${apiHost}/api/v1` : "/api";
-};
+  protected async deleteWithBody<ResponseData, RequestBody>(
+    endpoint: string,
+    body: RequestBody
+  ): Promise<ResponseData> {
+    const response = await this.client.delete<ResponseData>(endpoint, {
+      data: body,
+    });
+    return response.data;
+  }
+}
 
 /** Custom error class for API errors */
 export class ApiRequestError extends Error {
@@ -82,103 +97,4 @@ export class ApiRequestError extends Error {
       details: this.details,
     };
   }
-}
-
-/**
- * Makes an API request with the given configuration
- */
-export async function apiRequest<T>(
-  endpoint: string,
-  config: RequestConfig = {}
-): Promise<ApiResponse<T>> {
-  const { method = "GET", headers = {}, body, signal } = config;
-
-  const url = `${getApiBaseUrl()}${endpoint}`;
-
-  const requestHeaders: Record<string, string> = {
-    "Content-Type": "application/json",
-    ...headers,
-  };
-
-  const requestOptions: RequestInit = {
-    method,
-    headers: requestHeaders,
-    signal,
-  };
-
-  if (body !== undefined && method !== "GET") {
-    requestOptions.body = JSON.stringify(body);
-  }
-
-  const response = await fetch(url, requestOptions);
-
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new ApiRequestError(
-      data.code || "API_ERROR",
-      data.message || "An error occurred",
-      data.details
-    );
-  }
-
-  return {
-    data,
-    status: response.status,
-    message: data.message,
-  };
-}
-
-/**
- * GET request helper
- */
-export async function get<T>(
-  endpoint: string,
-  signal?: AbortSignal
-): Promise<T> {
-  const response = await apiRequest<T>(endpoint, { method: "GET", signal });
-  return response.data;
-}
-
-/**
- * POST request helper
- */
-export async function post<T>(
-  endpoint: string,
-  body: unknown,
-  signal?: AbortSignal
-): Promise<T> {
-  const response = await apiRequest<T>(endpoint, {
-    method: "POST",
-    body,
-    signal,
-  });
-  return response.data;
-}
-
-/**
- * PUT request helper
- */
-export async function put<T>(
-  endpoint: string,
-  body: unknown,
-  signal?: AbortSignal
-): Promise<T> {
-  const response = await apiRequest<T>(endpoint, {
-    method: "PUT",
-    body,
-    signal,
-  });
-  return response.data;
-}
-
-/**
- * DELETE request helper
- */
-export async function del<T>(
-  endpoint: string,
-  signal?: AbortSignal
-): Promise<T> {
-  const response = await apiRequest<T>(endpoint, { method: "DELETE", signal });
-  return response.data;
 }
