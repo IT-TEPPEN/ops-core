@@ -25,7 +25,7 @@ function App() {
           </div>
 
           {/* Page Content Area */}
-          <main className="h-[calc(100vh-4rem)] p-4">
+          <main className="max-h-[calc(100vh-4rem)] overflow-auto p-4">
             <Routes>
               <Route path="/markdown-test" element={<MarkdownTestEditor />} />
               <Route path="/login" element={<LoginPage />} />

@@ -14,7 +14,7 @@ export const MarkdownTestEditor = () => {
     <div className="grid grid-cols-2 gap-4 w-full h-full">
       <div>
         <textarea
-          className="bg-white rounded-2xl w-full h-full p-4 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-transparent"
+          className="bg-gray-100 dark:bg-gray-800 rounded-2xl w-full h-full p-4 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-transparent"
           onChange={(event) => setTestText(event.target.value)}
         />
       </div>
