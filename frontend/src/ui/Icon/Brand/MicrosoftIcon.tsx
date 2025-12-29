@@ -1,0 +1,13 @@
+/**
+ * Microsoft brand logo icon
+ */
+export function MicrosoftIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24">
+      <path fill="#f35325" d="M1 1h10v10H1z" />
+      <path fill="#81bc06" d="M13 1h10v10H13z" />
+      <path fill="#05a6f0" d="M1 13h10v10H1z" />
+      <path fill="#ffba08" d="M13 13h10v10H13z" />
+    </svg>
+  );
+}
