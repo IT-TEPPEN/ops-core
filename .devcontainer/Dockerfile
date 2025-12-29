@@ -9,10 +9,11 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
     && apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/*
 
 # Install global node packages
-RUN npm install -g npm@latest vite concurrently
+RUN npm install -g npm@latest vite concurrently @anthropic-ai/claude-code
 
 # Install Go tools
-RUN go install github.com/air-verse/air@v1.63.0 # For live reloading Go apps
+RUN go install github.com/air-verse/air@v1.63.0 \
+    && go install github.com/swaggo/swag/cmd/swag@latest # For live reloading Go apps
 RUN chown -R vscode /go
 RUN chmod -R u+w /go
 

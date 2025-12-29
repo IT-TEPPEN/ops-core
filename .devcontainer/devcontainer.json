@@ -27,7 +27,7 @@
         "bierner.github-markdown-preview",
         // GitHub Copilot
         "github.copilot",
-        "github.copilot-chat", // Add Copilot Chat
+        "github.copilot-chat",
         // Tailwind CSS
         "bradlc.vscode-tailwindcss", // Add Tailwind CSS IntelliSense
         // toml support
@@ -157,7 +157,8 @@
   },
   // Mount the host Docker socket into the container
   "mounts": [
-    "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"
+    "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind",
+    "source=~/.aws,target=/home/vscode/.aws,type=bind"
   ],
   // Optional: Ensure the user running in the container has permissions for the Docker socket
   // This might be needed depending on your setup

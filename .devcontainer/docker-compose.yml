@@ -14,6 +14,13 @@ services:
       - db
     environment: # Add environment variables for the app service
       - DATABASE_URL=postgres://opscore_user:opscore_password@db:5432/opscore_db?sslmode=disable
+      - CLAUDE_CODE_USE_BEDROCK=1 
+      - AWS_REGION=ap-northeast-1
+      - AWS_PROFILE=dev
+      - ANTHROPIC_MODEL=arn:aws:bedrock:ap-northeast-1:261270697005:inference-profile/jp.anthropic.claude-sonnet-4-5-20250929-v1:0
+      - ANTHROPIC_SMALL_FAST_MODEL=arn:aws:bedrock:ap-northeast-1:261270697005:inference-profile/jp.anthropic.claude-haiku-4-5-20251001-v1:0
+      - CLAUDE_CODE_MAX_OUTPUT_TOKENS=4096 
+      - MAX_THINKING_TOKENS=1024
 
   db: # Add the database service
     image: postgres:16 # Use a specific version of postgres
