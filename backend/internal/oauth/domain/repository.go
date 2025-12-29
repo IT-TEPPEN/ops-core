@@ -15,6 +15,9 @@ type OAuthConnectionRepository interface {
 	// FindByUserAndProvider finds an OAuth connection by user ID and provider
 	FindByUserAndProvider(ctx context.Context, userID string, provider Provider) (*OAuthConnection, error)
 
+	// FindByUserProviderAndHost finds an OAuth connection by user ID, provider, and host
+	FindByUserProviderAndHost(ctx context.Context, userID string, provider Provider, providerHost string) (*OAuthConnection, error)
+
 	// FindByUser finds all OAuth connections for a user
 	FindByUser(ctx context.Context, userID string) ([]*OAuthConnection, error)
 

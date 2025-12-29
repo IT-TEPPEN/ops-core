@@ -5,19 +5,31 @@ import (
 	"time"
 )
 
+// ProviderMetadata represents provider-specific metadata stored in JSONB
+type ProviderMetadata struct {
+	ProviderUserID   string   `json:"provider_user_id"`
+	ProviderUsername string   `json:"provider_username"`
+	Scopes           []string `json:"scopes"`
+
+	// GitLab用（オプショナル）
+	RefreshTokenEncrypted *string    `json:"refresh_token_encrypted,omitempty"`
+	TokenExpiresAt        *time.Time `json:"token_expires_at,omitempty"`
+
+	// GitLab self-hosted用（オプショナル）
+	ClientIDEncrypted     *string `json:"client_id_encrypted,omitempty"`
+	ClientSecretEncrypted *string `json:"client_secret_encrypted,omitempty"`
+}
+
 // OAuthConnection represents a user's OAuth connection to a Git provider
 type OAuthConnection struct {
-	id               string
-	userID           string
-	provider         Provider
-	providerUserID   string
-	providerUsername string
-	accessToken      string
-	refreshToken     string
-	tokenExpiresAt   *time.Time
-	scopes           []string
-	createdAt        time.Time
-	updatedAt        time.Time
+	id           string
+	userID       string
+	provider     Provider
+	providerHost string
+	metadata     ProviderMetadata
+	accessToken  string
+	createdAt    time.Time
+	updatedAt    time.Time
 }
 
 // NewOAuthConnection creates a new OAuth connection
@@ -25,12 +37,9 @@ func NewOAuthConnection(
 	id string,
 	userID string,
 	provider Provider,
-	providerUserID string,
-	providerUsername string,
+	providerHost string,
+	metadata ProviderMetadata,
 	accessToken string,
-	refreshToken string,
-	tokenExpiresAt *time.Time,
-	scopes []string,
 ) (*OAuthConnection, error) {
 	if id == "" {
 		return nil, errors.New("id is required")
@@ -41,23 +50,23 @@ func NewOAuthConnection(
 	if !provider.IsValid() {
 		return nil, errors.New("invalid provider")
 	}
+	if providerHost == "" {
+		return nil, errors.New("provider_host is required")
+	}
 	if accessToken == "" {
 		return nil, errors.New("access_token is required")
 	}
 
 	now := time.Now()
 	return &OAuthConnection{
-		id:               id,
-		userID:           userID,
-		provider:         provider,
-		providerUserID:   providerUserID,
-		providerUsername: providerUsername,
-		accessToken:      accessToken,
-		refreshToken:     refreshToken,
-		tokenExpiresAt:   tokenExpiresAt,
-		scopes:           scopes,
-		createdAt:        now,
-		updatedAt:        now,
+		id:           id,
+		userID:       userID,
+		provider:     provider,
+		providerHost: providerHost,
+		metadata:     metadata,
+		accessToken:  accessToken,
+		createdAt:    now,
+		updatedAt:    now,
 	}, nil
 }
 
@@ -66,27 +75,21 @@ func ReconstructOAuthConnection(
 	id string,
 	userID string,
 	provider Provider,
-	providerUserID string,
-	providerUsername string,
+	providerHost string,
+	metadata ProviderMetadata,
 	accessToken string,
-	refreshToken string,
-	tokenExpiresAt *time.Time,
-	scopes []string,
 	createdAt time.Time,
 	updatedAt time.Time,
 ) *OAuthConnection {
 	return &OAuthConnection{
-		id:               id,
-		userID:           userID,
-		provider:         provider,
-		providerUserID:   providerUserID,
-		providerUsername: providerUsername,
-		accessToken:      accessToken,
-		refreshToken:     refreshToken,
-		tokenExpiresAt:   tokenExpiresAt,
-		scopes:           scopes,
-		createdAt:        createdAt,
-		updatedAt:        updatedAt,
+		id:           id,
+		userID:       userID,
+		provider:     provider,
+		providerHost: providerHost,
+		metadata:     metadata,
+		accessToken:  accessToken,
+		createdAt:    createdAt,
+		updatedAt:    updatedAt,
 	}
 }
 
@@ -94,22 +97,49 @@ func ReconstructOAuthConnection(
 func (c *OAuthConnection) ID() string                 { return c.id }
 func (c *OAuthConnection) UserID() string             { return c.userID }
 func (c *OAuthConnection) Provider() Provider         { return c.provider }
-func (c *OAuthConnection) ProviderUserID() string     { return c.providerUserID }
-func (c *OAuthConnection) ProviderUsername() string   { return c.providerUsername }
+func (c *OAuthConnection) ProviderHost() string       { return c.providerHost }
+func (c *OAuthConnection) Metadata() ProviderMetadata { return c.metadata }
 func (c *OAuthConnection) AccessToken() string        { return c.accessToken }
-func (c *OAuthConnection) RefreshToken() string       { return c.refreshToken }
-func (c *OAuthConnection) TokenExpiresAt() *time.Time { return c.tokenExpiresAt }
-func (c *OAuthConnection) Scopes() []string           { return c.scopes }
 func (c *OAuthConnection) CreatedAt() time.Time       { return c.createdAt }
 func (c *OAuthConnection) UpdatedAt() time.Time       { return c.updatedAt }
 
+// Backward compatibility getters
+func (c *OAuthConnection) ProviderUserID() string   { return c.metadata.ProviderUserID }
+func (c *OAuthConnection) ProviderUsername() string { return c.metadata.ProviderUsername }
+func (c *OAuthConnection) Scopes() []string         { return c.metadata.Scopes }
+
+func (c *OAuthConnection) RefreshToken() string {
+	if c.metadata.RefreshTokenEncrypted != nil {
+		return *c.metadata.RefreshTokenEncrypted
+	}
+	return ""
+}
+
+func (c *OAuthConnection) TokenExpiresAt() *time.Time {
+	return c.metadata.TokenExpiresAt
+}
+
+func (c *OAuthConnection) ClientID() string {
+	if c.metadata.ClientIDEncrypted != nil {
+		return *c.metadata.ClientIDEncrypted
+	}
+	return ""
+}
+
+func (c *OAuthConnection) ClientSecret() string {
+	if c.metadata.ClientSecretEncrypted != nil {
+		return *c.metadata.ClientSecretEncrypted
+	}
+	return ""
+}
+
 // IsTokenExpired checks if the access token is expired
 func (c *OAuthConnection) IsTokenExpired() bool {
-	if c.tokenExpiresAt == nil {
+	if c.metadata.TokenExpiresAt == nil {
 		return false
 	}
 	// Add 5 minute buffer for token refresh
-	return time.Now().Add(5 * time.Minute).After(*c.tokenExpiresAt)
+	return time.Now().Add(5 * time.Minute).After(*c.metadata.TokenExpiresAt)
 }
 
 // UpdateTokens updates the access and refresh tokens
@@ -119,9 +149,9 @@ func (c *OAuthConnection) UpdateTokens(accessToken string, refreshToken string, 
 	}
 	c.accessToken = accessToken
 	if refreshToken != "" {
-		c.refreshToken = refreshToken
+		c.metadata.RefreshTokenEncrypted = &refreshToken
 	}
-	c.tokenExpiresAt = expiresAt
+	c.metadata.TokenExpiresAt = expiresAt
 	c.updatedAt = time.Now()
 	return nil
 }

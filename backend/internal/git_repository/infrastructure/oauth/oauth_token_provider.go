@@ -21,6 +21,7 @@ func NewOAuthTokenProviderAdapter(oauthService *oauthservice.OAuthService) *OAut
 }
 
 // GetAccessTokenForProvider retrieves an OAuth access token for the specified provider
+// Deprecated: Use GetAccessTokenForRepoURL instead for better multi-instance support
 func (a *OAuthTokenProviderAdapter) GetAccessTokenForProvider(ctx context.Context, userID string, providerName string) (string, error) {
 	// Convert provider name to domain.Provider
 	var provider oauthdomain.Provider
@@ -34,4 +35,10 @@ func (a *OAuthTokenProviderAdapter) GetAccessTokenForProvider(ctx context.Contex
 	}
 
 	return a.oauthService.GetAccessToken(ctx, userID, provider)
+}
+
+// GetAccessTokenForRepoURL retrieves an OAuth access token for a repository URL
+// This method supports multiple self-hosted GitLab instances
+func (a *OAuthTokenProviderAdapter) GetAccessTokenForRepoURL(ctx context.Context, userID string, repoURL string) (string, error) {
+	return a.oauthService.GetAccessTokenForRepoURL(ctx, userID, repoURL)
 }

@@ -64,6 +64,28 @@ func (s *OAuthService) ExchangeToken(req domain.OAuthCallbackRequest) (*domain.O
 	return tokenResp, nil
 }
 
+// extractProviderHost extracts the host from the provider
+func (s *OAuthService) extractProviderHost(provider domain.Provider, gitlabURL string) (string, error) {
+	switch provider {
+	case domain.ProviderGitHub:
+		return "github.com", nil
+	case domain.ProviderGitLab:
+		return "gitlab.com", nil
+	case domain.ProviderGitLabSelfHosted:
+		if gitlabURL == "" {
+			return "", fmt.Errorf("gitlabURL is required for self-hosted GitLab")
+		}
+		// Parse URL and extract host
+		parsedURL, err := url.Parse(gitlabURL)
+		if err != nil {
+			return "", fmt.Errorf("failed to parse GitLab URL: %w", err)
+		}
+		return parsedURL.Host, nil
+	default:
+		return "", fmt.Errorf("unsupported provider: %s", provider)
+	}
+}
+
 // getOAuthConfig returns OAuth configuration for the provider
 func (s *OAuthService) getOAuthConfig(provider domain.Provider, gitlabURL, clientID, clientSecret string) (*domain.OAuthConfig, error) {
 	redirectURI := os.Getenv("OAUTH_REDIRECT_URI")
@@ -170,6 +192,12 @@ func (s *OAuthService) ExchangeAndSaveToken(ctx context.Context, userID string, 
 		return nil, err
 	}
 
+	// Extract provider host
+	providerHost, err := s.extractProviderHost(req.Provider, req.GitLabURL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to extract provider host: %w", err)
+	}
+
 	// Get user info from provider
 	providerUserID, providerUsername, err := s.getProviderUserInfo(ctx, req.Provider, tokenResp.AccessToken, req.GitLabURL)
 	if err != nil {
@@ -205,17 +233,41 @@ func (s *OAuthService) ExchangeAndSaveToken(ctx context.Context, userID string, 
 		}
 	}
 
+	// Build provider metadata
+	metadata := domain.ProviderMetadata{
+		ProviderUserID:   providerUserID,
+		ProviderUsername: providerUsername,
+		Scopes:           scopes,
+	}
+
+	// Add refresh token if present (GitLab)
+	if tokenResp.RefreshToken != "" {
+		metadata.RefreshTokenEncrypted = &tokenResp.RefreshToken
+	}
+
+	// Add token expiration if present (GitLab)
+	if expiresAt != nil {
+		metadata.TokenExpiresAt = expiresAt
+	}
+
+	// Add client credentials for self-hosted GitLab
+	if req.Provider == domain.ProviderGitLabSelfHosted {
+		if req.ClientID != "" {
+			metadata.ClientIDEncrypted = &req.ClientID
+		}
+		if req.ClientSecret != "" {
+			metadata.ClientSecretEncrypted = &req.ClientSecret
+		}
+	}
+
 	// Create OAuth connection
 	conn, err := domain.NewOAuthConnection(
 		uuid.New().String(),
 		userID,
 		req.Provider,
-		providerUserID,
-		providerUsername,
+		providerHost,
+		metadata,
 		tokenResp.AccessToken,
-		tokenResp.RefreshToken,
-		expiresAt,
-		scopes,
 	)
 	if err != nil {
 		return nil, err
@@ -314,6 +366,39 @@ func (s *OAuthService) GetConnection(ctx context.Context, userID string, provide
 	return s.repo.FindByUserAndProvider(ctx, userID, provider)
 }
 
+// GetConnectionByHost retrieves a user's OAuth connection for a provider and host
+func (s *OAuthService) GetConnectionByHost(ctx context.Context, userID string, provider domain.Provider, providerHost string) (*domain.OAuthConnection, error) {
+	if s.repo == nil {
+		return nil, fmt.Errorf("repository not configured")
+	}
+	return s.repo.FindByUserProviderAndHost(ctx, userID, provider, providerHost)
+}
+
+// ExtractHostFromRepoURL extracts the host from a repository URL
+func ExtractHostFromRepoURL(repoURL string) (string, error) {
+	parsedURL, err := url.Parse(repoURL)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse repository URL: %w", err)
+	}
+	if parsedURL.Host == "" {
+		return "", fmt.Errorf("no host found in repository URL: %s", repoURL)
+	}
+	return parsedURL.Host, nil
+}
+
+// DetermineProviderFromHost determines the provider type from a host
+func DetermineProviderFromHost(host string) domain.Provider {
+	switch {
+	case strings.Contains(host, "github.com"):
+		return domain.ProviderGitHub
+	case strings.Contains(host, "gitlab.com"):
+		return domain.ProviderGitLab
+	default:
+		// Assume self-hosted GitLab for other hosts
+		return domain.ProviderGitLabSelfHosted
+	}
+}
+
 // GetAccessToken retrieves a valid access token for a user and provider
 // If the token is expired, it will attempt to refresh it
 func (s *OAuthService) GetAccessToken(ctx context.Context, userID string, provider domain.Provider) (string, error) {
@@ -323,6 +408,39 @@ func (s *OAuthService) GetAccessToken(ctx context.Context, userID string, provid
 	}
 	if conn == nil {
 		return "", fmt.Errorf("no oauth connection found for provider %s", provider)
+	}
+
+	// Check if token is expired
+	if conn.IsTokenExpired() {
+		// Try to refresh the token
+		refreshedConn, err := s.RefreshToken(ctx, conn)
+		if err != nil {
+			return "", fmt.Errorf("token expired and refresh failed: %w", err)
+		}
+		return refreshedConn.AccessToken(), nil
+	}
+
+	return conn.AccessToken(), nil
+}
+
+// GetAccessTokenForRepoURL retrieves a valid access token for a repository URL
+func (s *OAuthService) GetAccessTokenForRepoURL(ctx context.Context, userID string, repoURL string) (string, error) {
+	// Extract host from repository URL
+	host, err := ExtractHostFromRepoURL(repoURL)
+	if err != nil {
+		return "", err
+	}
+
+	// Determine provider from host
+	provider := DetermineProviderFromHost(host)
+
+	// Get OAuth connection by host
+	conn, err := s.GetConnectionByHost(ctx, userID, provider, host)
+	if err != nil {
+		return "", err
+	}
+	if conn == nil {
+		return "", fmt.Errorf("no oauth connection found for %s (%s)", host, provider)
 	}
 
 	// Check if token is expired
