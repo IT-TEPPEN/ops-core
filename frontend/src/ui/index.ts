@@ -8,6 +8,10 @@ export * from "./Badge";
 export * from "./Card";
 export * from "./Tag";
 export * from "./StatusIndicator";
+export * from "./LoadingSpinner";
+export * from "./Alert";
+export * from "./Button";
+export * from "./Icon";
 
 // Form components
 export * from "./TextInput";
