@@ -10,7 +10,7 @@ import {
   useEffect,
 } from "react";
 import type { ReactNode } from "react";
-import type { Toast as ToastType, Variant } from "../../../shared/types/ui";
+import type { Toast as ToastType, Variant } from "@/shared/types/ui";
 import { XIcon } from "@/ui";
 
 // Toast context
@@ -132,16 +132,16 @@ function ToastItem({ toast, onRemove }: ToastItemProps) {
         ${styles.bg} text-white
         px-4 py-3 rounded-lg shadow-lg
         flex items-center gap-3
-        min-w-[200px] max-w-md
+        min-w-50 max-w-md
         animate-in slide-in-from-right
       `}
       role="alert"
     >
-      <span className="flex-shrink-0">{styles.icon}</span>
+      <span className="shrink-0">{styles.icon}</span>
       <p className="flex-1 text-sm">{toast.message}</p>
       <button
         onClick={() => onRemove(toast.id)}
-        className="flex-shrink-0 hover:opacity-70"
+        className="shrink-0 hover:opacity-70"
         aria-label="Dismiss"
       >
         <XIcon size={16} />
@@ -189,15 +189,15 @@ export function Toast({
           ${styles.bg} text-white
           px-4 py-3 rounded-lg shadow-lg
           flex items-center gap-3
-          min-w-[200px] max-w-md
+          min-w-50 max-w-md
         `}
         role="alert"
       >
-        <span className="flex-shrink-0">{styles.icon}</span>
+        <span className="shrink-0">{styles.icon}</span>
         <p className="flex-1 text-sm">{message}</p>
         <button
           onClick={onClose}
-          className="flex-shrink-0 hover:opacity-70"
+          className="shrink-0 hover:opacity-70"
           aria-label="Dismiss"
         >
           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
