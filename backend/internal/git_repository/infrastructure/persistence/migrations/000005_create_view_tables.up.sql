@@ -1,4 +1,4 @@
--- Filepath: backend/internal/git_repository/infrastructure/persistence/migrations/000007_create_view_tables.up.sql
+-- Filepath: backend/internal/git_repository/infrastructure/persistence/migrations/000005_create_view_tables.up.sql
 -- Create view_history and view_statistics tables
 
 -- view_history table
@@ -23,3 +23,7 @@ CREATE TABLE view_statistics (
     last_viewed_at TIMESTAMPTZ,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Comments
+COMMENT ON TABLE view_history IS 'Document view history';
+COMMENT ON TABLE view_statistics IS 'Aggregated view statistics per document';

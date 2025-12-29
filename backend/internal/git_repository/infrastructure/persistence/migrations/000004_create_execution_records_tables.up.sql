@@ -1,4 +1,4 @@
--- Filepath: backend/internal/git_repository/infrastructure/persistence/migrations/000006_create_execution_records_tables.up.sql
+-- Filepath: backend/internal/git_repository/infrastructure/persistence/migrations/000004_create_execution_records_tables.up.sql
 -- Create execution_records, execution_steps, and attachments tables
 
 -- execution_records table
@@ -55,3 +55,8 @@ CREATE TABLE attachments (
 CREATE INDEX idx_attachments_execution_record_id ON attachments(execution_record_id);
 CREATE INDEX idx_attachments_execution_step_id ON attachments(execution_step_id);
 CREATE INDEX idx_attachments_uploaded_by ON attachments(uploaded_by);
+
+-- Comments
+COMMENT ON TABLE execution_records IS 'Records of document execution';
+COMMENT ON TABLE execution_steps IS 'Steps performed during document execution';
+COMMENT ON TABLE attachments IS 'Files attached to execution records';

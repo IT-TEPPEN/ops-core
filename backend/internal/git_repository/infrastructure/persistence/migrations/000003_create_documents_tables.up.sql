@@ -1,4 +1,4 @@
--- Filepath: backend/internal/git_repository/infrastructure/persistence/migrations/000005_create_documents_tables.up.sql
+-- Filepath: backend/internal/git_repository/infrastructure/persistence/migrations/000003_create_documents_tables.up.sql
 -- Create documents and document_versions tables
 
 -- documents table
@@ -42,7 +42,11 @@ CREATE INDEX idx_document_versions_doc_type ON document_versions(doc_type);
 CREATE INDEX idx_document_versions_tags ON document_versions USING GIN(tags);
 CREATE INDEX idx_document_versions_commit_hash ON document_versions(commit_hash);
 
--- Add foreign key constraint after document_versions table is created to avoid circular dependency
+-- Add foreign key constraint after document_versions table is created
 ALTER TABLE documents
 ADD CONSTRAINT fk_documents_current_version
 FOREIGN KEY (current_version_id) REFERENCES document_versions(id);
+
+-- Comments
+COMMENT ON TABLE documents IS 'Documents (procedures, knowledge base) registered in OpScore';
+COMMENT ON TABLE document_versions IS 'Version history of documents';
