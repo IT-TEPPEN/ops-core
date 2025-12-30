@@ -1,4 +1,4 @@
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useRepositoryQueryService } from "@/features/repository";
 import { useQuery } from "@tanstack/react-query";
 import type {
@@ -6,19 +6,28 @@ import type {
   DocumentProcedureMeta,
 } from "@/features/repository/types";
 import { Page } from "@/shared/types/Page";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { MarkdownProcessor } from "@/features/markdown/processor";
 import { FileCommitHistory } from "@/features/repository/presentation/components/FileCommitHistory";
-import "@/features/markdown/markdown.css";
-// import { useDocumentRegistration } from "@/features/document/hooks/useDocumentRegistration";
-// import { DocumentRegistrationDialog } from "@/features/document/components/DocumentRegistrationDialog";
-// import { useNotifications } from "@/features/notification";
+import { VariableForm } from "@/features/common/components";
+import { substituteVariables } from "@/shared/utils/variableSubstitution";
+import { documentVariableToDefinition } from "@/features/repository/utils/variableAdapter";
+import { useDocumentRegistration } from "@/features/document/hooks/useDocumentRegistration";
+import { DocumentRegistrationDialog } from "@/features/document/components/DocumentRegistrationDialog";
+import { useNotifications } from "@/features/notification";
 
-function ProcedureMetaComponent(props: { meta: DocumentProcedureMeta }) {
+interface ProcedureMetaComponentProps {
+  meta: DocumentProcedureMeta;
+  variableValues: Record<string, string | number | boolean>;
+  onVariableChange: (name: string, value: string | number | boolean) => void;
+  onValidate?: () => Promise<boolean>;
+}
+
+function ProcedureMetaComponent(props: ProcedureMetaComponentProps) {
   return (
     <div className="mb-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg shadow">
-      <h2 className="text-lg font-semibold mb-2">Procedure Metadata</h2>
-      <dl className="space-y-2">
+      <h2 className="text-lg font-semibold mb-4">Procedure Metadata</h2>
+      <dl className="space-y-8">
         <div>
           <dt className="font-medium text-gray-600 dark:text-gray-400">
             Title
@@ -44,6 +53,17 @@ function ProcedureMetaComponent(props: { meta: DocumentProcedureMeta }) {
           </dd>
         </div>
       </dl>
+
+      {!!props.meta.variables && props.meta.variables.length > 0 && (
+        <div className="mt-8">
+          <VariableForm
+            variables={props.meta.variables.map(documentVariableToDefinition)}
+            values={props.variableValues}
+            onChange={props.onVariableChange}
+            onValidate={props.onValidate}
+          />
+        </div>
+      )}
     </div>
   );
 }
@@ -52,7 +72,7 @@ function KnowledgeMetaComponent(props: { meta: DocumentKnowledgeMeta }) {
   return (
     <div className="mb-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg shadow">
       <h2 className="text-lg font-semibold mb-2">Knowledge Metadata</h2>
-      <dl className="space-y-2">
+      <dl className="space-y-8">
         <div>
           <dt className="font-medium text-gray-600 dark:text-gray-400">
             Title
@@ -85,61 +105,130 @@ function KnowledgeMetaComponent(props: { meta: DocumentKnowledgeMeta }) {
 export const DocumentPreviewPage: Page<"repoId" | "filePath"> = ({
   path: { repoId, filePath },
 }) => {
+  console.log("Rendering DocumentPreviewPage");
+
   const [Component, setComponent] = useState<React.ReactElement | null>(null);
+  const [variableValues, setVariableValues] = useState<
+    Record<string, string | number | boolean>
+  >({});
   const [searchParams, setSearchParams] = useSearchParams();
   const commit = searchParams.get("commit") || undefined;
-  // const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const queryService = useRepositoryQueryService();
-  // const navigate = useNavigate();
-  // const { registerDocument, isLoading: isRegistering } =
-  //   useDocumentRegistration();
-  // const { actions: notificationActions } = useNotifications();
+  const navigate = useNavigate();
+  const { registerDocument, isLoading: isRegistering } =
+    useDocumentRegistration();
+  const { actions: notificationActions } = useNotifications();
 
   const query = useQuery({
     queryKey: ["repositories", repoId, "files", filePath, commit],
     queryFn: () => queryService.getFileContent(repoId!, filePath!, commit),
   });
 
+  const handleVariableChange = useCallback(
+    (name: string, value: string | number | boolean) => {
+      setVariableValues((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    },
+    []
+  );
+
+  const handleValidate = useCallback(async (): Promise<boolean> => {
+    if (!query.data?.meta || query.data.meta.type !== "procedure") return true;
+
+    const variables = query.data.meta.variables;
+    if (!variables || variables.length === 0) return true;
+
+    let isValid = true;
+
+    for (const variable of variables) {
+      if (variable.required) {
+        const value = variableValues[variable.name];
+        if (value === undefined || value === null || value === "") {
+          isValid = false;
+        }
+      }
+    }
+
+    return isValid;
+  }, [query.data, variableValues]);
+
+  // Initialize variable values when document loads
+  useEffect(() => {
+    if (query.data?.meta.type === "procedure" && query.data.meta.variables) {
+      const initialValues: Record<string, string | number | boolean> = {};
+      query.data.meta.variables.forEach((v) => {
+        initialValues[v.name] = v.defaultValue ?? "";
+      });
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setVariableValues(initialValues);
+    }
+  }, [query.data?.meta]);
+
+  // Process content with variable substitution
   useEffect(() => {
     if (!query.isLoading && !query.error && query.data) {
-      MarkdownProcessor.process(query.data.content).then(
+      const substituted = substituteVariables(
+        query.data.content,
+        variableValues
+      );
+
+      MarkdownProcessor.process(substituted).then(
         (file: { result: unknown }) => {
           setComponent(file.result as React.ReactElement);
         }
       );
     }
-  }, [query]);
+  }, [query.data, query.isLoading, query.error, variableValues]);
 
   const handleCommitSelect = (commitHash: string) => {
     setSearchParams({ commit: commitHash });
   };
 
-  // const handleRegisterDocument = async (options: {
-  //   accessScope: "public" | "private";
-  //   isAutoUpdate: boolean;
-  // }) => {
-  //   if (!query.data) return;
+  const handleRegisterDocument = useCallback(
+    async (options: {
+      accessScope: "public" | "private";
+      isAutoUpdate: boolean;
+    }) => {
+      if (!query.data) return;
 
-  //   try {
-  //     const result = await registerDocument(query.data, options);
-  //     notificationActions.push({
-  //       title: "Success",
-  //       message: "Document registered successfully",
-  //       type: "success",
-  //     });
-  //     setIsDialogOpen(false);
-  //     navigate(`/documents/${result.id}`);
-  //   } catch (error) {
-  //     notificationActions.push({
-  //       title: "Error",
-  //       message:
-  //         error instanceof Error
-  //           ? error.message
-  //           : "Failed to register document",
-  //       type: "error",
-  //     });
-  //   }
-  // };
+      try {
+        const result = await registerDocument(
+          repoId,
+          filePath!,
+          options,
+          commit
+        );
+        notificationActions.push({
+          title: "Success",
+          message: "Document registered successfully",
+          type: "success",
+        });
+        setIsDialogOpen(false);
+        navigate(`/documents/${result.id}`);
+      } catch (error) {
+        notificationActions.push({
+          title: "Error",
+          message:
+            error instanceof Error
+              ? error.message
+              : "Failed to register document",
+          type: "error",
+        });
+      }
+    },
+    [
+      registerDocument,
+      navigate,
+      notificationActions,
+      query.data,
+      commit,
+      repoId,
+      filePath,
+    ]
+  );
 
   if (query.isLoading) {
     return (
@@ -185,12 +274,12 @@ export const DocumentPreviewPage: Page<"repoId" | "filePath"> = ({
           )}
         </div>
         <div className="flex gap-3">
-          {/* <button
+          <button
             onClick={() => setIsDialogOpen(true)}
             className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
           >
             Register as Document
-          </button> */}
+          </button>
           <Link
             to={`/repositories/${repoId}`}
             className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
@@ -203,8 +292,17 @@ export const DocumentPreviewPage: Page<"repoId" | "filePath"> = ({
       <div className="flex flex-col md:flex-row gap-6">
         <div className="w-full md:w-1/4 space-y-4">
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4">
-            {meta.type === "procedure" && <ProcedureMetaComponent meta={meta} />}
-            {meta.type === "knowledge" && <KnowledgeMetaComponent meta={meta} />}
+            {meta.type === "procedure" && (
+              <ProcedureMetaComponent
+                meta={meta}
+                variableValues={variableValues}
+                onVariableChange={handleVariableChange}
+                onValidate={handleValidate}
+              />
+            )}
+            {meta.type === "knowledge" && (
+              <KnowledgeMetaComponent meta={meta} />
+            )}
           </div>
 
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4">
@@ -222,12 +320,12 @@ export const DocumentPreviewPage: Page<"repoId" | "filePath"> = ({
         </div>
       </div>
 
-      {/* <DocumentRegistrationDialog
+      <DocumentRegistrationDialog
         isOpen={isDialogOpen}
         onClose={() => setIsDialogOpen(false)}
         onConfirm={handleRegisterDocument}
         isLoading={isRegistering}
-      /> */}
+      />
     </div>
   );
 };
