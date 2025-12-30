@@ -164,7 +164,7 @@ export const DocumentPreviewPage: Page<"repoId" | "filePath"> = ({
     );
   }
 
-  const meta = query.data.getMeta();
+  const meta = query.data.meta;
 
   return (
     <div className="space-y-6">
