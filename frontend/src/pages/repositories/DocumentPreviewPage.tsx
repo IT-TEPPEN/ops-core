@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { useRepositoryManagementAdapter } from "@/features/repository/hooks";
+import { useRepositoryQueryService } from "@/features/repository";
 import { useQuery } from "@tanstack/react-query";
 import type {
   DocumentKnowledgeMeta,
@@ -9,6 +9,9 @@ import { Page } from "@/shared/types/Page";
 import { useEffect, useState } from "react";
 import { MarkdownProcessor } from "@/features/markdown/processor";
 import "@/features/markdown/markdown.css";
+// import { useDocumentRegistration } from "@/features/document/hooks/useDocumentRegistration";
+// import { DocumentRegistrationDialog } from "@/features/document/components/DocumentRegistrationDialog";
+// import { useNotifications } from "@/features/notification";
 
 function ProcedureMetaComponent(props: { meta: DocumentProcedureMeta }) {
   return (
@@ -82,21 +85,54 @@ export const DocumentPreviewPage: Page<"repoId" | "filePath"> = ({
   path: { repoId, filePath },
 }) => {
   const [Component, setComponent] = useState<React.ReactElement | null>(null);
-  const adapter = useRepositoryManagementAdapter();
+  // const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const queryService = useRepositoryQueryService();
+  // const navigate = useNavigate();
+  // const { registerDocument, isLoading: isRegistering } =
+  //   useDocumentRegistration();
+  // const { actions: notificationActions } = useNotifications();
+
   const query = useQuery({
     queryKey: ["repositories", repoId, "files", filePath],
-    queryFn: () => adapter.getFileContent(repoId!, filePath!),
+    queryFn: () => queryService.getFileContent(repoId!, filePath!),
   });
 
   useEffect(() => {
     if (!query.isLoading && !query.error && query.data) {
-      MarkdownProcessor.process(query.data.getContent()).then(
+      MarkdownProcessor.process(query.data.content).then(
         (file: { result: unknown }) => {
           setComponent(file.result as React.ReactElement);
         }
       );
     }
   }, [query]);
+
+  // const handleRegisterDocument = async (options: {
+  //   accessScope: "public" | "private";
+  //   isAutoUpdate: boolean;
+  // }) => {
+  //   if (!query.data) return;
+
+  //   try {
+  //     const result = await registerDocument(query.data, options);
+  //     notificationActions.push({
+  //       title: "Success",
+  //       message: "Document registered successfully",
+  //       type: "success",
+  //     });
+  //     setIsDialogOpen(false);
+  //     navigate(`/documents/${result.id}`);
+  //   } catch (error) {
+  //     notificationActions.push({
+  //       title: "Error",
+  //       message:
+  //         error instanceof Error
+  //           ? error.message
+  //           : "Failed to register document",
+  //       type: "error",
+  //     });
+  //   }
+  // };
 
   if (query.isLoading) {
     return (
@@ -134,12 +170,20 @@ export const DocumentPreviewPage: Page<"repoId" | "filePath"> = ({
     <div className="space-y-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Documentation</h1>
-        <Link
-          to={`/repositories/${repoId}`}
-          className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
-        >
-          Back to Repository
-        </Link>
+        <div className="flex gap-3">
+          {/* <button
+            onClick={() => setIsDialogOpen(true)}
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
+          >
+            Register as Document
+          </button> */}
+          <Link
+            to={`/repositories/${repoId}`}
+            className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
+          >
+            Back to Repository
+          </Link>
+        </div>
       </div>
 
       <div className="flex flex-col md:flex-row gap-6">
@@ -152,6 +196,13 @@ export const DocumentPreviewPage: Page<"repoId" | "filePath"> = ({
           <article className="markdown-content max-w-none">{Component}</article>
         </div>
       </div>
+
+      {/* <DocumentRegistrationDialog
+        isOpen={isDialogOpen}
+        onClose={() => setIsDialogOpen(false)}
+        onConfirm={handleRegisterDocument}
+        isLoading={isRegistering}
+      /> */}
     </div>
   );
 };

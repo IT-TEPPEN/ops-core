@@ -1,11 +1,12 @@
 import { useReducer, useEffect, useCallback } from "react";
-import { useRepositoryManagementAdapter } from "./useRepositoryManagementAdapter";
-import { FileNode, RepositoryDetail } from "../api";
+import { useRepositoryQueryService } from "./useRepositoryQueryService";
+import { useRepositoryCommandService } from "./useRepositoryCommandService";
+import type { FileNodeViewData, RepositoryViewData } from "../../application";
 import { AxiosError } from "axios";
 
 type RepositoryDetailState = {
-  repository: RepositoryDetail | null;
-  files: FileNode[];
+  repository: RepositoryViewData | null;
+  files: FileNodeViewData[];
   isLoading: boolean;
   error: string | null;
   fileError: string | null;
@@ -17,8 +18,8 @@ type RepositoryDetailState = {
 
 type RepositoryDetailAction =
   | { type: "FETCH_START" }
-  | { type: "FETCH_REPOSITORY_SUCCESS"; repository: RepositoryDetail }
-  | { type: "FETCH_FILES_SUCCESS"; files: FileNode[] }
+  | { type: "FETCH_REPOSITORY_SUCCESS"; repository: RepositoryViewData }
+  | { type: "FETCH_FILES_SUCCESS"; files: FileNodeViewData[] }
   | { type: "FETCH_ERROR"; error: string }
   | { type: "FETCH_FILE_ERROR"; error: string; needsToken?: boolean }
   | { type: "SET_ACCESS_TOKEN"; token: string }
@@ -92,7 +93,8 @@ function repositoryDetailReducer(
 
 export function useRepositoryDetail(repoId: string | undefined) {
   const [state, dispatch] = useReducer(repositoryDetailReducer, initialState);
-  const repositoryApi = useRepositoryManagementAdapter();
+  const queryService = useRepositoryQueryService();
+  const commandService = useRepositoryCommandService();
 
   const fetchRepository = useCallback(async () => {
     if (!repoId) return;
@@ -100,7 +102,7 @@ export function useRepositoryDetail(repoId: string | undefined) {
     dispatch({ type: "FETCH_START" });
 
     try {
-      const repository = await repositoryApi.getRepository(repoId);
+      const repository = await queryService.getById(repoId);
       dispatch({ type: "FETCH_REPOSITORY_SUCCESS", repository });
     } catch (err) {
       dispatch({
@@ -109,7 +111,7 @@ export function useRepositoryDetail(repoId: string | undefined) {
       });
       console.error("Error fetching repository:", err);
     }
-  }, [repoId, repositoryApi]);
+  }, [repoId, queryService]);
 
   const fetchFiles = useCallback(async () => {
     if (!repoId) return;
@@ -117,7 +119,7 @@ export function useRepositoryDetail(repoId: string | undefined) {
     dispatch({ type: "FETCH_START" });
 
     try {
-      const files = await repositoryApi.listFiles(repoId);
+      const files = await queryService.listFiles(repoId);
       dispatch({ type: "FETCH_FILES_SUCCESS", files });
     } catch (err) {
       // Handle Axios errors
@@ -150,7 +152,7 @@ export function useRepositoryDetail(repoId: string | undefined) {
       });
       console.error("Error fetching files:", err);
     }
-  }, [repoId, repositoryApi]);
+  }, [repoId, queryService]);
 
   useEffect(() => {
     if (repoId) {
@@ -174,7 +176,7 @@ export function useRepositoryDetail(repoId: string | undefined) {
     dispatch({ type: "UPDATE_TOKEN_START" });
 
     try {
-      await repositoryApi.updateAccessToken(repoId, state.accessToken);
+      await commandService.updateAccessToken(repoId, state.accessToken);
 
       dispatch({
         type: "UPDATE_TOKEN_SUCCESS",

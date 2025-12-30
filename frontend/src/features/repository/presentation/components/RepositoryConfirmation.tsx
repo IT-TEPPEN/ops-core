@@ -22,6 +22,7 @@ export function RepositoryConfirmation({
     const success = await handleSubmitRepository({
       provider,
       url: repository.cloneUrl,
+      name: repository.name,
     });
     if (success) {
       onSuccess?.();

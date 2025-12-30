@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { GitRepository, GitProvider } from "@/shared/api/gitProviderApi";
 import { SpinnerIcon, CheckCircleFilledIcon } from "@/ui";
-import { useGitProvider } from "../hooks/useGitProvider";
+import { useGitProvider } from "@/features/oauth";
 
 interface RepositorySelectorProps {
   provider: GitProvider;

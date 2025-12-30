@@ -1,23 +1,8 @@
-import { useQuery } from "@tanstack/react-query";
-// import axios from "axios";
 import { Link } from "react-router-dom";
-import { useRepositoryManagementAdapter } from "../hooks";
-
-// const listRepositories = async (): Promise<Repository[]> => {
-//   const apiHost = import.meta.env.VITE_API_HOST || window.location.host;
-//   const apiUrl = `${window.location.protocol}//${apiHost}/api/v1`;
-
-//   return axios
-//     .get<{ repositories: Repository[] }>(`${apiUrl}/repositories`)
-//     .then((response) => response.data.repositories);
-// };
+import { useRepositoryList } from "../hooks";
 
 export function RepositoryList() {
-  const adapter = useRepositoryManagementAdapter();
-  const query = useQuery({
-    queryKey: ["repositories"],
-    queryFn: () => adapter.listRepositories(),
-  });
+  const query = useRepositoryList();
 
   return (
     <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
@@ -36,11 +21,11 @@ export function RepositoryList() {
       {!query.isLoading &&
         !query.error &&
         query.data &&
-        query.data.pagenation.getTotalItems() === 0 && (
+        query.data.pagination.totalItems === 0 && (
           <p className="text-gray-500">No repositories registered yet.</p>
         )}
 
-      {query.data && query.data.pagenation.getTotalItems() > 0 && (
+      {query.data && query.data.pagination.totalItems > 0 && (
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead className="bg-gray-50 dark:bg-gray-900">
@@ -61,19 +46,19 @@ export function RepositoryList() {
             </thead>
             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
               {query.data.data.map((repo) => (
-                <tr key={repo.getId()}>
+                <tr key={repo.id}>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    {repo.getName()}
+                    {repo.name}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    {repo.getUrl()}
+                    {repo.url}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    {repo.getCreatedAt().toLocaleString()}
+                    {repo.createdAt.toLocaleString()}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm">
                     <Link
-                      to={`/repositories/${repo.getId()}`}
+                      to={`/repositories/${repo.id}`}
                       className="text-blue-500 hover:text-blue-700 font-medium"
                     >
                       Manage Files

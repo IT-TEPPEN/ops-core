@@ -1,4 +1,5 @@
 import { useReducer } from "react";
+import { useRepositoryCommandService } from "./useRepositoryCommandService";
 import { initiateOAuthFlow, SelfHostedOAuthParams } from "@/shared/utils/oauth";
 
 type RegistrationState = {
@@ -60,9 +61,7 @@ function registrationReducer(
 
 export function useRepositoryRegistration() {
   const [state, dispatch] = useReducer(registrationReducer, initialState);
-
-  const apiHost = import.meta.env.VITE_API_HOST || window.location.host;
-  const apiUrl = `${window.location.protocol}//${apiHost}/api/v1`;
+  const commandService = useRepositoryCommandService();
 
   const handleOAuthConnect = async (
     provider: "github" | "gitlab" | "gitlab-self-hosted",
@@ -82,25 +81,16 @@ export function useRepositoryRegistration() {
   const handleSubmitRepository = async (data: {
     provider: string;
     url: string;
+    name: string;
   }): Promise<boolean> => {
     dispatch({ type: "START_SUBMIT" });
 
     try {
-      const response = await fetch(`${apiUrl}/repositories`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
+      await commandService.create({
+        name: data.name,
+        url: data.url,
+        provider: data.provider,
       });
-
-      const responseData = await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          responseData.message || "Failed to register repository"
-        );
-      }
 
       dispatch({
         type: "SUBMIT_SUCCESS",

@@ -7,7 +7,8 @@ export { V1ApiClient, ApiRequestError } from "./client";
 
 // Export API client classes and instances
 export * from "./authApi";
-export * from "./repositoryApi";
+// export * from "./repositoryApi";
+// export * from "./documentApi";
 export * from "./userApiClient";
 export * from "./groupApiClient";
 export * from "./executionRecordApiClient";

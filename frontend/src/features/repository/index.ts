@@ -1,33 +1,38 @@
-// Components
-export * from "./components/RepositoryList";
-export { AccessTokenForm } from "./components/AccessTokenForm";
-export { FileList } from "./components/FileList";
-export { OAuthConnection } from "./components/OAuthConnection";
-export { RepositoryRegistrationForm } from "./components/RepositoryRegistrationForm";
-export { ConnectionStatus } from "./components/ConnectionStatus";
-export { RepositoryConfirmation } from "./components/RepositoryConfirmation";
+/**
+ * Repository feature public API.
+ * Following ADR 0012 - Features should be self-contained with clear public APIs.
+ * Following ADR 0018/0019/0021 - Layered architecture for complex features.
+ */
 
-// Contexts
-export { RepositoryManagementAdapterContext } from "./contexts";
+// Presentation layer exports (components and hooks)
+export {
+  RepositoryList,
+  AccessTokenForm,
+  FileList,
+  RepositoryRegistrationForm,
+  RepositorySelector,
+  RepositoryConfirmation,
+  useRepositoryList,
+  useRepositoryDetail,
+  useRepositoryRegistration,
+  useRepositoryQueryService,
+  useRepositoryCommandService,
+  RepositoryQueryServiceProvider,
+  RepositoryCommandServiceProvider,
+} from "./presentation";
 
-// Hooks
-export { useRepositoryManagementAdapter } from "./hooks";
-export { useRepositoryDetail } from "./hooks/useRepositoryDetail";
-export { useRepositoryRegistration } from "./hooks/useRepositoryRegistration";
-export { useGitProvider } from "./hooks/useGitProvider";
-
-// Types
+// Application layer exports (ViewData types for external usage)
 export type {
-  Repository,
-  Document,
-  DocumentMeta,
-  DocumentVariable,
-} from "./types";
+  RepositoryViewData,
+  FileNodeViewData,
+  DocumentContentViewData,
+  PagedResponse,
+} from "./application";
+
+// Type exports from existing types
+export type { DocumentMeta, DocumentVariable } from "./types/repository";
 export type { RepositoryFormData } from "./types/repositoryForm";
 export {
   repositoryFormSchema,
   getProviderDisplayName,
 } from "./types/repositoryForm";
-
-// API
-export type { RepositoryManagementAdapter, Repositories } from "./api";

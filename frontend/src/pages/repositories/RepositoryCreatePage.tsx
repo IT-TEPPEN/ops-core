@@ -2,18 +2,14 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { OAuthConnection } from "@/features/repository/components/OAuthConnection";
-import { RepositorySelector } from "@/features/repository/components/RepositorySelector";
-import { ConnectionStatus } from "@/features/repository/components/ConnectionStatus";
-import { RepositoryConfirmation } from "@/features/repository/components/RepositoryConfirmation";
+import { OAuthConnection, ConnectionStatus, useGitProvider } from "@/features/oauth";
+import { RepositorySelector, RepositoryConfirmation, useRepositoryRegistration } from "@/features/repository";
 import {
   repositoryFormSchema,
   type RepositoryFormData,
 } from "@/features/repository/types/repositoryForm";
 import { GitProvider, GitRepository } from "@/shared/api/gitProviderApi";
 import { Alert } from "@/ui";
-import { useGitProvider } from "@/features/repository/hooks/useGitProvider";
-import { useRepositoryRegistration } from "@/features/repository/hooks/useRepositoryRegistration";
 
 /**
  * リポジトリ新規登録ページ

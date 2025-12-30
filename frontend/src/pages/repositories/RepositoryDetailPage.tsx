@@ -1,7 +1,5 @@
 import { Link } from "react-router-dom";
-import { useRepositoryDetail } from "@/features/repository/hooks/useRepositoryDetail";
-import { AccessTokenForm } from "@/features/repository/components/AccessTokenForm";
-import { FileList } from "@/features/repository/components/FileList";
+import { useRepositoryDetail, AccessTokenForm, FileList } from "@/features/repository";
 import { Page } from "@/shared/types/Page";
 
 export const RepositoryDetailPage: Page<"repoId"> = ({ path: { repoId } }) => {
