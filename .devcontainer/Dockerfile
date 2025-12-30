@@ -13,7 +13,7 @@ RUN npm install -g npm@latest vite concurrently @anthropic-ai/claude-code
 
 # Install Go tools
 RUN go install github.com/air-verse/air@v1.63.0 \
-    && go install github.com/swaggo/swag/cmd/swag@latest # For live reloading Go apps
+    && go install github.com/swaggo/swag/cmd/swag@v1.16.6 # For live reloading Go apps
 RUN chown -R vscode /go
 RUN chmod -R u+w /go
 
