@@ -9,4 +9,5 @@ export interface DocumentContentViewData {
   filePath: string;
   content: string;
   meta: DocumentMeta;
+  commitHash?: string; // Commit hash of the file version
 }

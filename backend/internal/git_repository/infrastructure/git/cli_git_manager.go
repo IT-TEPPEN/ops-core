@@ -50,6 +50,7 @@ func (g *cliGitManager) runGitCommand(ctx context.Context, dir string, repo enti
 		"ls-tree":  true,
 		"ls-files": true,
 		"log":      true,
+		"show":     true,
 		// 必要に応じて他の安全なgitコマンドを追加
 	}
 
@@ -285,6 +286,43 @@ func (g *cliGitManager) ReadManagedFileContent(ctx context.Context, localPath st
 		return nil, fmt.Errorf("failed to read file %s: %w", absFilePath, err)
 	}
 	return content, nil
+}
+
+// ReadFileAtCommit reads the content of a file at a specific commit using git show.
+// If commitHash is empty, reads from the latest commit (HEAD). Returns content and actual commit hash.
+func (g *cliGitManager) ReadFileAtCommit(ctx context.Context, filePath string, commitHash string, repo entity.Repository) ([]byte, string, error) {
+	// Security check
+	if strings.Contains(filePath, "..") || strings.Contains(filePath, "~") {
+		return nil, "", fmt.Errorf("invalid file path containing potentially dangerous sequences: %s", filePath)
+	}
+
+	localPath := g.getLocalPath(repo)
+
+	// Ensure repository is cloned and updated
+	_, err := g.EnsureCloned(ctx, repo)
+	if err != nil {
+		return nil, "", fmt.Errorf("failed to ensure repository is cloned: %w", err)
+	}
+
+	// If commitHash is empty, get the latest commit
+	actualCommit := commitHash
+	if actualCommit == "" {
+		latestCommit, err := g.GetLatestCommit(ctx, repo)
+		if err != nil {
+			return nil, "", fmt.Errorf("failed to get latest commit: %w", err)
+		}
+		actualCommit = latestCommit.Hash
+	}
+
+	// Use git show to read file at specific commit
+	// Format: git show <commit>:<path>
+	gitPath := fmt.Sprintf("%s:%s", actualCommit, filePath)
+	output, err := g.runGitCommand(ctx, localPath, repo, "show", gitPath)
+	if err != nil {
+		return nil, "", fmt.Errorf("failed to read file %s at commit %s: %w", filePath, actualCommit, err)
+	}
+
+	return output, actualCommit, nil
 }
 
 // GetLatestCommit retrieves the latest commit information for the repository.

@@ -50,7 +50,8 @@ type RepositoryUseCase interface {
 	// GetDirectoryContents retrieves files and directories at a specific path (non-recursive).
 	GetDirectoryContents(ctx context.Context, repoID string, path string, userID string) ([]entity.FileNode, error)
 	// GetFileContents retrieves the content of a specific file from a repository.
-	GetFileContents(ctx context.Context, repoID string, filePath string, userID string) (string, error)
+	// If commitHash is empty, retrieves the latest version. Returns content and actual commit hash.
+	GetFileContents(ctx context.Context, repoID string, filePath string, userID string, commitHash string) (string, string, error)
 	// UpdateAccessToken updates the access token for a repository.
 	UpdateAccessToken(ctx context.Context, repoID string, accessToken string) error
 	// GetLatestCommit retrieves the latest commit information for a repository.
@@ -269,27 +270,28 @@ func (uc *repositoryUseCase) GetDirectoryContents(ctx context.Context, repoID st
 }
 
 // GetFileContents implements the logic for retrieving a specific file's content.
-func (uc *repositoryUseCase) GetFileContents(ctx context.Context, repoID string, filePath string, userID string) (string, error) {
+// If commitHash is empty, retrieves the latest version. Returns content and actual commit hash.
+func (uc *repositoryUseCase) GetFileContents(ctx context.Context, repoID string, filePath string, userID string, commitHash string) (string, string, error) {
 	// 1. Find the repository by ID to ensure it exists
 	repo, err := uc.repo.FindByID(ctx, repoID)
 	if err != nil {
-		return "", fmt.Errorf("failed to retrieve repository details: %w", err)
+		return "", "", fmt.Errorf("failed to retrieve repository details: %w", err)
 	}
 	if repo == nil {
-		return "", apperror.NewNotFoundError("Repository", repoID, nil)
+		return "", "", apperror.NewNotFoundError("Repository", repoID, nil)
 	}
 
 	// 2. Get OAuth access token for the provider
 	provider := getProviderFromURL(repo.URL())
 	if provider == "" {
-		return "", apperror.NewValidationFailedError([]apperror.FieldError{
+		return "", "", apperror.NewValidationFailedError([]apperror.FieldError{
 			{Field: "url", Message: "unsupported Git provider"},
 		})
 	}
 
 	accessToken, err := uc.oauthProvider.GetAccessTokenForProvider(ctx, userID, provider)
 	if err != nil {
-		return "", apperror.NewValidationFailedError([]apperror.FieldError{
+		return "", "", apperror.NewValidationFailedError([]apperror.FieldError{
 			{Field: "oauth", Message: fmt.Sprintf("OAuth connection required for %s. Please connect your account.", provider)},
 		})
 	}
@@ -297,13 +299,13 @@ func (uc *repositoryUseCase) GetFileContents(ctx context.Context, repoID string,
 	// Set the OAuth token on the repository for GitManager to use
 	repo.SetAccessToken(accessToken)
 
-	// 3. Read the file content (on-demand fetching with caching)
-	contentBytes, err := uc.gitManager.ReadManagedFileContent(ctx, "", filePath, repo)
+	// 3. Read the file content at specific commit (or latest if commitHash is empty)
+	contentBytes, actualCommit, err := uc.gitManager.ReadFileAtCommit(ctx, filePath, commitHash, repo)
 	if err != nil {
-		return "", fmt.Errorf("failed to read content of file '%s': %w", filePath, err)
+		return "", "", fmt.Errorf("failed to read content of file '%s': %w", filePath, err)
 	}
 
-	return string(contentBytes), nil
+	return string(contentBytes), actualCommit, nil
 }
 
 // UpdateAccessToken updates the access token for a repository.

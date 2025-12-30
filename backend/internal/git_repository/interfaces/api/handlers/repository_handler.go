@@ -181,12 +181,13 @@ func (h *RepositoryHandler) ListRepositoryFiles(c *gin.Context) {
 
 // GetFileContents godoc
 // @Summary Get file contents from a repository
-// @Description Retrieves the content of a specific file from a repository by its file path provided as a query parameter.
+// @Description Retrieves the content of a specific file from a repository by its file path provided as a query parameter. Optionally specify a commit hash to retrieve a specific version.
 // @Tags repositories
 // @Produce  json
 // @Security BearerAuth
 // @Param   repoId path string true "Repository ID" example:"a1b2c3d4-e5f6-7890-1234-567890abcdef"
 // @Param   path query string true "File path in the repository" example:"README.md" example:"docs/adr/0001.md"
+// @Param   commit query string false "Commit hash (defaults to latest)" example:"abc1234567890def"
 // @Success 200 {object} schema.GetFileContentsResponse "Successfully retrieved file contents"
 // @Failure 400 {object} schema.ErrorResponse "Invalid repository ID or file path"
 // @Failure 401 {object} schema.ErrorResponse "Authentication required"
@@ -196,6 +197,7 @@ func (h *RepositoryHandler) ListRepositoryFiles(c *gin.Context) {
 func (h *RepositoryHandler) GetFileContents(c *gin.Context) {
 	repoId := c.Param("repoId")
 	filePath := c.Query("path")
+	commit := c.DefaultQuery("commit", "") // Empty string means latest
 	requestID := c.GetString("request_id")
 
 	if repoId == "" {
@@ -218,22 +220,23 @@ func (h *RepositoryHandler) GetFileContents(c *gin.Context) {
 		return
 	}
 
-	h.logger.Info("Getting file contents", "request_id", requestID, "repo_id", repoId, "file_path", filePath, "user_id", userID)
-	content, err := h.repoUseCase.GetFileContents(c.Request.Context(), repoId, filePath, userID.(string))
+	h.logger.Info("Getting file contents", "request_id", requestID, "repo_id", repoId, "file_path", filePath, "commit", commit, "user_id", userID)
+	content, actualCommit, err := h.repoUseCase.GetFileContents(c.Request.Context(), repoId, filePath, userID.(string), commit)
 
 	if err != nil {
 		// Use error mapper to convert application errors to HTTP errors
 		httpErr := intererror.MapToHTTPError(err, requestID)
-		h.logger.Error("Failed to retrieve file contents", "request_id", requestID, "repo_id", repoId, "file_path", filePath, "error", err.Error(), "http_code", httpErr.Code)
+		h.logger.Error("Failed to retrieve file contents", "request_id", requestID, "repo_id", repoId, "file_path", filePath, "commit", commit, "error", err.Error(), "http_code", httpErr.Code)
 		c.JSON(httpErr.StatusCode, schema.ErrorResponse{Code: httpErr.Code, Message: httpErr.Message})
 		return
 	}
 
-	h.logger.Info("Successfully retrieved file contents", "request_id", requestID, "repo_id", repoId, "file_path", filePath, "content_length", len(content))
+	h.logger.Info("Successfully retrieved file contents", "request_id", requestID, "repo_id", repoId, "file_path", filePath, "commit", actualCommit, "content_length", len(content))
 	c.JSON(http.StatusOK, schema.GetFileContentsResponse{
-		RepoID:   repoId,
-		FilePath: filePath,
-		Content:  content,
+		RepoID:     repoId,
+		FilePath:   filePath,
+		Content:    content,
+		CommitHash: &actualCommit,
 	})
 }
 

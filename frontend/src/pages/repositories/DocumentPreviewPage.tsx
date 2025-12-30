@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useRepositoryQueryService } from "@/features/repository";
 import { useQuery } from "@tanstack/react-query";
 import type {
@@ -8,6 +8,7 @@ import type {
 import { Page } from "@/shared/types/Page";
 import { useEffect, useState } from "react";
 import { MarkdownProcessor } from "@/features/markdown/processor";
+import { FileCommitHistory } from "@/features/repository/presentation/components/FileCommitHistory";
 import "@/features/markdown/markdown.css";
 // import { useDocumentRegistration } from "@/features/document/hooks/useDocumentRegistration";
 // import { DocumentRegistrationDialog } from "@/features/document/components/DocumentRegistrationDialog";
@@ -85,6 +86,8 @@ export const DocumentPreviewPage: Page<"repoId" | "filePath"> = ({
   path: { repoId, filePath },
 }) => {
   const [Component, setComponent] = useState<React.ReactElement | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const commit = searchParams.get("commit") || undefined;
   // const [isDialogOpen, setIsDialogOpen] = useState(false);
   const queryService = useRepositoryQueryService();
   // const navigate = useNavigate();
@@ -93,8 +96,8 @@ export const DocumentPreviewPage: Page<"repoId" | "filePath"> = ({
   // const { actions: notificationActions } = useNotifications();
 
   const query = useQuery({
-    queryKey: ["repositories", repoId, "files", filePath],
-    queryFn: () => queryService.getFileContent(repoId!, filePath!),
+    queryKey: ["repositories", repoId, "files", filePath, commit],
+    queryFn: () => queryService.getFileContent(repoId!, filePath!, commit),
   });
 
   useEffect(() => {
@@ -106,6 +109,10 @@ export const DocumentPreviewPage: Page<"repoId" | "filePath"> = ({
       );
     }
   }, [query]);
+
+  const handleCommitSelect = (commitHash: string) => {
+    setSearchParams({ commit: commitHash });
+  };
 
   // const handleRegisterDocument = async (options: {
   //   accessScope: "public" | "private";
@@ -169,7 +176,14 @@ export const DocumentPreviewPage: Page<"repoId" | "filePath"> = ({
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Documentation</h1>
+        <div>
+          <h1 className="text-2xl font-bold">Documentation</h1>
+          {query.data?.commitHash && (
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              Viewing commit: {query.data.commitHash.substring(0, 7)}
+            </p>
+          )}
+        </div>
         <div className="flex gap-3">
           {/* <button
             onClick={() => setIsDialogOpen(true)}
@@ -187,12 +201,23 @@ export const DocumentPreviewPage: Page<"repoId" | "filePath"> = ({
       </div>
 
       <div className="flex flex-col md:flex-row gap-6">
-        <div className="w-full md:w-1/4 bg-white dark:bg-gray-800 rounded-lg shadow-md">
-          {meta.type === "procedure" && <ProcedureMetaComponent meta={meta} />}
-          {meta.type === "knowledge" && <KnowledgeMetaComponent meta={meta} />}
+        <div className="w-full md:w-1/4 space-y-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4">
+            {meta.type === "procedure" && <ProcedureMetaComponent meta={meta} />}
+            {meta.type === "knowledge" && <KnowledgeMetaComponent meta={meta} />}
+          </div>
+
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4">
+            <FileCommitHistory
+              repoId={repoId!}
+              filePath={filePath!}
+              currentCommit={query.data?.commitHash}
+              onCommitSelect={handleCommitSelect}
+            />
+          </div>
         </div>
 
-        <div className="p-6 md:p-8 bg-white dark:bg-gray-800 rounded-lg shadow-md">
+        <div className="flex-1 p-6 md:p-8 bg-white dark:bg-gray-800 rounded-lg shadow-md">
           <article className="markdown-content max-w-none">{Component}</article>
         </div>
       </div>

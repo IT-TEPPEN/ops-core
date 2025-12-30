@@ -4,6 +4,7 @@ import type {
   RepositoryViewData,
   FileNodeViewData,
   DocumentContentViewData,
+  FileCommitViewData,
   PagedResponse,
 } from "../../application";
 import { DocumentMeta } from "../../types/repository";
@@ -13,6 +14,7 @@ import type {
   ApiRepositoryResponse,
   ApiListFilesResponse,
   ApiFileContentResponse,
+  ApiFileHistoryResponse,
 } from "../types";
 
 /**
@@ -68,10 +70,19 @@ export class HttpRepositoryQueryService
 
   async getFileContent(
     repoId: string,
-    filePath: string
+    filePath: string,
+    commit?: string
   ): Promise<DocumentContentViewData> {
+    const params = new URLSearchParams({
+      path: filePath,
+    });
+
+    if (commit) {
+      params.append("commit", commit);
+    }
+
     const response = await this.get<ApiFileContentResponse>(
-      `/${repoId}/files/content?path=${encodeURIComponent(filePath)}`
+      `/${repoId}/files/content?${params.toString()}`
     );
 
     const { content, data: meta } = matter(response.content);
@@ -81,7 +92,25 @@ export class HttpRepositoryQueryService
       filePath: response.filePath,
       content,
       meta: meta as DocumentMeta,
+      commitHash: response.commit_hash,
     };
+  }
+
+  async getFileHistory(
+    repoId: string,
+    filePath: string
+  ): Promise<FileCommitViewData[]> {
+    const response = await this.get<ApiFileHistoryResponse>(
+      `/${repoId}/files/history?path=${encodeURIComponent(filePath)}`
+    );
+
+    return response.commits.map((commit) => ({
+      commitHash: commit.commit_hash,
+      message: commit.message,
+      author: commit.author,
+      authorEmail: commit.author_email,
+      date: new Date(commit.date),
+    }));
   }
 
   /**

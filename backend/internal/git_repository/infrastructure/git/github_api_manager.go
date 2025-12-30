@@ -298,10 +298,17 @@ func (g *githubApiManager) ValidateFilesExist(ctx context.Context, localPath str
 }
 
 // ReadManagedFileContent reads the content of a repository file with on-demand fetching.
+// This method now uses commit-based caching for better consistency.
 func (g *githubApiManager) ReadManagedFileContent(ctx context.Context, localPath string, filePath string, repo entity.Repository) ([]byte, error) {
 	// Security check: ensure the filePath doesn't contain path traversal sequences
 	if strings.Contains(filePath, "..") {
 		return nil, fmt.Errorf("invalid file path containing path traversal sequences: %s", filePath)
+	}
+
+	// Get the latest commit to ensure we're fetching the current version
+	latestCommit, err := g.GetLatestCommit(ctx, repo)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get latest commit for caching: %w", err)
 	}
 
 	// Determine the local cache path
@@ -309,43 +316,105 @@ func (g *githubApiManager) ReadManagedFileContent(ctx context.Context, localPath
 		localPath = g.getLocalPath(repo)
 	}
 
-	// Join the local repository path with the requested file path
-	fullPath := filepath.Join(localPath, filePath)
+	// Check commit-based cache first (Phase 4: commit-specific caching)
+	commitCachePath := filepath.Join(localPath, "commits", latestCommit.Hash)
+	commitFullPath := filepath.Join(commitCachePath, filePath)
 
-	// Ensure the resulting path is still within the repository directory
+	// Ensure the path is within the repository directory
 	absLocalPath, _ := filepath.Abs(localPath)
-	absFullPath, _ := filepath.Abs(fullPath)
-	if !strings.HasPrefix(absFullPath, absLocalPath) {
+	absCommitFullPath, _ := filepath.Abs(commitFullPath)
+	if !strings.HasPrefix(absCommitFullPath, absLocalPath) {
 		return nil, fmt.Errorf("invalid file path: attempt to access file outside repository directory")
 	}
 
-	// Try to read from local cache first
-	content, err := os.ReadFile(fullPath)
+	// Try to read from commit-based cache
+	content, err := os.ReadFile(commitFullPath)
 	if err == nil {
-		fmt.Printf("Reading file from cache: %s\n", filePath)
+		fmt.Printf("Reading file from commit-based cache: %s (commit: %s)\n", filePath, latestCommit.Hash)
 		return content, nil
 	}
 
-	// If file not found locally, fetch from GitHub API
+	// If not in commit cache, fetch from GitHub API at the latest commit
 	if os.IsNotExist(err) {
-		fmt.Printf("Fetching file from GitHub API: %s\n", filePath)
+		fmt.Printf("Fetching file from GitHub API at latest commit: %s (commit: %s)\n", filePath, latestCommit.Hash)
 
-		// Extract owner and repo name from URL
-		owner, repoName, err := parseGitHubURL(repo.URL())
+		// Use ReadFileAtCommit to fetch and cache the file
+		content, _, err := g.ReadFileAtCommit(ctx, filePath, latestCommit.Hash, repo)
 		if err != nil {
 			return nil, err
 		}
 
-		// Get file content via GitHub API
-		client := g.getGitHubClient(repo.AccessToken())
-		fileContent, _, _, err := client.Repositories.GetContents(ctx, owner, repoName, filePath, &github.RepositoryContentGetOptions{})
+		return content, nil
+	}
+
+	// Other error reading file
+	return nil, fmt.Errorf("failed to read file %s: %w", commitFullPath, err)
+}
+
+// ReadFileAtCommit reads the content of a file at a specific commit.
+// If commitHash is empty, reads from the latest commit. Returns content and actual commit hash.
+func (g *githubApiManager) ReadFileAtCommit(ctx context.Context, filePath string, commitHash string, repo entity.Repository) ([]byte, string, error) {
+	// Security check: ensure the filePath doesn't contain path traversal sequences
+	if strings.Contains(filePath, "..") {
+		return nil, "", fmt.Errorf("invalid file path containing path traversal sequences: %s", filePath)
+	}
+
+	// If commitHash is empty, get the latest commit
+	actualCommit := commitHash
+	if actualCommit == "" {
+		latestCommit, err := g.GetLatestCommit(ctx, repo)
 		if err != nil {
-			return nil, fmt.Errorf("failed to get file content from API: %w", err)
+			return nil, "", fmt.Errorf("failed to get latest commit: %w", err)
+		}
+		actualCommit = latestCommit.Hash
+		fmt.Printf("Using latest commit: %s for file: %s\n", actualCommit, filePath)
+	}
+
+	// Check cache first (Phase 4: commit-based caching)
+	localPath := g.getLocalPath(repo)
+	commitCachePath := filepath.Join(localPath, "commits", actualCommit)
+	fullPath := filepath.Join(commitCachePath, filePath)
+
+	// Ensure the path is within the repository directory
+	absLocalPath, _ := filepath.Abs(localPath)
+	absFullPath, _ := filepath.Abs(fullPath)
+	if !strings.HasPrefix(absFullPath, absLocalPath) {
+		return nil, "", fmt.Errorf("invalid file path: attempt to access file outside repository directory")
+	}
+
+	// Try to read from commit-based cache
+	content, err := os.ReadFile(fullPath)
+	if err == nil {
+		fmt.Printf("Reading file from commit cache: %s (commit: %s)\n", filePath, actualCommit)
+		return content, actualCommit, nil
+	}
+
+	// Cache miss - fetch from GitHub API
+	if os.IsNotExist(err) {
+		fmt.Printf("Cache miss - fetching from GitHub API: %s (commit: %s)\n", filePath, actualCommit)
+
+		// Extract owner and repo name from URL
+		owner, repoName, err := parseGitHubURL(repo.URL())
+		if err != nil {
+			return nil, "", err
+		}
+
+		// Get GitHub client
+		client := g.getGitHubClient(repo.AccessToken())
+
+		// Get file content at the specific commit
+		opts := &github.RepositoryContentGetOptions{
+			Ref: actualCommit,
+		}
+
+		fileContent, _, _, err := client.Repositories.GetContents(ctx, owner, repoName, filePath, opts)
+		if err != nil {
+			return nil, "", fmt.Errorf("failed to get file content at commit %s: %w", actualCommit, err)
 		}
 
 		contentStr, err := fileContent.GetContent()
 		if err != nil {
-			return nil, fmt.Errorf("failed to decode content from API: %w", err)
+			return nil, "", fmt.Errorf("failed to decode content from API: %w", err)
 		}
 
 		content = []byte(contentStr)
@@ -358,15 +427,15 @@ func (g *githubApiManager) ReadManagedFileContent(ctx context.Context, localPath
 			if err := os.WriteFile(fullPath, content, 0644); err != nil {
 				fmt.Printf("Warning: failed to cache file %s: %v\n", fullPath, err)
 			} else {
-				fmt.Printf("Cached file: %s\n", fullPath)
+				fmt.Printf("Cached file at commit %s: %s\n", actualCommit, fullPath)
 			}
 		}
 
-		return content, nil
+		return content, actualCommit, nil
 	}
 
 	// Other error reading file
-	return nil, fmt.Errorf("failed to read file %s: %w", fullPath, err)
+	return nil, "", fmt.Errorf("failed to read file %s: %w", fullPath, err)
 }
 
 // GetLatestCommit retrieves the latest commit information for the repository.

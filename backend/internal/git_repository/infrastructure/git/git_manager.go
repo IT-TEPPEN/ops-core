@@ -31,6 +31,9 @@ type GitManager interface {
 	ValidateFilesExist(ctx context.Context, localPath string, filePaths []string, repo entity.Repository) error
 	// ReadManagedFileContent reads the content of a specific file from the local repository.
 	ReadManagedFileContent(ctx context.Context, localPath string, filePath string, repo entity.Repository) ([]byte, error)
+	// ReadFileAtCommit reads the content of a file at a specific commit.
+	// If commitHash is empty, reads from the latest commit. Returns content and actual commit hash.
+	ReadFileAtCommit(ctx context.Context, filePath string, commitHash string, repo entity.Repository) ([]byte, string, error)
 	// GetLatestCommit retrieves the latest commit information for the repository.
 	GetLatestCommit(ctx context.Context, repo entity.Repository) (*CommitInfo, error)
 	// GetFileCommitHistory retrieves the commit history for a specific file.

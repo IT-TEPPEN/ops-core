@@ -80,7 +80,9 @@ export class V1ApiClient {
             }
 
             // Attempt to refresh the token
-            const response = await axios.post(`${this.client.defaults.baseURL?.replace(/(\/[^\/]*)?$/, '')}/api/v1/auth/refresh`, {
+            // Extract base URL without resource path (e.g., "/api/v1/auth" -> "/api/v1")
+            const baseUrl = this.client.defaults.baseURL?.replace(/\/api\/v1.*$/, '') || '';
+            const response = await axios.post(`${baseUrl}/api/v1/auth/refresh`, {
               refresh_token: refreshToken,
             });
 

@@ -29,6 +29,20 @@ export interface ApiFileContentResponse {
   repoId: string;
   filePath: string;
   content: string;
+  commit_hash?: string;
+}
+
+export interface ApiFileCommitInfo {
+  commit_hash: string;
+  message: string;
+  author: string;
+  author_email: string;
+  date: string;
+}
+
+export interface ApiFileHistoryResponse {
+  file_path: string;
+  commits: ApiFileCommitInfo[];
 }
 
 export interface ApiUpdateTokenResponse {

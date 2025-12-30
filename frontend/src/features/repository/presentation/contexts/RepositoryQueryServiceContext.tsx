@@ -1,4 +1,4 @@
-import { createContext, ReactNode, useMemo } from "react";
+import { createContext, ReactNode, useContext, useMemo } from "react";
 import type { RepositoryQueryService } from "../../application";
 import { HttpRepositoryQueryService } from "../../infrastructure";
 
@@ -19,6 +19,16 @@ export function RepositoryQueryServiceProvider({
       {children}
     </RepositoryQueryServiceContext.Provider>
   );
+}
+
+export function useRepositoryQueryService(): RepositoryQueryService {
+  const context = useContext(RepositoryQueryServiceContext);
+  if (!context) {
+    throw new Error(
+      "useRepositoryQueryService must be used within RepositoryQueryServiceProvider"
+    );
+  }
+  return context;
 }
 
 export { RepositoryQueryServiceContext };

@@ -10,5 +10,6 @@ export type {
   RepositoryViewData,
   FileNodeViewData,
   DocumentContentViewData,
+  FileCommitViewData,
   PagedResponse,
 } from "./dto";
