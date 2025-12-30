@@ -2,8 +2,8 @@
  * Tabs component
  */
 
+import { TabItem } from "@/shared/types/ui";
 import { useState, useCallback } from "react";
-import type { TabItem } from "../../../shared/types/ui";
 
 export interface TabsProps {
   /** Tab items */
@@ -25,7 +25,9 @@ export function Tabs({
   onTabChange,
   className = "",
 }: TabsProps) {
-  const [internalActiveTab, setInternalActiveTab] = useState(items[0]?.id ?? "");
+  const [internalActiveTab, setInternalActiveTab] = useState(
+    items[0]?.id ?? ""
+  );
 
   const activeTab = controlledActiveTab ?? internalActiveTab;
 
@@ -61,7 +63,11 @@ export function Tabs({
                       ? "border-blue-500 text-blue-600 dark:text-blue-400"
                       : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600"
                   }
-                  ${item.disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
+                  ${
+                    item.disabled
+                      ? "opacity-50 cursor-not-allowed"
+                      : "cursor-pointer"
+                  }
                 `}
                 aria-current={isActive ? "page" : undefined}
               >
@@ -73,9 +79,7 @@ export function Tabs({
       </div>
 
       {/* Tab content */}
-      <div className="pt-4">
-        {activeItem?.content}
-      </div>
+      <div className="pt-4">{activeItem?.content}</div>
     </div>
   );
 }

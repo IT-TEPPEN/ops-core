@@ -1,5 +1,5 @@
+import { VariableDefinition } from "@/shared/types/domain";
 import { useState } from "react";
-import { VariableDefinition } from "../../../shared/types/domain";
 
 export interface VariableFormProps {
   variables: VariableDefinition[];
@@ -8,21 +8,23 @@ export interface VariableFormProps {
   onValidate?: () => Promise<boolean>;
 }
 
-export function VariableForm({ 
-  variables, 
-  values, 
-  onChange, 
-  onValidate 
+export function VariableForm({
+  variables,
+  values,
+  onChange,
+  onValidate,
 }: VariableFormProps) {
-  const [validationErrors, setValidationErrors] = useState<{ [key: string]: string }>({});
+  const [validationErrors, setValidationErrors] = useState<{
+    [key: string]: string;
+  }>({});
   const [isValidating, setIsValidating] = useState(false);
 
   const handleValidate = async () => {
     if (!onValidate) return true;
-    
+
     setIsValidating(true);
     setValidationErrors({});
-    
+
     try {
       const isValid = await onValidate();
       return isValid;
@@ -39,8 +41,8 @@ export function VariableForm({
     const hasError = !!validationErrors[variable.name];
 
     const inputClassName = `w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white ${
-      hasError 
-        ? "border-red-500 dark:border-red-500" 
+      hasError
+        ? "border-red-500 dark:border-red-500"
         : "border-gray-300 dark:border-gray-700"
     }`;
 
@@ -53,7 +55,9 @@ export function VariableForm({
             onChange={(e) => onChange(variable.name, e.target.value)}
             className={inputClassName}
             aria-label={variable.label}
-            aria-describedby={variable.description ? `${variable.name}-description` : undefined}
+            aria-describedby={
+              variable.description ? `${variable.name}-description` : undefined
+            }
             aria-invalid={hasError}
           />
         );
@@ -74,7 +78,9 @@ export function VariableForm({
             }}
             className={inputClassName}
             aria-label={variable.label}
-            aria-describedby={variable.description ? `${variable.name}-description` : undefined}
+            aria-describedby={
+              variable.description ? `${variable.name}-description` : undefined
+            }
             aria-invalid={hasError}
           />
         );
@@ -88,7 +94,11 @@ export function VariableForm({
               onChange={(e) => onChange(variable.name, e.target.checked)}
               className="h-4 w-4 text-blue-500 focus:ring-blue-500 border-gray-300 rounded"
               aria-label={variable.label}
-              aria-describedby={variable.description ? `${variable.name}-description` : undefined}
+              aria-describedby={
+                variable.description
+                  ? `${variable.name}-description`
+                  : undefined
+              }
             />
           </div>
         );
@@ -101,7 +111,9 @@ export function VariableForm({
             onChange={(e) => onChange(variable.name, e.target.value)}
             className={inputClassName}
             aria-label={variable.label}
-            aria-describedby={variable.description ? `${variable.name}-description` : undefined}
+            aria-describedby={
+              variable.description ? `${variable.name}-description` : undefined
+            }
             aria-invalid={hasError}
           />
         );
@@ -118,28 +130,30 @@ export function VariableForm({
   return (
     <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
       <h2 className="text-lg font-semibold mb-4">Variables</h2>
-      
+
       <div className="space-y-4">
         {variables.map((variable) => (
           <div key={variable.name}>
             <label className="block text-sm font-medium mb-1">
               {variable.label}
               {variable.required && (
-                <span className="text-red-500 ml-1" aria-label="required">*</span>
+                <span className="text-red-500 ml-1" aria-label="required">
+                  *
+                </span>
               )}
             </label>
-            
+
             {renderInput(variable)}
-            
+
             {variable.description && (
-              <p 
+              <p
                 id={`${variable.name}-description`}
                 className="mt-1 text-xs text-gray-500 dark:text-gray-400"
               >
                 {variable.description}
               </p>
             )}
-            
+
             {validationErrors[variable.name] && (
               <p className="mt-1 text-xs text-red-500" role="alert">
                 {validationErrors[variable.name]}

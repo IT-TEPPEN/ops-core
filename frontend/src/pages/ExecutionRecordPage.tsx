@@ -1,10 +1,6 @@
 import { useParams, Link } from "react-router-dom";
 import { useEffect, useState } from "react";
-import {
-  ThreePaneLayout,
-  VariableForm,
-  ExecutionStepPanel,
-} from "@/features/common/components";
+import { ThreePaneLayout, VariableForm } from "@/features/common/components";
 import { useExecutionRecord } from "@/features/execution/hooks/useExecutionRecord";
 import { useDocumentExecution } from "@/features/document/hooks/useDocumentExecution";
 import { MarkdownProcessor } from "@/features/markdown";
@@ -42,8 +38,6 @@ function ExecutionRecordPage() {
     handleStartExecution,
     handleUpdateTitle,
     handleUpdateNotes,
-    handleAddStep,
-    handleUpdateStepNotes,
     handleComplete,
     handleFail,
   } = useExecutionRecord({
@@ -257,13 +251,13 @@ function ExecutionRecordPage() {
           </div>
 
           {/* Steps */}
-          {executionRecord.status === "in_progress" && (
+          {/* {executionRecord.status === "in_progress" && (
             <ExecutionStepPanel
               steps={executionRecord.steps}
               onAddStep={handleAddStep}
               onUpdateStepNotes={handleUpdateStepNotes}
             />
-          )}
+          )} */}
 
           {/* Action Buttons */}
           {executionRecord.status === "in_progress" && (
@@ -288,12 +282,12 @@ function ExecutionRecordPage() {
           {/* Timestamps */}
           <div className="text-xs text-gray-500 dark:text-gray-400 space-y-1 pt-4 border-t border-gray-200 dark:border-gray-700">
             <p>
-              Started: {new Date(executionRecord.started_at).toLocaleString()}
+              Started: {new Date(executionRecord.createdAt).toLocaleString()}
             </p>
-            {executionRecord.completed_at && (
+            {executionRecord.completedAt && (
               <p>
                 Completed:{" "}
-                {new Date(executionRecord.completed_at).toLocaleString()}
+                {new Date(executionRecord.completedAt).toLocaleString()}
               </p>
             )}
           </div>

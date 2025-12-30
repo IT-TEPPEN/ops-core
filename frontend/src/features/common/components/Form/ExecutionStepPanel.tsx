@@ -1,5 +1,5 @@
+import { ExecutionStep } from "@/shared/types/domain";
 import { useState } from "react";
-import { ExecutionStep } from "../../../shared/types/domain";
 
 export interface ExecutionStepPanelProps {
   steps: ExecutionStep[];

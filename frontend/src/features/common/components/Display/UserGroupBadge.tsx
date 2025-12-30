@@ -1,7 +1,7 @@
-import { getUserGroups } from "@/shared/api";
 import { Group } from "@/shared/types/domain";
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { useUserQueryService } from "../../presentation/contexts";
 
 interface UserGroupBadgeProps {
   userId: string;
@@ -15,13 +15,14 @@ export const UserGroupBadge: React.FC<UserGroupBadgeProps> = ({
   userId,
   maxDisplay = 3,
 }) => {
+  const userQueryService = useUserQueryService();
   const [groups, setGroups] = useState<Group[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchGroups = async () => {
       try {
-        const userGroups = await getUserGroups(userId);
+        const userGroups = await userQueryService.getUserGroups(userId);
         setGroups(userGroups);
       } catch (err) {
         console.error("Failed to load user groups:", err);
@@ -31,7 +32,7 @@ export const UserGroupBadge: React.FC<UserGroupBadgeProps> = ({
     };
 
     fetchGroups();
-  }, [userId]);
+  }, [userId, userQueryService]);
 
   if (isLoading) {
     return (

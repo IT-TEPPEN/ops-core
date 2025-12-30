@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { ViewHistoryList } from "./ViewHistoryList";
-import type { ViewHistory } from "../../../shared/types/domain";
+import { ViewHistory } from "@/shared/types/domain";
 
 describe("ViewHistoryList", () => {
   const mockItems: ViewHistory[] = [
@@ -29,13 +29,17 @@ describe("ViewHistoryList", () => {
   });
 
   it("shows loading spinner when isLoading is true", () => {
-    const { container } = render(<ViewHistoryList items={[]} isLoading={true} />);
+    const { container } = render(
+      <ViewHistoryList items={[]} isLoading={true} />
+    );
     expect(container.querySelector(".animate-spin")).toBeInTheDocument();
   });
 
   it("shows empty state when no items", () => {
     render(<ViewHistoryList items={[]} />);
-    expect(screen.getByText("No view history records found.")).toBeInTheDocument();
+    expect(
+      screen.getByText("No view history records found.")
+    ).toBeInTheDocument();
   });
 
   it("displays correct number of rows", () => {

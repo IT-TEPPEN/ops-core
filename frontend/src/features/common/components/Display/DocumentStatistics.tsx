@@ -1,8 +1,9 @@
+import { DocumentStatistics as Statistics } from "@/shared/types/domain";
 import { formatDateTime } from "@/shared/utils";
 import React from "react";
 
 export interface DocumentStatisticsProps {
-  statistics: DocumentType;
+  statistics: Statistics;
   isLoading?: boolean;
 }
 

@@ -1,5 +1,5 @@
+import { DocumentApiClient } from "@/adapters";
 import { useState } from "react";
-import { DocumentApiClient } from "@/shared/api/documentApi";
 
 export interface DocumentRegistrationOptions {
   accessScope: "public" | "private";

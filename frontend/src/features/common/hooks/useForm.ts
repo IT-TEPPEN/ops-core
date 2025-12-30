@@ -2,9 +2,9 @@
  * Custom hook for form management
  */
 
+import { FormState } from "@/shared/types/ui";
+import { ValidationFn } from "@/shared/utils";
 import { useState, useCallback, useMemo } from "react";
-import type { FormState } from "../types/ui";
-import type { ValidationFn } from "../utils/validation";
 
 export interface UseFormOptions<T> {
   /** Initial form values */
@@ -32,7 +32,11 @@ export interface UseFormResult<T> extends FormState<T> {
   getFieldProps: (name: keyof T) => {
     name: keyof T;
     value: unknown;
-    onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => void;
+    onChange: (
+      e: React.ChangeEvent<
+        HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+      >
+    ) => void;
     onBlur: () => void;
   };
 }
@@ -81,7 +85,7 @@ export function useForm<T extends Record<string, unknown>>(
   const handleChange = useCallback(
     (name: keyof T, value: unknown) => {
       setValues((prev) => ({ ...prev, [name]: value }));
-      
+
       // Clear error when user starts typing
       if (errors[name]) {
         setErrors((prev) => ({ ...prev, [name]: undefined }));
@@ -93,7 +97,7 @@ export function useForm<T extends Record<string, unknown>>(
   const handleBlur = useCallback(
     (name: keyof T) => {
       setTouched((prev) => ({ ...prev, [name]: true }));
-      
+
       const error = validateField(name, values[name]);
       if (error) {
         setErrors((prev) => ({ ...prev, [name]: error }));
@@ -152,9 +156,16 @@ export function useForm<T extends Record<string, unknown>>(
     (name: keyof T) => ({
       name,
       value: values[name],
-      onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+      onChange: (
+        e: React.ChangeEvent<
+          HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+        >
+      ) => {
         const target = e.target;
-        const value = target.type === "checkbox" ? (target as HTMLInputElement).checked : target.value;
+        const value =
+          target.type === "checkbox"
+            ? (target as HTMLInputElement).checked
+            : target.value;
         handleChange(name, value);
       },
       onBlur: () => handleBlur(name),

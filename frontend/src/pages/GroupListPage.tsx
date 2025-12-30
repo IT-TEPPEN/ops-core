@@ -1,28 +1,29 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { createGroup, listGroups } from "@/shared/api";
 import { GroupForm, GroupList } from "@/features/common/components";
 import { Group } from "@/shared/types/domain";
+import {
+  useGroupQueryService,
+  useGroupCommandService,
+} from "@/features/group";
 
 /**
  * GroupListPage displays all groups and allows creating new ones
  */
 const GroupListPage: React.FC = () => {
+  const groupQueryService = useGroupQueryService();
+  const groupCommandService = useGroupCommandService();
   const [groups, setGroups] = useState<Group[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    fetchGroups();
-  }, []);
-
   const fetchGroups = async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await listGroups();
+      const data = await groupQueryService.list();
       setGroups(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load groups");
@@ -31,9 +32,13 @@ const GroupListPage: React.FC = () => {
     }
   };
 
+  useEffect(() => {
+    fetchGroups();
+  }, [groupQueryService]);
+
   const handleCreate = async (data: { name: string; description: string }) => {
     try {
-      const newGroup = await createGroup(data);
+      const newGroup = await groupCommandService.create(data);
       setShowCreateForm(false);
       navigate(`/groups/${newGroup.id}`);
     } catch (err) {

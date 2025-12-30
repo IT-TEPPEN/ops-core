@@ -30,6 +30,8 @@ export function useDocumentRegistration() {
     setIsLoading(true);
     setError(null);
 
+    console.log(commitHash);
+
     try {
       const request: CreateDocumentRequest = {
         repositoryId,

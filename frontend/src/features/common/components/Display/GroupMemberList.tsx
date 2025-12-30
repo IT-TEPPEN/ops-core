@@ -1,5 +1,5 @@
+import { User } from "@/shared/types/domain";
 import React from "react";
-import type { User } from "../../../shared/types/domain";
 
 interface GroupMemberListProps {
   members: User[];
@@ -17,9 +17,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
 }) => {
   if (isLoading) {
     return (
-      <div className="text-center text-gray-500 py-8">
-        Loading members...
-      </div>
+      <div className="text-center text-gray-500 py-8">Loading members...</div>
     );
   }
 

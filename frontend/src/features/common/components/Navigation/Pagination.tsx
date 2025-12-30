@@ -2,7 +2,7 @@
  * Pagination component
  */
 
-import type { Size } from "../../../shared/types/ui";
+import { Size } from "@/shared/types/ui";
 
 export interface PaginationProps {
   /** Current page (1-indexed) */
@@ -93,7 +93,10 @@ export function Pagination({
   `;
 
   return (
-    <nav className={`flex items-center gap-1 ${className}`} aria-label="Pagination">
+    <nav
+      className={`flex items-center gap-1 ${className}`}
+      aria-label="Pagination"
+    >
       {/* First page button */}
       {showFirstLast && (
         <button

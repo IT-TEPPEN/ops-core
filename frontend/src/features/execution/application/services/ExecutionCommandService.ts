@@ -1,7 +1,6 @@
 import type {
   ExecutionRecordViewData,
   CreateExecutionRecordRequest,
-  UpdateExecutionRecordRequest,
   AddExecutionStepRequest,
   UpdateStepNotesRequest,
 } from "../dto";

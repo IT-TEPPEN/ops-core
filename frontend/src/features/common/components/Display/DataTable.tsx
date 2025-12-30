@@ -3,7 +3,7 @@
  */
 
 import type { ReactNode } from "react";
-import type { TableColumn } from "../../../shared/types/ui";
+import type { TableColumn } from "@/shared/types/ui";
 
 export interface DataTableProps<T> {
   /** Data to display */
@@ -90,7 +90,11 @@ export function DataTable<T>({
               key={String(item[keyField])}
               onClick={() => onRowClick?.(item)}
               className={`
-                ${onRowClick ? "cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700" : ""}
+                ${
+                  onRowClick
+                    ? "cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700"
+                    : ""
+                }
                 transition-colors
               `}
             >

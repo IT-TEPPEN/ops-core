@@ -1,10 +1,13 @@
 import { useState, useEffect, useCallback } from "react";
-import {
-  gitProviderApi,
+import type {
   GitProvider,
   OAuthConnection,
   GitRepository,
-} from "@/shared/api/gitProviderApi";
+} from "../types";
+import {
+  useOAuthQueryService,
+  useOAuthCommandService,
+} from "../presentation/contexts";
 
 interface UseGitProviderState {
   connections: OAuthConnection[];
@@ -26,6 +29,9 @@ interface UseGitProviderReturn extends UseGitProviderState {
  * Gitプロバイダーとの接続状態を管理するフック
  */
 export function useGitProvider(): UseGitProviderReturn {
+  const oauthQueryService = useOAuthQueryService();
+  const oauthCommandService = useOAuthCommandService();
+
   const [state, setState] = useState<UseGitProviderState>({
     connections: [],
     repositories: [],
@@ -37,7 +43,7 @@ export function useGitProvider(): UseGitProviderReturn {
   const refreshConnections = useCallback(async () => {
     setState((prev) => ({ ...prev, isLoadingConnections: true, error: null }));
     try {
-      const connections = await gitProviderApi.listConnections();
+      const connections = await oauthQueryService.listConnections();
       setState((prev) => ({
         ...prev,
         connections,
@@ -53,7 +59,7 @@ export function useGitProvider(): UseGitProviderReturn {
             : "Failed to load OAuth connections",
       }));
     }
-  }, []);
+  }, [oauthQueryService]);
 
   const isConnected = useCallback(
     (provider: GitProvider): boolean => {
@@ -69,34 +75,37 @@ export function useGitProvider(): UseGitProviderReturn {
     [state.connections]
   );
 
-  const loadRepositories = useCallback(async (provider: GitProvider) => {
-    setState((prev) => ({
-      ...prev,
-      isLoadingRepositories: true,
-      repositories: [],
-      error: null,
-    }));
-    try {
-      const repositories = await gitProviderApi.listRepositories(provider);
+  const loadRepositories = useCallback(
+    async (provider: GitProvider) => {
       setState((prev) => ({
         ...prev,
-        repositories,
-        isLoadingRepositories: false,
+        isLoadingRepositories: true,
+        repositories: [],
+        error: null,
       }));
-    } catch (err) {
-      setState((prev) => ({
-        ...prev,
-        isLoadingRepositories: false,
-        error:
-          err instanceof Error ? err.message : "Failed to load repositories",
-      }));
-    }
-  }, []);
+      try {
+        const repositories = await oauthQueryService.listRepositories(provider);
+        setState((prev) => ({
+          ...prev,
+          repositories,
+          isLoadingRepositories: false,
+        }));
+      } catch (err) {
+        setState((prev) => ({
+          ...prev,
+          isLoadingRepositories: false,
+          error:
+            err instanceof Error ? err.message : "Failed to load repositories",
+        }));
+      }
+    },
+    [oauthQueryService]
+  );
 
   const disconnect = useCallback(
     async (provider: GitProvider) => {
       try {
-        await gitProviderApi.disconnect(provider);
+        await oauthCommandService.disconnect(provider);
         await refreshConnections();
         setState((prev) => ({ ...prev, repositories: [] }));
       } catch (err) {
@@ -109,7 +118,7 @@ export function useGitProvider(): UseGitProviderReturn {
         }));
       }
     },
-    [refreshConnections]
+    [refreshConnections, oauthCommandService]
   );
 
   useEffect(() => {

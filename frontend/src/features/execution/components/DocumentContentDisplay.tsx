@@ -39,7 +39,7 @@ export function DocumentContentDisplay({
           <h3 className="font-semibold mb-3">Variables</h3>
           <div className="space-y-3">
             {variables.map((variable) => (
-              <div key={variable.id}>
+              <div key={variable.name}>
                 <label className="block text-sm font-medium mb-1">
                   {variable.name}
                   {variable.description && (
@@ -50,12 +50,22 @@ export function DocumentContentDisplay({
                 </label>
                 <input
                   type="text"
-                  value={variableValues[variable.id] || ""}
+                  value={variableValues[variable.name] || ""}
                   onChange={(e) =>
-                    onVariableChange(variable.id, e.target.value)
+                    onVariableChange(variable.name, e.target.value)
                   }
                   disabled={isExecutionStarted}
-                  placeholder={variable.default_value || ""}
+                  placeholder={
+                    typeof variable.defaultValue === "string"
+                      ? variable.defaultValue
+                      : typeof variable.defaultValue === "number"
+                      ? variable.defaultValue.toString()
+                      : typeof variable.defaultValue === "boolean"
+                      ? variable.defaultValue
+                        ? "true"
+                        : "false"
+                      : ""
+                  }
                   className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
                 />
               </div>

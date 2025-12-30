@@ -1,5 +1,5 @@
+import { ExecutionRecord } from "@/shared/types/domain";
 import { Link } from "react-router-dom";
-import { ExecutionRecord } from "../../../shared/types/domain";
 
 export interface ExecutionRecordListProps {
   records: ExecutionRecord[];
@@ -60,11 +60,15 @@ export function ExecutionRecordList({
                   <h3 className="font-medium">{record.title}</h3>
                   <div className="mt-2 flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
                     <span
-                      className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(record.status)}`}
+                      className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
+                        record.status
+                      )}`}
                     >
                       {record.status}
                     </span>
-                    <span>Started: {new Date(record.started_at).toLocaleString()}</span>
+                    <span>
+                      Started: {new Date(record.started_at).toLocaleString()}
+                    </span>
                     {record.completed_at && (
                       <span>
                         Completed:{" "}
@@ -78,7 +82,8 @@ export function ExecutionRecordList({
                     </p>
                   )}
                   <div className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                    {record.steps.length} step{record.steps.length !== 1 ? "s" : ""} recorded
+                    {record.steps.length} step
+                    {record.steps.length !== 1 ? "s" : ""} recorded
                   </div>
                 </div>
                 <Link

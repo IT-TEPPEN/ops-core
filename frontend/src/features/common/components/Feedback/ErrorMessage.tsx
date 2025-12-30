@@ -3,7 +3,7 @@
  */
 
 import type { ReactNode } from "react";
-import { XCircleIcon } from "@/ui";
+import { XCircleIcon, XIcon } from "@/ui";
 
 export interface ErrorMessageProps {
   /** Error title */

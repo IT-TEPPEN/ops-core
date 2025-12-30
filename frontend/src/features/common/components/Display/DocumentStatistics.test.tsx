@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { DocumentStatistics } from "./DocumentStatistics";
-import type { DocumentStatistics as DocumentStatisticsType } from "../../../shared/types/domain";
+import type { DocumentStatistics as DocumentStatisticsType } from "@/shared/types/domain";
 
 describe("DocumentStatistics", () => {
   const mockStatistics: DocumentStatisticsType = {
@@ -30,7 +30,9 @@ describe("DocumentStatistics", () => {
   });
 
   it("displays correct icons", () => {
-    const { container } = render(<DocumentStatistics statistics={mockStatistics} />);
+    const { container } = render(
+      <DocumentStatistics statistics={mockStatistics} />
+    );
     expect(container.textContent).toContain("📊");
     expect(container.textContent).toContain("👥");
     expect(container.textContent).toContain("🕒");

@@ -1,15 +1,9 @@
 import { useState, useEffect } from "react";
-import { ExecutionRecord } from "@/shared/types/domain";
+import type { ExecutionRecordViewData } from "../application/dto";
 import {
-  getExecutionRecord,
-  createExecutionRecord,
-  updateExecutionRecordTitle,
-  updateExecutionRecordNotes,
-  addExecutionStep,
-  updateStepNotes,
-  completeExecutionRecord,
-  failExecutionRecord,
-} from "@/shared/api";
+  useExecutionQueryService,
+  useExecutionCommandService,
+} from "../presentation/contexts";
 
 interface UseExecutionRecordProps {
   docId: string | undefined;
@@ -26,8 +20,11 @@ export function useExecutionRecord({
   variableValues,
   executionTitle,
 }: UseExecutionRecordProps) {
+  const executionQueryService = useExecutionQueryService();
+  const executionCommandService = useExecutionCommandService();
+
   const [executionRecord, setExecutionRecord] =
-    useState<ExecutionRecord | null>(null);
+    useState<ExecutionRecordViewData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -38,7 +35,7 @@ export function useExecutionRecord({
 
     const fetchRecord = async () => {
       try {
-        const record = await getExecutionRecord(recordId);
+        const record = await executionQueryService.getById(recordId);
         setExecutionRecord(record);
       } catch (err) {
         console.error("Error fetching execution record:", err);
@@ -47,7 +44,7 @@ export function useExecutionRecord({
     };
 
     fetchRecord();
-  }, [recordId]);
+  }, [recordId, executionQueryService]);
 
   const handleStartExecution = async () => {
     if (!docId || !documentVersionId) return;
@@ -58,11 +55,11 @@ export function useExecutionRecord({
         ([name, value]) => ({ name, value })
       );
 
-      const record = await createExecutionRecord({
-        document_id: docId,
-        document_version_id: documentVersionId,
+      const record = await executionCommandService.create({
+        documentId: docId,
+        documentVersionId: documentVersionId,
         title: executionTitle,
-        variable_values: variableValuesList,
+        variableValues: variableValuesList,
       });
 
       setExecutionRecord(record);
@@ -80,7 +77,7 @@ export function useExecutionRecord({
 
     setIsSaving(true);
     try {
-      const updated = await updateExecutionRecordTitle(
+      const updated = await executionCommandService.updateTitle(
         executionRecord.id,
         newTitle
       );
@@ -97,7 +94,7 @@ export function useExecutionRecord({
 
     setIsSaving(true);
     try {
-      const updated = await updateExecutionRecordNotes(
+      const updated = await executionCommandService.updateNotes(
         executionRecord.id,
         notes
       );
@@ -112,21 +109,22 @@ export function useExecutionRecord({
   const handleAddStep = async (stepNumber: number, description: string) => {
     if (!executionRecord) return;
 
-    const updated = await addExecutionStep(
-      executionRecord.id,
+    const updated = await executionCommandService.addStep(executionRecord.id, {
       stepNumber,
-      description
-    );
+      description,
+    });
     setExecutionRecord(updated);
   };
 
   const handleUpdateStepNotes = async (stepNumber: number, notes: string) => {
     if (!executionRecord) return;
 
-    const updated = await updateStepNotes(
+    const updated = await executionCommandService.updateStepNotes(
       executionRecord.id,
-      stepNumber,
-      notes
+      {
+        stepNumber,
+        notes,
+      }
     );
     setExecutionRecord(updated);
   };
@@ -136,7 +134,7 @@ export function useExecutionRecord({
 
     setIsSaving(true);
     try {
-      const updated = await completeExecutionRecord(executionRecord.id);
+      const updated = await executionCommandService.complete(executionRecord.id);
       setExecutionRecord(updated);
     } catch (err) {
       console.error("Failed to complete execution:", err);
@@ -150,7 +148,7 @@ export function useExecutionRecord({
 
     setIsSaving(true);
     try {
-      const updated = await failExecutionRecord(executionRecord.id);
+      const updated = await executionCommandService.fail(executionRecord.id);
       setExecutionRecord(updated);
     } catch (err) {
       console.error("Failed to fail execution:", err);

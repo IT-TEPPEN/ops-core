@@ -1,8 +1,4 @@
-interface ExecutionRecordPaneProps {
-  // Future props for execution record tracking
-}
-
-export function ExecutionRecordPane(props: ExecutionRecordPaneProps) {
+export function ExecutionRecordPane() {
   return (
     <div className="p-4">
       <h2 className="text-lg font-semibold mb-4">Execution Record</h2>

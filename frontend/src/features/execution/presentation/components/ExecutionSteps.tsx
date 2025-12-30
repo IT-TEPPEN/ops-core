@@ -12,7 +12,7 @@ export function ExecutionSteps({
   isSaving,
 }: ExecutionStepsProps) {
   const handleCheckboxChange = (step: ExecutionStep) => {
-    if (!step.completed && executionRecord?.status === "in_progress") {
+    if (!step.executed_at && executionRecord?.status === "in_progress") {
       onAddStep({
         step_number: step.step_number,
         description: step.description,
@@ -32,10 +32,10 @@ export function ExecutionSteps({
           <div key={step.id} className="flex items-start gap-3">
             <input
               type="checkbox"
-              checked={step.completed}
+              checked={!!step.executed_at}
               onChange={() => handleCheckboxChange(step)}
               disabled={
-                step.completed ||
+                !!step.executed_at ||
                 executionRecord.status !== "in_progress" ||
                 isSaving
               }
@@ -44,10 +44,9 @@ export function ExecutionSteps({
             <div className="flex-1">
               <div className="flex items-center gap-2">
                 <span className="font-semibold">Step {step.step_number}</span>
-                {step.completed && (
+                {!!step.executed_at && (
                   <span className="text-xs text-green-600">
-                    ✓ Completed at{" "}
-                    {new Date(step.completed_at!).toLocaleString()}
+                    ✓ Completed at {new Date(step.executed_at).toLocaleString()}
                   </span>
                 )}
               </div>

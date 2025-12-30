@@ -2,7 +2,7 @@
  * Loading component
  */
 
-import type { Size } from "../../../shared/types/ui";
+import { Size } from "@/shared/types/ui";
 import { SpinnerIcon } from "@/ui";
 
 export interface LoadingProps {

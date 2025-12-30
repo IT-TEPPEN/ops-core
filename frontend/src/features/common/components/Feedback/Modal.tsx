@@ -4,7 +4,8 @@
 
 import { useEffect, useCallback } from "react";
 import type { ReactNode } from "react";
-import type { Size } from "../../../shared/types/ui";
+import { XIcon } from "@/ui";
+import { Size } from "@/shared/types/ui";
 
 export interface ModalProps {
   /** Whether the modal is open */

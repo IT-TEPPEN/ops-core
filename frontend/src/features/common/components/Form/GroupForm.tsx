@@ -1,5 +1,5 @@
+import { Group } from "@/shared/types/domain";
 import React, { useState } from "react";
-import type { Group } from "../../../shared/types/domain";
 
 interface GroupFormProps {
   initialData?: Group;
@@ -18,7 +18,9 @@ export const GroupForm: React.FC<GroupFormProps> = ({
   submitLabel = "Save",
 }) => {
   const [name, setName] = useState(initialData?.name || "");
-  const [description, setDescription] = useState(initialData?.description || "");
+  const [description, setDescription] = useState(
+    initialData?.description || ""
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

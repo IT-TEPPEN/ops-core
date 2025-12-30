@@ -2,13 +2,9 @@ import { useReducer, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Group, User } from "@/shared/types/domain";
 import {
-  getGroup,
-  listUsers,
-  updateGroup,
-  deleteGroup,
-  addMember,
-  removeMember,
-} from "@/shared/api";
+  useGroupQueryService,
+  useGroupCommandService,
+} from "../presentation/contexts";
 
 interface GroupDetailState {
   group: Group | null;
@@ -92,15 +88,17 @@ const initialState: GroupDetailState = {
 export function useGroupDetail(groupId: string | undefined) {
   const [state, dispatch] = useReducer(groupDetailReducer, initialState);
   const navigate = useNavigate();
+  const groupQueryService = useGroupQueryService();
+  const groupCommandService = useGroupCommandService();
 
   const fetchGroup = useCallback(async () => {
     if (!groupId) return;
 
     dispatch({ type: "FETCH_START" });
     try {
-      const data = await getGroup(groupId);
-      const allUsers = await listUsers();
-      const groupMembers = allUsers.filter((user) =>
+      const data = await groupQueryService.getById(groupId);
+      const allUsers = await groupQueryService.listUsers();
+      const groupMembers = allUsers.filter((user: User) =>
         data.member_ids.includes(user.id)
       );
       dispatch({ type: "FETCH_SUCCESS", group: data, members: groupMembers });
@@ -110,7 +108,7 @@ export function useGroupDetail(groupId: string | undefined) {
         error: err instanceof Error ? err.message : "Failed to load group",
       });
     }
-  }, [groupId]);
+  }, [groupId, groupQueryService]);
 
   useEffect(() => {
     fetchGroup();
@@ -121,13 +119,13 @@ export function useGroupDetail(groupId: string | undefined) {
       if (!groupId) return;
 
       try {
-        const updated = await updateGroup(groupId, data);
+        const updated = await groupCommandService.update(groupId, data);
         dispatch({ type: "UPDATE_SUCCESS", group: updated });
       } catch (err) {
         throw err; // Let the form handle the error
       }
     },
-    [groupId]
+    [groupId, groupCommandService]
   );
 
   const handleDelete = useCallback(async () => {
@@ -139,7 +137,7 @@ export function useGroupDetail(groupId: string | undefined) {
     }
 
     try {
-      await deleteGroup(groupId);
+      await groupCommandService.deleteGroup(groupId);
       navigate("/groups");
     } catch (err) {
       dispatch({
@@ -147,20 +145,22 @@ export function useGroupDetail(groupId: string | undefined) {
         error: err instanceof Error ? err.message : "Failed to delete group",
       });
     }
-  }, [groupId, navigate]);
+  }, [groupId, navigate, groupCommandService]);
 
   const handleAddMember = useCallback(
     async (userId: string) => {
       if (!groupId) return;
 
       try {
-        const updated = await addMember(groupId, { user_id: userId });
+        const updated = await groupCommandService.addMember(groupId, {
+          user_id: userId,
+        });
         dispatch({ type: "UPDATE_SUCCESS", group: updated });
         dispatch({ type: "SET_MEMBER_SELECTOR", show: false });
 
         // Update member list
-        const allUsers = await listUsers();
-        const groupMembers = allUsers.filter((user) =>
+        const allUsers = await groupQueryService.listUsers();
+        const groupMembers = allUsers.filter((user: User) =>
           updated.member_ids.includes(user.id)
         );
         dispatch({ type: "UPDATE_MEMBERS", members: groupMembers });
@@ -168,7 +168,7 @@ export function useGroupDetail(groupId: string | undefined) {
         throw err; // Let the selector handle the error
       }
     },
-    [groupId]
+    [groupId, groupCommandService, groupQueryService]
   );
 
   const handleRemoveMember = useCallback(
@@ -181,7 +181,9 @@ export function useGroupDetail(groupId: string | undefined) {
       }
 
       try {
-        const updated = await removeMember(groupId, { user_id: userId });
+        const updated = await groupCommandService.removeMember(groupId, {
+          user_id: userId,
+        });
         dispatch({ type: "UPDATE_SUCCESS", group: updated });
 
         // Update member list by filtering out removed user
@@ -196,7 +198,7 @@ export function useGroupDetail(groupId: string | undefined) {
         });
       }
     },
-    [groupId, state.members]
+    [groupId, state.members, groupCommandService]
   );
 
   const setEditing = useCallback((isEditing: boolean) => {

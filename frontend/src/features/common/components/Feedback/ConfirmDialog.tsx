@@ -2,8 +2,8 @@
  * Confirm dialog component
  */
 
+import { Variant } from "@/shared/types/ui";
 import { Modal } from "./Modal";
-import type { Variant } from "../../../shared/types/ui";
 
 export interface ConfirmDialogProps {
   /** Whether the dialog is open */

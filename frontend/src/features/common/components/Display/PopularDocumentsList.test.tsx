@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { PopularDocumentsList } from "./PopularDocumentsList";
-import type { PopularDocument } from "../../../shared/types/domain";
+import { PopularDocument } from "@/shared/types/domain";
 
 describe("PopularDocumentsList", () => {
   const mockItems: PopularDocument[] = [
@@ -27,7 +27,9 @@ describe("PopularDocumentsList", () => {
   });
 
   it("shows loading spinner when isLoading is true", () => {
-    const { container } = render(<PopularDocumentsList items={[]} isLoading={true} />);
+    const { container } = render(
+      <PopularDocumentsList items={[]} isLoading={true} />
+    );
     expect(container.querySelector(".animate-spin")).toBeInTheDocument();
   });
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { listUsers } from "../../../../shared/api";
 import { User } from "../../../../shared/types/domain";
+import { useUserQueryService } from "../../presentation/contexts";
 
 interface GroupMemberSelectorProps {
   existingMemberIds: string[];
@@ -14,6 +14,7 @@ export const GroupMemberSelector: React.FC<GroupMemberSelectorProps> = ({
   existingMemberIds,
   onAdd,
 }) => {
+  const userQueryService = useUserQueryService();
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isAdding, setIsAdding] = useState(false);
@@ -23,7 +24,7 @@ export const GroupMemberSelector: React.FC<GroupMemberSelectorProps> = ({
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const allUsers = await listUsers();
+        const allUsers = await userQueryService.listUsers();
         setUsers(allUsers);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load users");
@@ -33,7 +34,7 @@ export const GroupMemberSelector: React.FC<GroupMemberSelectorProps> = ({
     };
 
     fetchUsers();
-  }, []);
+  }, [userQueryService]);
 
   const availableUsers = users.filter(
     (user) => !existingMemberIds.includes(user.id)
