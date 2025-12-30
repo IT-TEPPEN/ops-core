@@ -11,21 +11,21 @@ import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
 import remarkToc from "remark-toc";
 import { createElement } from "react";
 import * as prod from "react/jsx-runtime";
-import { visit } from "unist-util-visit";
+// import { visit } from "unist-util-visit";
 
-function DebugPlugin() {
-  return transformer;
-  function transformer(tree: any, _file: any) {
-    visit(tree, (node, _index, _parent) => {
-      console.log(node);
-    });
-  }
-}
+// function DebugPlugin() {
+//   return transformer;
+//   function transformer(tree: any, _file: any) {
+//     visit(tree, (node, _index, _parent) => {
+//       console.log(node);
+//     });
+//   }
+// }
 
 export const MarkdownProcessor = unified()
   .use(remarkParse) // Markdownをパース
   .use(remarkFrontmatter) // Frontmatterをサポート
-  .use(DebugPlugin) // ASTをデバッグ表示
+  // .use(DebugPlugin) // ASTをデバッグ表示
   .use(remarkGfm) // GitHub Flavored Markdownをサポート
   .use(remarkToc) // 目次生成をサポート
   .use(remarkRehype, { allowDangerousHtml: false }) // MarkdownからHTMLへ変換
