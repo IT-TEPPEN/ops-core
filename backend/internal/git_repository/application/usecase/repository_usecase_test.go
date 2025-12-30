@@ -587,3 +587,147 @@ func TestUpdateAccessToken(t *testing.T) {
 		mockGitManager.AssertExpectations(t)
 	})
 }
+
+// TestGetDirectoryContents tests the GetDirectoryContents use case
+func TestGetDirectoryContents(t *testing.T) {
+	t.Run("正常にディレクトリ内容が取得できる", func(t *testing.T) {
+		// モックの準備
+		mockRepo := new(repository.MockRepository)
+		mockGitManager := new(git.MockGitManager)
+		mockOAuthProvider := new(MockOAuthTokenProvider)
+
+		repoID := uuid.NewString()
+		testRepo := entity.NewRepository(repoID, "test-repo", "https://github.com/example/test-repo", "")
+		path := "docs"
+		userID := "test-user-id"
+		oauthToken := "oauth-token-123"
+
+		fileNodes := []entity.FileNode{
+			entity.NewFileNode("README.md", "file"),
+			entity.NewFileNode("subfolder", "dir"),
+			entity.NewFileNode("index.md", "file"),
+		}
+
+		// モックの振る舞いを定義
+		mockRepo.On("FindByID", mock.Anything, repoID).Return(testRepo, nil)
+		mockOAuthProvider.On("GetAccessTokenForProvider", mock.Anything, userID, "github").Return(oauthToken, nil)
+		mockGitManager.On("ListDirectoryContents", mock.Anything, path, mock.AnythingOfType("*entity.repository")).Return(fileNodes, nil)
+
+		// テスト対象の UseCase を作成
+		uc := NewRepositoryUseCase(mockRepo, mockGitManager, mockOAuthProvider)
+
+		// テスト実行
+		result, err := uc.GetDirectoryContents(context.Background(), repoID, path, userID)
+
+		// 検証
+		assert.NoError(t, err)
+		assert.Len(t, result, 3)
+		assert.Equal(t, "README.md", result[0].Path())
+		assert.Equal(t, "file", result[0].Type())
+		assert.Equal(t, "subfolder", result[1].Path())
+		assert.Equal(t, "dir", result[1].Type())
+
+		// モックの呼び出しを検証
+		mockRepo.AssertExpectations(t)
+		mockGitManager.AssertExpectations(t)
+		mockOAuthProvider.AssertExpectations(t)
+	})
+
+	t.Run("ルートディレクトリの内容が取得できる", func(t *testing.T) {
+		// モックの準備
+		mockRepo := new(repository.MockRepository)
+		mockGitManager := new(git.MockGitManager)
+		mockOAuthProvider := new(MockOAuthTokenProvider)
+
+		repoID := uuid.NewString()
+		testRepo := entity.NewRepository(repoID, "test-repo", "https://github.com/example/test-repo", "")
+		path := "" // 空のパスはルートを示す
+		userID := "test-user-id"
+		oauthToken := "oauth-token-123"
+
+		fileNodes := []entity.FileNode{
+			entity.NewFileNode("README.md", "file"),
+			entity.NewFileNode("src", "dir"),
+			entity.NewFileNode("docs", "dir"),
+		}
+
+		// モックの振る舞いを定義
+		mockRepo.On("FindByID", mock.Anything, repoID).Return(testRepo, nil)
+		mockOAuthProvider.On("GetAccessTokenForProvider", mock.Anything, userID, "github").Return(oauthToken, nil)
+		mockGitManager.On("ListDirectoryContents", mock.Anything, path, mock.AnythingOfType("*entity.repository")).Return(fileNodes, nil)
+
+		// テスト対象の UseCase を作成
+		uc := NewRepositoryUseCase(mockRepo, mockGitManager, mockOAuthProvider)
+
+		// テスト実行
+		result, err := uc.GetDirectoryContents(context.Background(), repoID, path, userID)
+
+		// 検証
+		assert.NoError(t, err)
+		assert.Len(t, result, 3)
+
+		// モックの呼び出しを検証
+		mockRepo.AssertExpectations(t)
+		mockGitManager.AssertExpectations(t)
+		mockOAuthProvider.AssertExpectations(t)
+	})
+
+	t.Run("存在しないリポジトリIDでエラーになる", func(t *testing.T) {
+		// モックの準備
+		mockRepo := new(repository.MockRepository)
+		mockGitManager := new(git.MockGitManager)
+		mockOAuthProvider := new(MockOAuthTokenProvider)
+
+		repoID := uuid.NewString()
+		path := "docs"
+		userID := "test-user-id"
+
+		// モックの振る舞いを定義
+		mockRepo.On("FindByID", mock.Anything, repoID).Return(nil, nil)
+
+		// テスト対象の UseCase を作成
+		uc := NewRepositoryUseCase(mockRepo, mockGitManager, mockOAuthProvider)
+
+		// テスト実行
+		result, err := uc.GetDirectoryContents(context.Background(), repoID, path, userID)
+
+		// 検証
+		assert.Error(t, err)
+		assert.Nil(t, result)
+
+		// モックの呼び出しを検証
+		mockRepo.AssertExpectations(t)
+		mockGitManager.AssertExpectations(t)
+	})
+
+	t.Run("OAuth接続がない場合はエラーになる", func(t *testing.T) {
+		// モックの準備
+		mockRepo := new(repository.MockRepository)
+		mockGitManager := new(git.MockGitManager)
+		mockOAuthProvider := new(MockOAuthTokenProvider)
+
+		repoID := uuid.NewString()
+		testRepo := entity.NewRepository(repoID, "test-repo", "https://github.com/example/test-repo", "")
+		path := "docs"
+		userID := "test-user-id"
+
+		// モックの振る舞いを定義
+		mockRepo.On("FindByID", mock.Anything, repoID).Return(testRepo, nil)
+		mockOAuthProvider.On("GetAccessTokenForProvider", mock.Anything, userID, "github").Return("", errors.New("no OAuth connection"))
+
+		// テスト対象の UseCase を作成
+		uc := NewRepositoryUseCase(mockRepo, mockGitManager, mockOAuthProvider)
+
+		// テスト実行
+		result, err := uc.GetDirectoryContents(context.Background(), repoID, path, userID)
+
+		// 検証
+		assert.Error(t, err)
+		assert.Nil(t, result)
+
+		// モックの呼び出しを検証
+		mockRepo.AssertExpectations(t)
+		mockGitManager.AssertExpectations(t)
+		mockOAuthProvider.AssertExpectations(t)
+	})
+}

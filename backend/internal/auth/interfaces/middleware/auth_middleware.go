@@ -20,10 +20,10 @@ func AuthMiddleware(jwtService *service.JWTService) gin.HandlerFunc {
 			return
 		}
 
-		// Check Bearer token format
+		// Check Bearer token format (RFC 6750 compliant)
 		parts := strings.SplitN(authHeader, " ", 2)
 		if len(parts) != 2 || parts[0] != "Bearer" {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid authorization header format"})
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid authorization header format. Expected: Bearer <token>"})
 			c.Abort()
 			return
 		}

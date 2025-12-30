@@ -6,28 +6,10 @@ import (
 
 // ToCreateDocumentDTO converts API schema to application DTO
 func ToCreateDocumentDTO(req CreateDocumentRequest) dto.CreateDocumentRequest {
-	variables := make([]dto.VariableDefinitionDTO, len(req.Variables))
-	for i, v := range req.Variables {
-		variables[i] = dto.VariableDefinitionDTO{
-			Name:         v.Name,
-			Label:        v.Label,
-			Description:  v.Description,
-			Type:         v.Type,
-			Required:     v.Required,
-			DefaultValue: v.DefaultValue,
-		}
-	}
-
 	return dto.CreateDocumentRequest{
 		RepositoryID: req.RepositoryID,
 		FilePath:     req.FilePath,
 		CommitHash:   req.CommitHash,
-		Title:        req.Title,
-		DocType:      req.DocType,
-		Owner:        req.Owner,
-		Tags:         req.Tags,
-		Variables:    variables,
-		Content:      req.Content,
 		AccessScope:  req.AccessScope,
 		IsAutoUpdate: req.IsAutoUpdate,
 	}
@@ -35,26 +17,9 @@ func ToCreateDocumentDTO(req CreateDocumentRequest) dto.CreateDocumentRequest {
 
 // ToUpdateDocumentDTO converts API schema to application DTO
 func ToUpdateDocumentDTO(req UpdateDocumentRequest) dto.UpdateDocumentRequest {
-	variables := make([]dto.VariableDefinitionDTO, len(req.Variables))
-	for i, v := range req.Variables {
-		variables[i] = dto.VariableDefinitionDTO{
-			Name:         v.Name,
-			Label:        v.Label,
-			Description:  v.Description,
-			Type:         v.Type,
-			Required:     v.Required,
-			DefaultValue: v.DefaultValue,
-		}
-	}
-
 	return dto.UpdateDocumentRequest{
 		FilePath:   req.FilePath,
 		CommitHash: req.CommitHash,
-		Title:      req.Title,
-		DocType:    req.DocType,
-		Tags:       req.Tags,
-		Variables:  variables,
-		Content:    req.Content,
 	}
 }
 

@@ -215,6 +215,43 @@ func (g *githubApiManager) ListRepositoryFiles(ctx context.Context, localPath st
 	return files, nil
 }
 
+// ListDirectoryContents lists files and directories at a specific path (non-recursive).
+func (g *githubApiManager) ListDirectoryContents(ctx context.Context, path string, repo entity.Repository) ([]entity.FileNode, error) {
+	fmt.Printf("Fetching directory contents from GitHub API for repository: %s, path: %s\n", repo.URL(), path)
+
+	// Extract owner and repo name from URL
+	owner, repoName, err := parseGitHubURL(repo.URL())
+	if err != nil {
+		return nil, err
+	}
+
+	// Get GitHub client
+	client := g.getGitHubClient(repo.AccessToken())
+
+	// Get contents at the specified path
+	_, contents, _, err := client.Repositories.GetContents(ctx, owner, repoName, path, &github.RepositoryContentGetOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get repository contents at path '%s': %w", path, err)
+	}
+
+	// Map contents to FileNode entities
+	fileNodes := make([]entity.FileNode, 0, len(contents))
+	for _, content := range contents {
+		if content.Name == nil || content.Type == nil {
+			continue
+		}
+
+		nodeType := "file"
+		if *content.Type == "dir" {
+			nodeType = "dir"
+		}
+
+		fileNodes = append(fileNodes, entity.NewFileNode(*content.Name, nodeType))
+	}
+
+	return fileNodes, nil
+}
+
 // listFilesFromAPI recursively lists files from the GitHub API.
 func (g *githubApiManager) listFilesFromAPI(ctx context.Context, client *github.Client, owner string, repo string, path string) ([]string, error) {
 	var files []string
@@ -330,4 +367,87 @@ func (g *githubApiManager) ReadManagedFileContent(ctx context.Context, localPath
 
 	// Other error reading file
 	return nil, fmt.Errorf("failed to read file %s: %w", fullPath, err)
+}
+
+// GetLatestCommit retrieves the latest commit information for the repository.
+func (g *githubApiManager) GetLatestCommit(ctx context.Context, repo entity.Repository) (*CommitInfo, error) {
+	// Extract owner and repo name from URL
+	owner, repoName, err := parseGitHubURL(repo.URL())
+	if err != nil {
+		return nil, err
+	}
+
+	// Get GitHub client
+	client := g.getGitHubClient(repo.AccessToken())
+
+	// Get the default branch
+	repoInfo, _, err := client.Repositories.Get(ctx, owner, repoName)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get repository info: %w", err)
+	}
+
+	defaultBranch := repoInfo.GetDefaultBranch()
+
+	// Get the latest commit on the default branch
+	commits, _, err := client.Repositories.ListCommits(ctx, owner, repoName, &github.CommitsListOptions{
+		SHA: defaultBranch,
+		ListOptions: github.ListOptions{
+			Page:    1,
+			PerPage: 1,
+		},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get latest commit: %w", err)
+	}
+
+	if len(commits) == 0 {
+		return nil, fmt.Errorf("no commits found in repository")
+	}
+
+	commit := commits[0]
+	return &CommitInfo{
+		Hash:        commit.GetSHA(),
+		Message:     commit.GetCommit().GetMessage(),
+		Author:      commit.GetCommit().GetAuthor().GetName(),
+		AuthorEmail: commit.GetCommit().GetAuthor().GetEmail(),
+		Date:        commit.GetCommit().GetAuthor().GetDate().Time,
+	}, nil
+}
+
+// GetFileCommitHistory retrieves the commit history for a specific file.
+func (g *githubApiManager) GetFileCommitHistory(ctx context.Context, filePath string, repo entity.Repository) ([]CommitInfo, error) {
+	// Extract owner and repo name from URL
+	owner, repoName, err := parseGitHubURL(repo.URL())
+	if err != nil {
+		return nil, err
+	}
+
+	// Get GitHub client
+	client := g.getGitHubClient(repo.AccessToken())
+
+	// Get commits for the specific file
+	commits, _, err := client.Repositories.ListCommits(ctx, owner, repoName, &github.CommitsListOptions{
+		Path: filePath,
+		ListOptions: github.ListOptions{
+			Page:    1,
+			PerPage: 50, // Get up to 50 most recent commits for the file
+		},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get file commit history: %w", err)
+	}
+
+	// Convert to CommitInfo slice
+	result := make([]CommitInfo, 0, len(commits))
+	for _, commit := range commits {
+		result = append(result, CommitInfo{
+			Hash:        commit.GetSHA(),
+			Message:     commit.GetCommit().GetMessage(),
+			Author:      commit.GetCommit().GetAuthor().GetName(),
+			AuthorEmail: commit.GetCommit().GetAuthor().GetEmail(),
+			Date:        commit.GetCommit().GetAuthor().GetDate().Time,
+		})
+	}
+
+	return result, nil
 }

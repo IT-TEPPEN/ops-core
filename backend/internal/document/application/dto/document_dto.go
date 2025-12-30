@@ -3,29 +3,20 @@ package dto
 import "time"
 
 // CreateDocumentRequest represents the use case request for creating a document
+// Frontmatter fields (Title, DocType, Owner, Tags, Variables, Content) are extracted from the file
 type CreateDocumentRequest struct {
 	RepositoryID string
 	FilePath     string
-	CommitHash   string
-	Title        string
-	DocType      string   // "procedure" or "knowledge"
-	Owner        string
-	Tags         []string
-	Variables    []VariableDefinitionDTO
-	Content      string
-	AccessScope  string // "public" or "private"
+	CommitHash   string   // Optional: if empty, use latest commit
+	AccessScope  string   // "public" or "private"
 	IsAutoUpdate bool
 }
 
 // UpdateDocumentRequest represents the use case request for updating a document
+// Frontmatter fields (Title, DocType, Tags, Variables, Content) are extracted from the file
 type UpdateDocumentRequest struct {
 	FilePath   string
-	CommitHash string
-	Title      string
-	DocType    string
-	Tags       []string
-	Variables  []VariableDefinitionDTO
-	Content    string
+	CommitHash string // Optional: if empty, use latest commit
 }
 
 // UpdateDocumentMetadataRequest represents the use case request for updating document metadata

@@ -237,11 +237,65 @@ func (h *RepositoryHandler) GetFileContents(c *gin.Context) {
 	})
 }
 
+// GetRepositoryContents godoc
+// @Summary Get repository contents at a specific path
+// @Description Retrieves files and directories at the specified path (non-recursive). Returns only direct children of the specified directory.
+// @Tags repositories
+// @Produce  json
+// @Security BearerAuth
+// @Param   repoId path string true "Repository ID" example:"a1b2c3d4-e5f6-7890-1234-567890abcdef"
+// @Param   path query string false "Directory path relative to repository root (empty = root)" example:"docs/adr"
+// @Success 200 {object} schema.ListFilesResponse "Successfully retrieved directory contents"
+// @Failure 400 {object} schema.ErrorResponse "Invalid repository ID"
+// @Failure 401 {object} schema.ErrorResponse "Authentication required"
+// @Failure 404 {object} schema.ErrorResponse "Repository or path not found"
+// @Failure 500 {object} schema.ErrorResponse "Internal server error"
+// @Router /repositories/{repoId}/contents [get]
+func (h *RepositoryHandler) GetRepositoryContents(c *gin.Context) {
+	repoId := c.Param("repoId")
+	path := c.DefaultQuery("path", "") // Default to root if not provided
+	requestID := c.GetString("request_id")
+
+	if repoId == "" {
+		h.logger.Warn("Missing repository ID", "request_id", requestID)
+		c.JSON(http.StatusBadRequest, schema.ErrorResponse{Code: "INVALID_ID", Message: "Repository ID is required"})
+		return
+	}
+
+	// Get user ID from context (requires authentication middleware)
+	userID, exists := c.Get("user_id")
+	if !exists {
+		h.logger.Error("User ID not found in context", "request_id", requestID)
+		c.JSON(http.StatusUnauthorized, schema.ErrorResponse{Code: "UNAUTHORIZED", Message: "Authentication required"})
+		return
+	}
+
+	h.logger.Info("Getting repository contents", "request_id", requestID, "repo_id", repoId, "path", path, "user_id", userID)
+	// Call the use case to get directory contents
+	domainFiles, err := h.repoUseCase.GetDirectoryContents(c.Request.Context(), repoId, path, userID.(string))
+
+	if err != nil {
+		// Use error mapper to convert application errors to HTTP errors
+		httpErr := intererror.MapToHTTPError(err, requestID)
+		h.logger.Error("Failed to get repository contents", "request_id", requestID, "repo_id", repoId, "path", path, "error", err.Error(), "http_code", httpErr.Code)
+		c.JSON(httpErr.StatusCode, schema.ErrorResponse{Code: httpErr.Code, Message: httpErr.Message})
+		return
+	}
+
+	// Map domain entity.FileNode to DTO FileNode, then to schema
+	dtoFiles := dto.ToFileNodeList(domainFiles)
+	responseFiles := schema.FromFileNodeListDTO(dtoFiles)
+
+	h.logger.Info("Successfully retrieved repository contents", "request_id", requestID, "repo_id", repoId, "path", path, "item_count", len(responseFiles))
+	c.JSON(http.StatusOK, schema.ListFilesResponse{Files: responseFiles})
+}
+
 // ListRepositories godoc
 // @Summary List all repositories
 // @Description Retrieves a list of all repositories registered in OpsCore
 // @Tags repositories
 // @Produce json
+// @Security BearerAuth
 // @Success 200 {object} schema.ListRepositoriesResponse "Successfully retrieved repositories"
 // @Failure 500 {object} schema.ErrorResponse "Internal server error"
 // @Router /repositories [get]
@@ -274,6 +328,7 @@ func (h *RepositoryHandler) ListRepositories(c *gin.Context) {
 // @Description Retrieves detailed information about a specific repository by ID
 // @Tags repositories
 // @Produce json
+// @Security BearerAuth
 // @Param   repoId path string true "Repository ID" example:"a1b2c3d4-e5f6-7890-1234-567890abcdef"
 // @Success 200 {object} schema.RepositoryResponse "Successfully retrieved repository details"
 // @Failure 400 {object} schema.ErrorResponse "Invalid repository ID format"
@@ -304,5 +359,67 @@ func (h *RepositoryHandler) GetRepository(c *gin.Context) {
 	h.logger.Info("Successfully retrieved repository details", "request_id", requestID, "repo_id", repoId)
 	dtoResp := dto.ToRepositoryResponse(repo)
 	response := schema.FromRepositoryDTO(dtoResp)
+	c.JSON(http.StatusOK, response)
+}
+
+// GetFileHistory godoc
+// @Summary Get file commit history
+// @Description Retrieves the commit history for a specific file in a repository
+// @Tags repositories
+// @Produce  json
+// @Security BearerAuth
+// @Param   repoId path string true "Repository ID" example:"a1b2c3d4-e5f6-7890-1234-567890abcdef"
+// @Param   path query string true "File path relative to repository root" example:"docs/procedure.md"
+// @Success 200 {object} schema.GetFileHistoryResponse "File history retrieved successfully"
+// @Failure 400 {object} schema.ErrorResponse "Invalid repository ID or file path"
+// @Failure 404 {object} schema.ErrorResponse "Repository or file not found"
+// @Failure 500 {object} schema.ErrorResponse "Internal server error"
+// @Router /repositories/{repoId}/files/history [get]
+func (h *RepositoryHandler) GetFileHistory(c *gin.Context) {
+	repoId := c.Param("repoId")
+	filePath := c.Query("path")
+	requestID := c.GetString("request_id")
+	userID := c.GetString("user_id") // Get user ID from context (set by auth middleware)
+
+	if repoId == "" {
+		h.logger.Warn("Missing repository ID", "request_id", requestID)
+		c.JSON(http.StatusBadRequest, schema.ErrorResponse{Code: "INVALID_ID", Message: "Repository ID is required"})
+		return
+	}
+
+	if filePath == "" {
+		h.logger.Warn("Missing file path", "request_id", requestID)
+		c.JSON(http.StatusBadRequest, schema.ErrorResponse{Code: "INVALID_PATH", Message: "File path is required"})
+		return
+	}
+
+	h.logger.Info("Getting file commit history", "request_id", requestID, "repo_id", repoId, "file_path", filePath)
+	commits, err := h.repoUseCase.GetFileCommitHistory(c.Request.Context(), repoId, filePath, userID)
+
+	if err != nil {
+		httpErr := intererror.MapToHTTPError(err, requestID)
+		h.logger.Error("Failed to get file commit history", "request_id", requestID, "repo_id", repoId, "file_path", filePath, "error", err.Error(), "http_code", httpErr.Code)
+		c.JSON(httpErr.StatusCode, schema.ErrorResponse{Code: httpErr.Code, Message: httpErr.Message})
+		return
+	}
+
+	h.logger.Info("Successfully retrieved file commit history", "request_id", requestID, "repo_id", repoId, "file_path", filePath, "commit_count", len(commits))
+
+	// Convert to schema
+	commitSchemas := make([]schema.FileCommitInfo, len(commits))
+	for i, commit := range commits {
+		commitSchemas[i] = schema.FileCommitInfo{
+			CommitHash:  commit.Hash,
+			Message:     commit.Message,
+			Author:      commit.Author,
+			AuthorEmail: commit.AuthorEmail,
+			Date:        commit.Date,
+		}
+	}
+
+	response := schema.GetFileHistoryResponse{
+		FilePath: filePath,
+		Commits:  commitSchemas,
+	}
 	c.JSON(http.StatusOK, response)
 }

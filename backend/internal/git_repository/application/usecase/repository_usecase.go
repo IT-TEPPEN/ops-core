@@ -47,10 +47,16 @@ type RepositoryUseCase interface {
 	ListRepositories(ctx context.Context) ([]entity.Repository, error)
 	// ListFiles retrieves the file structure for a given repository ID.
 	ListFiles(ctx context.Context, repoID string, userID string) ([]entity.FileNode, error) // Use entity.FileNode
+	// GetDirectoryContents retrieves files and directories at a specific path (non-recursive).
+	GetDirectoryContents(ctx context.Context, repoID string, path string, userID string) ([]entity.FileNode, error)
 	// GetFileContents retrieves the content of a specific file from a repository.
 	GetFileContents(ctx context.Context, repoID string, filePath string, userID string) (string, error)
 	// UpdateAccessToken updates the access token for a repository.
 	UpdateAccessToken(ctx context.Context, repoID string, accessToken string) error
+	// GetLatestCommit retrieves the latest commit information for a repository.
+	GetLatestCommit(ctx context.Context, repoID string, userID string) (*git.CommitInfo, error)
+	// GetFileCommitHistory retrieves the commit history for a specific file.
+	GetFileCommitHistory(ctx context.Context, repoID string, filePath string, userID string) ([]git.CommitInfo, error)
 }
 
 // repositoryUseCase implements the RepositoryUseCase interface.
@@ -224,6 +230,44 @@ func (uc *repositoryUseCase) ListFiles(ctx context.Context, repoID string, userI
 	return fileNodes, nil
 }
 
+// GetDirectoryContents implements the logic for listing directory contents at a specific path.
+func (uc *repositoryUseCase) GetDirectoryContents(ctx context.Context, repoID string, path string, userID string) ([]entity.FileNode, error) {
+	// 1. Find the repository by ID
+	repo, err := uc.repo.FindByID(ctx, repoID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve repository details: %w", err)
+	}
+	if repo == nil {
+		return nil, apperror.NewNotFoundError("Repository", repoID, nil)
+	}
+
+	// 2. Get OAuth access token for the provider
+	provider := getProviderFromURL(repo.URL())
+	if provider == "" {
+		return nil, apperror.NewValidationFailedError([]apperror.FieldError{
+			{Field: "url", Message: "unsupported Git provider"},
+		})
+	}
+
+	accessToken, err := uc.oauthProvider.GetAccessTokenForProvider(ctx, userID, provider)
+	if err != nil {
+		return nil, apperror.NewValidationFailedError([]apperror.FieldError{
+			{Field: "oauth", Message: fmt.Sprintf("OAuth connection required for %s. Please connect your account.", provider)},
+		})
+	}
+
+	// Set the OAuth token on the repository for GitManager to use
+	repo.SetAccessToken(accessToken)
+
+	// 3. Get directory contents from GitHub API (non-recursive)
+	fileNodes, err := uc.gitManager.ListDirectoryContents(ctx, path, repo)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list directory contents at path '%s': %w", path, err)
+	}
+
+	return fileNodes, nil
+}
+
 // GetFileContents implements the logic for retrieving a specific file's content.
 func (uc *repositoryUseCase) GetFileContents(ctx context.Context, repoID string, filePath string, userID string) (string, error) {
 	// 1. Find the repository by ID to ensure it exists
@@ -280,4 +324,66 @@ func (uc *repositoryUseCase) UpdateAccessToken(ctx context.Context, repoID strin
 	}
 
 	return nil
+}
+
+// GetLatestCommit retrieves the latest commit information for a repository.
+func (uc *repositoryUseCase) GetLatestCommit(ctx context.Context, repoID string, userID string) (*git.CommitInfo, error) {
+	// 1. Find the repository by ID
+	repo, err := uc.repo.FindByID(ctx, repoID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve repository details: %w", err)
+	}
+	if repo == nil {
+		return nil, apperror.NewNotFoundError("Repository", repoID, nil)
+	}
+
+	// 2. Try to get OAuth token if no stored access token
+	if repo.AccessToken() == "" && userID != "" {
+		provider := getProviderFromURL(repo.URL())
+		if provider != "" {
+			token, err := uc.oauthProvider.GetAccessTokenForProvider(ctx, userID, provider)
+			if err == nil && token != "" {
+				repo = entity.ReconstructRepository(repo.ID(), repo.Name(), repo.URL(), token, repo.CreatedAt(), repo.UpdatedAt())
+			}
+		}
+	}
+
+	// 3. Get the latest commit information
+	commitInfo, err := uc.gitManager.GetLatestCommit(ctx, repo)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get latest commit: %w", err)
+	}
+
+	return commitInfo, nil
+}
+
+// GetFileCommitHistory retrieves the commit history for a specific file.
+func (uc *repositoryUseCase) GetFileCommitHistory(ctx context.Context, repoID string, filePath string, userID string) ([]git.CommitInfo, error) {
+	// 1. Find the repository by ID
+	repo, err := uc.repo.FindByID(ctx, repoID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve repository details: %w", err)
+	}
+	if repo == nil {
+		return nil, apperror.NewNotFoundError("Repository", repoID, nil)
+	}
+
+	// 2. Try to get OAuth token if no stored access token
+	if repo.AccessToken() == "" && userID != "" {
+		provider := getProviderFromURL(repo.URL())
+		if provider != "" {
+			token, err := uc.oauthProvider.GetAccessTokenForProvider(ctx, userID, provider)
+			if err == nil && token != "" {
+				repo = entity.ReconstructRepository(repo.ID(), repo.Name(), repo.URL(), token, repo.CreatedAt(), repo.UpdatedAt())
+			}
+		}
+	}
+
+	// 3. Get the file commit history
+	commits, err := uc.gitManager.GetFileCommitHistory(ctx, filePath, repo)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get file commit history: %w", err)
+	}
+
+	return commits, nil
 }

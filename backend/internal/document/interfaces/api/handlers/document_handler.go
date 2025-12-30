@@ -57,7 +57,7 @@ func (h *DocumentHandler) CreateDocument(c *gin.Context) {
 	// Convert schema to DTO
 	dtoReq := schema.ToCreateDocumentDTO(req)
 
-	h.logger.Info("Creating document", "request_id", requestID, "title", dtoReq.Title)
+	h.logger.Info("Creating document", "request_id", requestID, "repository_id", dtoReq.RepositoryID, "file_path", dtoReq.FilePath)
 	result, err := h.docUseCase.CreateDocument(c.Request.Context(), &dtoReq)
 
 	if err != nil {

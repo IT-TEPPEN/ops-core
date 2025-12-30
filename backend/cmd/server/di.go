@@ -14,6 +14,7 @@ import (
 	repohandlers "opscore/backend/internal/git_repository/interfaces/api/handlers"
 
 	docusecase "opscore/backend/internal/document/application/usecase"
+	"opscore/backend/internal/document/infrastructure/parser"
 	dochandlers "opscore/backend/internal/document/interfaces/api/handlers"
 
 	execusecase "opscore/backend/internal/execution_record/application/usecase"
@@ -220,8 +221,11 @@ func InitializeAPI(db *pgxpool.Pool) (*repohandlers.RepositoryHandler,
 	// TODO: Replace with actual persistence implementation when DB migration is complete
 	documentRepository := NewInMemoryDocumentRepository()
 
+	// Create frontmatter parser
+	frontmatterParser := parser.NewFrontmatterParser()
+
 	// Create document use case
-	documentUseCase := docusecase.NewDocumentUseCase(documentRepository)
+	documentUseCase := docusecase.NewDocumentUseCase(documentRepository, repositoryRepository, gitManager, frontmatterParser)
 
 	// Create variable use case
 	variableUseCase := docusecase.NewVariableUseCase(documentRepository)

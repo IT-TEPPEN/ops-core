@@ -3,29 +3,20 @@ package schema
 import "time"
 
 // CreateDocumentRequest represents the API request for creating a document
+// Frontmatter fields (Title, DocType, Owner, Tags, Variables, Content) are automatically extracted from the file
 type CreateDocumentRequest struct {
-	RepositoryID string                       `json:"repository_id" binding:"required" example:"a1b2c3d4-e5f6-7890-1234-567890abcdef"`
-	FilePath     string                       `json:"file_path" binding:"required" example:"docs/backup-procedure.md"`
-	CommitHash   string                       `json:"commit_hash" binding:"required" example:"abc1234567890"`
-	Title        string                       `json:"title" binding:"required" example:"Database Backup Procedure"`
-	DocType      string                       `json:"doc_type" binding:"required" example:"procedure"`
-	Owner        string                       `json:"owner" binding:"required" example:"database-team"`
-	Tags         []string                     `json:"tags" example:"[\"database\",\"backup\"]"`
-	Variables    []VariableDefinitionRequest  `json:"variables"`
-	Content      string                       `json:"content" binding:"required" example:"# Database Backup Procedure\n\nThis document describes..."`
-	AccessScope  string                       `json:"access_scope" binding:"required" example:"public"`
-	IsAutoUpdate bool                         `json:"is_auto_update" example:"true"`
+	RepositoryID string `json:"repository_id" binding:"required" example:"a1b2c3d4-e5f6-7890-1234-567890abcdef"`
+	FilePath     string `json:"file_path" binding:"required" example:"docs/backup-procedure.md"`
+	CommitHash   string `json:"commit_hash" example:"abc1234567890"` // Optional: if empty, use latest commit
+	AccessScope  string `json:"access_scope" binding:"required" example:"public"`
+	IsAutoUpdate bool   `json:"is_auto_update" example:"true"`
 }
 
 // UpdateDocumentRequest represents the API request for updating a document
+// Frontmatter fields (Title, DocType, Tags, Variables, Content) are automatically extracted from the file
 type UpdateDocumentRequest struct {
-	FilePath   string                      `json:"file_path" binding:"required" example:"docs/backup-procedure.md"`
-	CommitHash string                      `json:"commit_hash" binding:"required" example:"def4567890123"`
-	Title      string                      `json:"title" binding:"required" example:"Database Backup Procedure v2"`
-	DocType    string                      `json:"doc_type" binding:"required" example:"procedure"`
-	Tags       []string                    `json:"tags" example:"[\"database\",\"backup\",\"v2\"]"`
-	Variables  []VariableDefinitionRequest `json:"variables"`
-	Content    string                      `json:"content" binding:"required" example:"# Database Backup Procedure v2\n\nUpdated procedure..."`
+	FilePath   string `json:"file_path" binding:"required" example:"docs/backup-procedure.md"`
+	CommitHash string `json:"commit_hash" example:"def4567890123"` // Optional: if empty, use latest commit
 }
 
 // UpdateDocumentMetadataRequest represents the API request for updating document metadata

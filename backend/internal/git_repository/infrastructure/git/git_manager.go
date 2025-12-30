@@ -3,7 +3,17 @@ package git
 import (
 	"context"
 	"opscore/backend/internal/git_repository/domain/entity"
+	"time"
 )
+
+// CommitInfo represents commit metadata
+type CommitInfo struct {
+	Hash        string
+	Message     string
+	Author      string
+	AuthorEmail string
+	Date        time.Time
+}
 
 // GitManager defines the interface for interacting with Git repositories.
 type GitManager interface {
@@ -13,8 +23,16 @@ type GitManager interface {
 	// ListRepositoryFiles lists all files in the repository at the HEAD commit.
 	// Returns a list of file paths relative to the repository root.
 	ListRepositoryFiles(ctx context.Context, localPath string, repo entity.Repository) ([]string, error)
+	// ListDirectoryContents lists files and directories at a specific path (non-recursive).
+	// Returns items with their types ("file" or "dir"). Path is relative to repository root.
+	// Empty path returns root directory contents.
+	ListDirectoryContents(ctx context.Context, path string, repo entity.Repository) ([]entity.FileNode, error)
 	// ValidateFilesExist checks if the given file paths exist in the repository.
 	ValidateFilesExist(ctx context.Context, localPath string, filePaths []string, repo entity.Repository) error
 	// ReadManagedFileContent reads the content of a specific file from the local repository.
 	ReadManagedFileContent(ctx context.Context, localPath string, filePath string, repo entity.Repository) ([]byte, error)
+	// GetLatestCommit retrieves the latest commit information for the repository.
+	GetLatestCommit(ctx context.Context, repo entity.Repository) (*CommitInfo, error)
+	// GetFileCommitHistory retrieves the commit history for a specific file.
+	GetFileCommitHistory(ctx context.Context, filePath string, repo entity.Repository) ([]CommitInfo, error)
 }

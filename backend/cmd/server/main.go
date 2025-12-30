@@ -25,6 +25,10 @@ import (
 // @description This is the API documentation for the OpsCore backend service.
 // @host localhost:8080
 // @BasePath /api/v1
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description Enter "Bearer " followed by your JWT token. Example: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 func main() {
 	// Load .env file if it exists
 	if err := godotenv.Load(); err != nil {
@@ -146,7 +150,9 @@ func main() {
 		repoFiles.Use(authMiddleware)
 		{
 			repoFiles.GET("/:repoId/files", repoHandler.ListRepositoryFiles)
+			repoFiles.GET("/:repoId/contents", repoHandler.GetRepositoryContents)
 			repoFiles.GET("/:repoId/files/content", repoHandler.GetFileContents)
+			repoFiles.GET("/:repoId/files/history", repoHandler.GetFileHistory)
 		}
 
 		// Document routes

@@ -71,16 +71,8 @@ definitions:
         example: public
         type: string
       commit_hash:
+        description: 'Optional: if empty, use latest commit'
         example: abc1234567890
-        type: string
-      content:
-        example: |-
-          # Database Backup Procedure
-
-          This document describes...
-        type: string
-      doc_type:
-        example: procedure
         type: string
       file_path:
         example: docs/backup-procedure.md
@@ -88,35 +80,13 @@ definitions:
       is_auto_update:
         example: true
         type: boolean
-      owner:
-        example: database-team
-        type: string
       repository_id:
         example: a1b2c3d4-e5f6-7890-1234-567890abcdef
         type: string
-      tags:
-        example:
-        - '["database"'
-        - '"backup"]'
-        items:
-          type: string
-        type: array
-      title:
-        example: Database Backup Procedure
-        type: string
-      variables:
-        items:
-          $ref: '#/definitions/opscore_backend_internal_document_interfaces_api_schema.VariableDefinitionRequest'
-        type: array
     required:
     - access_scope
-    - commit_hash
-    - content
-    - doc_type
     - file_path
-    - owner
     - repository_id
-    - title
     type: object
   opscore_backend_internal_document_interfaces_api_schema.DocumentListItemResponse:
     properties:
@@ -280,41 +250,14 @@ definitions:
   opscore_backend_internal_document_interfaces_api_schema.UpdateDocumentRequest:
     properties:
       commit_hash:
+        description: 'Optional: if empty, use latest commit'
         example: def4567890123
-        type: string
-      content:
-        example: |-
-          # Database Backup Procedure v2
-
-          Updated procedure...
-        type: string
-      doc_type:
-        example: procedure
         type: string
       file_path:
         example: docs/backup-procedure.md
         type: string
-      tags:
-        example:
-        - '["database"'
-        - '"backup"'
-        - '"v2"]'
-        items:
-          type: string
-        type: array
-      title:
-        example: Database Backup Procedure v2
-        type: string
-      variables:
-        items:
-          $ref: '#/definitions/opscore_backend_internal_document_interfaces_api_schema.VariableDefinitionRequest'
-        type: array
     required:
-    - commit_hash
-    - content
-    - doc_type
     - file_path
-    - title
     type: object
   opscore_backend_internal_document_interfaces_api_schema.ValidateVariableValuesRequest:
     properties:
@@ -353,29 +296,6 @@ definitions:
       type:
         description: '"string", "number", "boolean", "date"'
         type: string
-    type: object
-  opscore_backend_internal_document_interfaces_api_schema.VariableDefinitionRequest:
-    properties:
-      default_value: {}
-      description:
-        example: The target server name
-        type: string
-      label:
-        example: Server Name
-        type: string
-      name:
-        example: server_name
-        type: string
-      required:
-        example: true
-        type: boolean
-      type:
-        example: string
-        type: string
-    required:
-    - label
-    - name
-    - type
     type: object
   opscore_backend_internal_document_interfaces_api_schema.VariableDefinitionResponse:
     properties:
@@ -568,11 +488,39 @@ definitions:
         example: Invalid request body
         type: string
     type: object
+  opscore_backend_internal_git_repository_interfaces_api_schema.FileCommitInfo:
+    properties:
+      author:
+        example: John Doe
+        type: string
+      author_email:
+        example: john@example.com
+        type: string
+      commit_hash:
+        example: abc1234567890def
+        type: string
+      date:
+        example: "2025-04-22T10:00:00Z"
+        type: string
+      message:
+        example: Updated documentation
+        type: string
+    type: object
   opscore_backend_internal_git_repository_interfaces_api_schema.FileNode:
     properties:
+      commit_hash:
+        example: def4567890123abc
+        type: string
       path:
         example: src/main.go
         type: string
+      sha:
+        example: abc1234567890def
+        type: string
+      size:
+        description: File size in bytes (only for files)
+        example: 1024
+        type: integer
       type:
         description: '"file" or "dir"'
         example: file
@@ -580,6 +528,10 @@ definitions:
     type: object
   opscore_backend_internal_git_repository_interfaces_api_schema.GetFileContentsResponse:
     properties:
+      commit_hash:
+        description: Commit hash of the file
+        example: abc1234567890def
+        type: string
       content:
         example: |-
           # Project Title
@@ -592,6 +544,20 @@ definitions:
       repoId:
         example: a1b2c3d4-e5f6-7890-1234-567890abcdef
         type: string
+      sha:
+        description: SHA of the file content
+        example: def4567890123abc
+        type: string
+    type: object
+  opscore_backend_internal_git_repository_interfaces_api_schema.GetFileHistoryResponse:
+    properties:
+      commits:
+        items:
+          $ref: '#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.FileCommitInfo'
+        type: array
+      file_path:
+        example: docs/procedure.md
+        type: string
     type: object
   opscore_backend_internal_git_repository_interfaces_api_schema.ListFilesResponse:
     properties:
@@ -599,6 +565,13 @@ definitions:
         items:
           $ref: '#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.FileNode'
         type: array
+      latest_commit:
+        description: Latest commit hash of the repository
+        example: abc1234567890def
+        type: string
+      latest_commit_at:
+        example: "2025-04-22T10:00:00Z"
+        type: string
     type: object
   opscore_backend_internal_git_repository_interfaces_api_schema.ListRepositoriesResponse:
     properties:
@@ -1608,6 +1581,8 @@ paths:
           schema:
             additionalProperties: true
             type: object
+      security:
+      - BearerAuth: []
       summary: OAuth callback endpoint with token storage
       tags:
       - OAuth
@@ -1632,6 +1607,8 @@ paths:
           schema:
             additionalProperties: true
             type: object
+      security:
+      - BearerAuth: []
       summary: List OAuth connections
       tags:
       - OAuth
@@ -1662,6 +1639,8 @@ paths:
           schema:
             additionalProperties: true
             type: object
+      security:
+      - BearerAuth: []
       summary: Disconnect OAuth provider
       tags:
       - OAuth
@@ -2679,6 +2658,8 @@ paths:
           schema:
             additionalProperties: true
             type: object
+      security:
+      - BearerAuth: []
       summary: Get file content from a repository
       tags:
       - GitProvider
@@ -2715,6 +2696,8 @@ paths:
           schema:
             additionalProperties: true
             type: object
+      security:
+      - BearerAuth: []
       summary: List user repositories from Git provider
       tags:
       - GitProvider
@@ -2964,6 +2947,8 @@ paths:
           description: Internal server error
           schema:
             $ref: '#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: List all repositories
       tags:
       - repositories
@@ -3029,7 +3014,51 @@ paths:
           description: Internal server error
           schema:
             $ref: '#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: Get repository details
+      tags:
+      - repositories
+  /repositories/{repoId}/contents:
+    get:
+      description: Retrieves files and directories at the specified path (non-recursive).
+        Returns only direct children of the specified directory.
+      parameters:
+      - description: Repository ID
+        in: path
+        name: repoId
+        required: true
+        type: string
+      - description: Directory path relative to repository root (empty = root)
+        in: query
+        name: path
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved directory contents
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ListFilesResponse'
+        "400":
+          description: Invalid repository ID
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse'
+        "401":
+          description: Authentication required
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse'
+        "404":
+          description: Repository or path not found
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get repository contents at a specific path
       tags:
       - repositories
   /repositories/{repoId}/files:
@@ -3110,6 +3139,44 @@ paths:
       security:
       - BearerAuth: []
       summary: Get file contents from a repository
+      tags:
+      - repositories
+  /repositories/{repoId}/files/history:
+    get:
+      description: Retrieves the commit history for a specific file in a repository
+      parameters:
+      - description: Repository ID
+        in: path
+        name: repoId
+        required: true
+        type: string
+      - description: File path relative to repository root
+        in: query
+        name: path
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: File history retrieved successfully
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.GetFileHistoryResponse'
+        "400":
+          description: Invalid repository ID or file path
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse'
+        "404":
+          description: Repository or file not found
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get file commit history
       tags:
       - repositories
   /repositories/{repoId}/token:
@@ -3462,4 +3529,10 @@ paths:
       summary: Change user role
       tags:
       - users
+securityDefinitions:
+  BearerAuth:
+    description: 'Enter "Bearer " followed by your JWT token. Example: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"

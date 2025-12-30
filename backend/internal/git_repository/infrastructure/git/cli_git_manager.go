@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 // cliGitManager implements the GitManager interface using Git CLI commands.
@@ -48,6 +49,7 @@ func (g *cliGitManager) runGitCommand(ctx context.Context, dir string, repo enti
 		"reset":    true,
 		"ls-tree":  true,
 		"ls-files": true,
+		"log":      true,
 		// 必要に応じて他の安全なgitコマンドを追加
 	}
 
@@ -172,6 +174,62 @@ func (g *cliGitManager) ListRepositoryFiles(ctx context.Context, localPath strin
 	return result, nil
 }
 
+// ListDirectoryContents lists files and directories at a specific path (non-recursive).
+func (g *cliGitManager) ListDirectoryContents(ctx context.Context, path string, repo entity.Repository) ([]entity.FileNode, error) {
+	localPath := g.getLocalPath(repo)
+
+	// Ensure repository is cloned
+	_, err := g.EnsureCloned(ctx, repo)
+	if err != nil {
+		return nil, fmt.Errorf("failed to ensure repository is cloned: %w", err)
+	}
+
+	// Use git ls-tree to list directory contents at the specified path
+	// The -d flag includes directories, and we omit -r to avoid recursion
+	var output []byte
+	if path == "" {
+		// List root directory
+		output, err = g.runGitCommand(ctx, localPath, repo, "ls-tree", "--name-only", "HEAD")
+	} else {
+		// List specific directory
+		output, err = g.runGitCommand(ctx, localPath, repo, "ls-tree", "--name-only", "HEAD", path+"/")
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to list directory contents at path '%s': %w", path, err)
+	}
+
+	// Parse the output
+	lines := strings.Split(strings.TrimSpace(string(output)), "\n")
+	fileNodes := make([]entity.FileNode, 0, len(lines))
+
+	for _, line := range lines {
+		if line == "" {
+			continue
+		}
+
+		// Get the base name (remove path prefix if any)
+		name := filepath.Base(line)
+
+		// Determine if it's a file or directory by checking if it exists in the filesystem
+		fullPath := filepath.Join(localPath, line)
+		info, err := os.Stat(fullPath)
+		if err != nil {
+			// If we can't stat the file, skip it
+			continue
+		}
+
+		nodeType := "file"
+		if info.IsDir() {
+			nodeType = "dir"
+		}
+
+		fileNodes = append(fileNodes, entity.NewFileNode(name, nodeType))
+	}
+
+	return fileNodes, nil
+}
+
 // ValidateFilesExist checks if files exist in the git repository index.
 func (g *cliGitManager) ValidateFilesExist(ctx context.Context, localPath string, filePaths []string, repo entity.Repository) error {
 	if len(filePaths) == 0 {
@@ -227,4 +285,85 @@ func (g *cliGitManager) ReadManagedFileContent(ctx context.Context, localPath st
 		return nil, fmt.Errorf("failed to read file %s: %w", absFilePath, err)
 	}
 	return content, nil
+}
+
+// GetLatestCommit retrieves the latest commit information for the repository.
+func (g *cliGitManager) GetLatestCommit(ctx context.Context, repo entity.Repository) (*CommitInfo, error) {
+	localPath := g.getLocalPath(repo)
+
+	// Ensure repository is cloned
+	_, err := g.EnsureCloned(ctx, repo)
+	if err != nil {
+		return nil, fmt.Errorf("failed to ensure repository is cloned: %w", err)
+	}
+
+	// Get the latest commit hash
+	output, err := g.runGitCommand(ctx, localPath, repo, "log", "-1", "--format=%H|%s|%an|%ae|%aI")
+	if err != nil {
+		return nil, fmt.Errorf("failed to get latest commit: %w", err)
+	}
+
+	return parseCommitInfo(string(output))
+}
+
+// GetFileCommitHistory retrieves the commit history for a specific file.
+func (g *cliGitManager) GetFileCommitHistory(ctx context.Context, filePath string, repo entity.Repository) ([]CommitInfo, error) {
+	localPath := g.getLocalPath(repo)
+
+	// Ensure repository is cloned
+	_, err := g.EnsureCloned(ctx, repo)
+	if err != nil {
+		return nil, fmt.Errorf("failed to ensure repository is cloned: %w", err)
+	}
+
+	// Get commit history for the file (up to 50 commits)
+	output, err := g.runGitCommand(ctx, localPath, repo, "log", "-50", "--format=%H|%s|%an|%ae|%aI", "--", filePath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get file commit history: %w", err)
+	}
+
+	// Parse the output
+	lines := strings.Split(strings.TrimSpace(string(output)), "\n")
+	result := make([]CommitInfo, 0, len(lines))
+
+	for _, line := range lines {
+		if line == "" {
+			continue
+		}
+		commitInfo, err := parseCommitInfo(line)
+		if err != nil {
+			// Skip invalid lines
+			continue
+		}
+		result = append(result, *commitInfo)
+	}
+
+	return result, nil
+}
+
+// parseCommitInfo parses a commit info line in format: hash|message|author|email|date
+func parseCommitInfo(line string) (*CommitInfo, error) {
+	parts := strings.SplitN(strings.TrimSpace(line), "|", 5)
+	if len(parts) != 5 {
+		return nil, fmt.Errorf("invalid commit info format: %s", line)
+	}
+
+	date, err := parseGitDate(parts[4])
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse commit date: %w", err)
+	}
+
+	return &CommitInfo{
+		Hash:        parts[0],
+		Message:     parts[1],
+		Author:      parts[2],
+		AuthorEmail: parts[3],
+		Date:        date,
+	}, nil
+}
+
+// parseGitDate parses a Git ISO 8601 date format
+func parseGitDate(dateStr string) (time.Time, error) {
+	// Git's %aI format produces ISO 8601 format like "2025-04-22T10:00:00+09:00"
+	return time.Parse(time.RFC3339, dateStr)
 }

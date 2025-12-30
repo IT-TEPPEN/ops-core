@@ -9,6 +9,9 @@ import (
 	"opscore/backend/internal/document/domain/entity"
 	"opscore/backend/internal/document/domain/repository"
 	"opscore/backend/internal/document/domain/value_object"
+	"opscore/backend/internal/document/infrastructure/parser"
+	gitrepo "opscore/backend/internal/git_repository/domain/repository"
+	"opscore/backend/internal/git_repository/infrastructure/git"
 )
 
 // DocumentUseCase defines the interface for document related use cases.
@@ -46,13 +49,24 @@ type DocumentUseCase interface {
 
 // documentUseCase implements the DocumentUseCase interface.
 type documentUseCase struct {
-	repo repository.DocumentRepository
+	repo        repository.DocumentRepository
+	gitRepo     gitrepo.Repository
+	gitManager  git.GitManager
+	fmParser    parser.FrontmatterParser
 }
 
 // NewDocumentUseCase creates a new instance of documentUseCase.
-func NewDocumentUseCase(repo repository.DocumentRepository) DocumentUseCase {
+func NewDocumentUseCase(
+	repo repository.DocumentRepository,
+	gitRepo gitrepo.Repository,
+	gitManager git.GitManager,
+	fmParser parser.FrontmatterParser,
+) DocumentUseCase {
 	return &documentUseCase{
-		repo: repo,
+		repo:       repo,
+		gitRepo:    gitRepo,
+		gitManager: gitManager,
+		fmParser:   fmParser,
 	}
 }
 
@@ -74,15 +88,7 @@ func (uc *documentUseCase) CreateDocument(ctx context.Context, req *dto.CreateDo
 		})
 	}
 
-	// Validate document type
-	docType, err := value_object.NewDocumentType(req.DocType)
-	if err != nil {
-		return nil, apperror.NewValidationFailedError([]apperror.FieldError{
-			{Field: "doc_type", Message: err.Error()},
-		})
-	}
-
-	// Create file path and commit hash
+	// Validate file path
 	filePath, err := value_object.NewFilePath(req.FilePath)
 	if err != nil {
 		return nil, apperror.NewValidationFailedError([]apperror.FieldError{
@@ -90,7 +96,86 @@ func (uc *documentUseCase) CreateDocument(ctx context.Context, req *dto.CreateDo
 		})
 	}
 
-	commitHash, err := value_object.NewCommitHash(req.CommitHash)
+	// Fetch repository entity
+	repoEntity, err := uc.gitRepo.FindByID(ctx, req.RepositoryID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find repository: %w", err)
+	}
+	if repoEntity == nil {
+		return nil, apperror.NewNotFoundError("Repository", req.RepositoryID, nil)
+	}
+
+	// Ensure repository is cloned
+	localPath, err := uc.gitManager.EnsureCloned(ctx, repoEntity)
+	if err != nil {
+		return nil, fmt.Errorf("failed to clone repository: %w", err)
+	}
+
+	// Read file content from repository
+	fileContent, err := uc.gitManager.ReadManagedFileContent(ctx, localPath, req.FilePath, repoEntity)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read file content: %w", err)
+	}
+
+	// Parse frontmatter from markdown file
+	frontmatterData, err := uc.fmParser.Parse(string(fileContent))
+	if err != nil {
+		return nil, apperror.NewValidationFailedError([]apperror.FieldError{
+			{Field: "file_content", Message: fmt.Sprintf("failed to parse frontmatter: %s", err.Error())},
+		})
+	}
+
+	// Validate and create document type
+	docType, err := value_object.NewDocumentType(frontmatterData.Type)
+	if err != nil {
+		return nil, apperror.NewValidationFailedError([]apperror.FieldError{
+			{Field: "doc_type", Message: err.Error()},
+		})
+	}
+
+	// Convert tags from frontmatter
+	tags := make([]value_object.Tag, len(frontmatterData.Tags))
+	for i, tagStr := range frontmatterData.Tags {
+		tag, err := value_object.NewTag(tagStr)
+		if err != nil {
+			return nil, apperror.NewValidationFailedError([]apperror.FieldError{
+				{Field: fmt.Sprintf("tags[%d]", i), Message: err.Error()},
+			})
+		}
+		tags[i] = tag
+	}
+
+	// Convert variables from frontmatter
+	variables := make([]value_object.VariableDefinition, len(frontmatterData.Variables))
+	for i, v := range frontmatterData.Variables {
+		varType, err := value_object.NewVariableType(v.Type)
+		if err != nil {
+			return nil, apperror.NewValidationFailedError([]apperror.FieldError{
+				{Field: fmt.Sprintf("variables[%d].type", i), Message: err.Error()},
+			})
+		}
+		varDef, err := value_object.NewVariableDefinition(
+			v.Name,
+			v.Label,
+			v.Description,
+			varType,
+			v.Required,
+			v.DefaultValue,
+		)
+		if err != nil {
+			return nil, apperror.NewValidationFailedError([]apperror.FieldError{
+				{Field: fmt.Sprintf("variables[%d]", i), Message: err.Error()},
+			})
+		}
+		variables[i] = varDef
+	}
+
+	// Determine commit hash (use provided or "HEAD" as default)
+	commitHashStr := req.CommitHash
+	if commitHashStr == "" {
+		commitHashStr = "HEAD"
+	}
+	commitHash, err := value_object.NewCommitHash(commitHashStr)
 	if err != nil {
 		return nil, apperror.NewValidationFailedError([]apperror.FieldError{
 			{Field: "commit_hash", Message: err.Error()},
@@ -105,48 +190,11 @@ func (uc *documentUseCase) CreateDocument(ctx context.Context, req *dto.CreateDo
 		})
 	}
 
-	// Convert tags
-	tags, err := dto.ToTagSlice(req.Tags)
-	if err != nil {
-		return nil, apperror.NewValidationFailedError([]apperror.FieldError{
-			{Field: "tags", Message: err.Error()},
-		})
-	}
-
-	// Convert variables
-	variables, err := dto.ToVariableDefinitionSlice(req.Variables)
-	if err != nil {
-		return nil, apperror.NewValidationFailedError([]apperror.FieldError{
-			{Field: "variables", Message: err.Error()},
-		})
-	}
-
-	// Validate title
-	if req.Title == "" {
-		return nil, apperror.NewValidationFailedError([]apperror.FieldError{
-			{Field: "title", Message: "title cannot be empty"},
-		})
-	}
-
-	// Validate content
-	if req.Content == "" {
-		return nil, apperror.NewValidationFailedError([]apperror.FieldError{
-			{Field: "content", Message: "content cannot be empty"},
-		})
-	}
-
-	// Validate owner
-	if req.Owner == "" {
-		return nil, apperror.NewValidationFailedError([]apperror.FieldError{
-			{Field: "owner", Message: "owner cannot be empty"},
-		})
-	}
-
 	// Generate new document ID
 	documentID := value_object.GenerateDocumentID()
 
 	// Create the document entity
-	doc, err := entity.NewDocument(documentID, repositoryID, req.Owner, accessScope)
+	doc, err := entity.NewDocument(documentID, repositoryID, frontmatterData.Owner, accessScope)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create document: %w", err)
 	}
@@ -157,7 +205,7 @@ func (uc *documentUseCase) CreateDocument(ctx context.Context, req *dto.CreateDo
 	}
 
 	// Publish the initial version
-	err = doc.Publish(source, req.Title, docType, tags, variables, req.Content)
+	err = doc.Publish(source, frontmatterData.Title, docType, tags, variables, frontmatterData.Content)
 	if err != nil {
 		return nil, fmt.Errorf("failed to publish initial version: %w", err)
 	}
@@ -192,15 +240,7 @@ func (uc *documentUseCase) UpdateDocument(ctx context.Context, documentID string
 		return nil, apperror.NewNotFoundError("Document", documentID, nil)
 	}
 
-	// Validate document type
-	docType, err := value_object.NewDocumentType(req.DocType)
-	if err != nil {
-		return nil, apperror.NewValidationFailedError([]apperror.FieldError{
-			{Field: "doc_type", Message: err.Error()},
-		})
-	}
-
-	// Create file path and commit hash
+	// Validate file path
 	filePath, err := value_object.NewFilePath(req.FilePath)
 	if err != nil {
 		return nil, apperror.NewValidationFailedError([]apperror.FieldError{
@@ -208,7 +248,86 @@ func (uc *documentUseCase) UpdateDocument(ctx context.Context, documentID string
 		})
 	}
 
-	commitHash, err := value_object.NewCommitHash(req.CommitHash)
+	// Fetch repository entity
+	repoEntity, err := uc.gitRepo.FindByID(ctx, doc.RepositoryID().String())
+	if err != nil {
+		return nil, fmt.Errorf("failed to find repository: %w", err)
+	}
+	if repoEntity == nil {
+		return nil, apperror.NewNotFoundError("Repository", doc.RepositoryID().String(), nil)
+	}
+
+	// Ensure repository is cloned
+	localPath, err := uc.gitManager.EnsureCloned(ctx, repoEntity)
+	if err != nil {
+		return nil, fmt.Errorf("failed to clone repository: %w", err)
+	}
+
+	// Read file content from repository
+	fileContent, err := uc.gitManager.ReadManagedFileContent(ctx, localPath, req.FilePath, repoEntity)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read file content: %w", err)
+	}
+
+	// Parse frontmatter from markdown file
+	frontmatterData, err := uc.fmParser.Parse(string(fileContent))
+	if err != nil {
+		return nil, apperror.NewValidationFailedError([]apperror.FieldError{
+			{Field: "file_content", Message: fmt.Sprintf("failed to parse frontmatter: %s", err.Error())},
+		})
+	}
+
+	// Validate and create document type
+	docType, err := value_object.NewDocumentType(frontmatterData.Type)
+	if err != nil {
+		return nil, apperror.NewValidationFailedError([]apperror.FieldError{
+			{Field: "doc_type", Message: err.Error()},
+		})
+	}
+
+	// Convert tags from frontmatter
+	tags := make([]value_object.Tag, len(frontmatterData.Tags))
+	for i, tagStr := range frontmatterData.Tags {
+		tag, err := value_object.NewTag(tagStr)
+		if err != nil {
+			return nil, apperror.NewValidationFailedError([]apperror.FieldError{
+				{Field: fmt.Sprintf("tags[%d]", i), Message: err.Error()},
+			})
+		}
+		tags[i] = tag
+	}
+
+	// Convert variables from frontmatter
+	variables := make([]value_object.VariableDefinition, len(frontmatterData.Variables))
+	for i, v := range frontmatterData.Variables {
+		varType, err := value_object.NewVariableType(v.Type)
+		if err != nil {
+			return nil, apperror.NewValidationFailedError([]apperror.FieldError{
+				{Field: fmt.Sprintf("variables[%d].type", i), Message: err.Error()},
+			})
+		}
+		varDef, err := value_object.NewVariableDefinition(
+			v.Name,
+			v.Label,
+			v.Description,
+			varType,
+			v.Required,
+			v.DefaultValue,
+		)
+		if err != nil {
+			return nil, apperror.NewValidationFailedError([]apperror.FieldError{
+				{Field: fmt.Sprintf("variables[%d]", i), Message: err.Error()},
+			})
+		}
+		variables[i] = varDef
+	}
+
+	// Determine commit hash (use provided or "HEAD" as default)
+	commitHashStr := req.CommitHash
+	if commitHashStr == "" {
+		commitHashStr = "HEAD"
+	}
+	commitHash, err := value_object.NewCommitHash(commitHashStr)
 	if err != nil {
 		return nil, apperror.NewValidationFailedError([]apperror.FieldError{
 			{Field: "commit_hash", Message: err.Error()},
@@ -223,38 +342,8 @@ func (uc *documentUseCase) UpdateDocument(ctx context.Context, documentID string
 		})
 	}
 
-	// Convert tags
-	tags, err := dto.ToTagSlice(req.Tags)
-	if err != nil {
-		return nil, apperror.NewValidationFailedError([]apperror.FieldError{
-			{Field: "tags", Message: err.Error()},
-		})
-	}
-
-	// Convert variables
-	variables, err := dto.ToVariableDefinitionSlice(req.Variables)
-	if err != nil {
-		return nil, apperror.NewValidationFailedError([]apperror.FieldError{
-			{Field: "variables", Message: err.Error()},
-		})
-	}
-
-	// Validate title
-	if req.Title == "" {
-		return nil, apperror.NewValidationFailedError([]apperror.FieldError{
-			{Field: "title", Message: "title cannot be empty"},
-		})
-	}
-
-	// Validate content
-	if req.Content == "" {
-		return nil, apperror.NewValidationFailedError([]apperror.FieldError{
-			{Field: "content", Message: "content cannot be empty"},
-		})
-	}
-
 	// Publish the new version
-	err = doc.Publish(source, req.Title, docType, tags, variables, req.Content)
+	err = doc.Publish(source, frontmatterData.Title, docType, tags, variables, frontmatterData.Content)
 	if err != nil {
 		return nil, fmt.Errorf("failed to publish new version: %w", err)
 	}

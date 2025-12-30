@@ -28,6 +28,7 @@ func NewGitProviderHandler(gitProviderService *service.GitProviderService, logge
 // @Description List all repositories accessible to the authenticated user from a Git provider
 // @Tags GitProvider
 // @Produce json
+// @Security BearerAuth
 // @Param provider path string true "Provider name (github, gitlab)"
 // @Success 200 {object} map[string]interface{}
 // @Failure 400 {object} map[string]interface{} "Invalid provider"
@@ -76,6 +77,7 @@ func (h *GitProviderHandler) ListUserRepositories(c *gin.Context) {
 // @Description Get the content of a file from a repository using OAuth token
 // @Tags GitProvider
 // @Produce json
+// @Security BearerAuth
 // @Param provider path string true "Provider name (github, gitlab)"
 // @Param owner path string true "Repository owner"
 // @Param repo path string true "Repository name"

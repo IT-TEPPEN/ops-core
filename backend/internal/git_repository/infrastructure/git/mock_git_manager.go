@@ -43,6 +43,15 @@ func (m *MockGitManager) ListRepositoryFiles(ctx context.Context, localPath stri
 	return args.Get(0).([]string), args.Error(1)
 }
 
+// ListDirectoryContents is a mock implementation of the GitManager.ListDirectoryContents method
+func (m *MockGitManager) ListDirectoryContents(ctx context.Context, path string, repo entity.Repository) ([]entity.FileNode, error) {
+	args := m.Called(ctx, path, repo)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]entity.FileNode), args.Error(1)
+}
+
 // ValidateFilesExist is a mock implementation of the GitManager.ValidateFilesExist method
 func (m *MockGitManager) ValidateFilesExist(ctx context.Context, localPath string, filePaths []string, repo entity.Repository) error {
 	args := m.Called(ctx, localPath, filePaths, repo)

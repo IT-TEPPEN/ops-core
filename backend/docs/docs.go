@@ -792,6 +792,11 @@ const docTemplate = `{
         },
         "/auth/oauth/connect": {
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Exchanges OAuth authorization code for access token and saves to database",
                 "consumes": [
                     "application/json"
@@ -847,6 +852,11 @@ const docTemplate = `{
         },
         "/auth/oauth/connections": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "List all OAuth connections for the authenticated user",
                 "produces": [
                     "application/json"
@@ -882,6 +892,11 @@ const docTemplate = `{
         },
         "/auth/oauth/connections/{provider}": {
             "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Remove an OAuth connection for the authenticated user",
                 "tags": [
                     "OAuth"
@@ -2446,6 +2461,11 @@ const docTemplate = `{
         },
         "/git-providers/{provider}/repos/{owner}/{repo}/contents": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Get the content of a file from a repository using OAuth token",
                 "produces": [
                     "application/json"
@@ -2524,6 +2544,11 @@ const docTemplate = `{
         },
         "/git-providers/{provider}/repositories": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "List all repositories accessible to the authenticated user from a Git provider",
                 "produces": [
                     "application/json"
@@ -2925,6 +2950,11 @@ const docTemplate = `{
         },
         "/repositories": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Retrieves a list of all repositories registered in OpsCore",
                 "produces": [
                     "application/json"
@@ -3001,6 +3031,11 @@ const docTemplate = `{
         },
         "/repositories/{repoId}": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Retrieves detailed information about a specific repository by ID",
                 "produces": [
                     "application/json"
@@ -3033,6 +3068,70 @@ const docTemplate = `{
                     },
                     "404": {
                         "description": "Repository not found",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/repositories/{repoId}/contents": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieves files and directories at the specified path (non-recursive). Returns only direct children of the specified directory.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "repositories"
+                ],
+                "summary": "Get repository contents at a specific path",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Repository ID",
+                        "name": "repoId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Directory path relative to repository root (empty = root)",
+                        "name": "path",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved directory contents",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ListFilesResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid repository ID",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Repository or path not found",
                         "schema": {
                             "$ref": "#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse"
                         }
@@ -3150,6 +3249,65 @@ const docTemplate = `{
                     },
                     "401": {
                         "description": "Authentication required",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Repository or file not found",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/repositories/{repoId}/files/history": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieves the commit history for a specific file in a repository",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "repositories"
+                ],
+                "summary": "Get file commit history",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Repository ID",
+                        "name": "repoId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "File path relative to repository root",
+                        "name": "path",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "File history retrieved successfully",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.GetFileHistoryResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid repository ID or file path",
                         "schema": {
                             "$ref": "#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse"
                         }
@@ -3803,13 +3961,8 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "access_scope",
-                "commit_hash",
-                "content",
-                "doc_type",
                 "file_path",
-                "owner",
-                "repository_id",
-                "title"
+                "repository_id"
             ],
             "properties": {
                 "access_scope": {
@@ -3817,16 +3970,9 @@ const docTemplate = `{
                     "example": "public"
                 },
                 "commit_hash": {
+                    "description": "Optional: if empty, use latest commit",
                     "type": "string",
                     "example": "abc1234567890"
-                },
-                "content": {
-                    "type": "string",
-                    "example": "# Database Backup Procedure\n\nThis document describes..."
-                },
-                "doc_type": {
-                    "type": "string",
-                    "example": "procedure"
                 },
                 "file_path": {
                     "type": "string",
@@ -3836,33 +3982,9 @@ const docTemplate = `{
                     "type": "boolean",
                     "example": true
                 },
-                "owner": {
-                    "type": "string",
-                    "example": "database-team"
-                },
                 "repository_id": {
                     "type": "string",
                     "example": "a1b2c3d4-e5f6-7890-1234-567890abcdef"
-                },
-                "tags": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    },
-                    "example": [
-                        "[\"database\"",
-                        "\"backup\"]"
-                    ]
-                },
-                "title": {
-                    "type": "string",
-                    "example": "Database Backup Procedure"
-                },
-                "variables": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/opscore_backend_internal_document_interfaces_api_schema.VariableDefinitionRequest"
-                    }
                 }
             }
         },
@@ -4088,49 +4210,17 @@ const docTemplate = `{
         "opscore_backend_internal_document_interfaces_api_schema.UpdateDocumentRequest": {
             "type": "object",
             "required": [
-                "commit_hash",
-                "content",
-                "doc_type",
-                "file_path",
-                "title"
+                "file_path"
             ],
             "properties": {
                 "commit_hash": {
+                    "description": "Optional: if empty, use latest commit",
                     "type": "string",
                     "example": "def4567890123"
-                },
-                "content": {
-                    "type": "string",
-                    "example": "# Database Backup Procedure v2\n\nUpdated procedure..."
-                },
-                "doc_type": {
-                    "type": "string",
-                    "example": "procedure"
                 },
                 "file_path": {
                     "type": "string",
                     "example": "docs/backup-procedure.md"
-                },
-                "tags": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    },
-                    "example": [
-                        "[\"database\"",
-                        "\"backup\"",
-                        "\"v2\"]"
-                    ]
-                },
-                "title": {
-                    "type": "string",
-                    "example": "Database Backup Procedure v2"
-                },
-                "variables": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/opscore_backend_internal_document_interfaces_api_schema.VariableDefinitionRequest"
-                    }
                 }
             }
         },
@@ -4189,37 +4279,6 @@ const docTemplate = `{
                 "type": {
                     "description": "\"string\", \"number\", \"boolean\", \"date\"",
                     "type": "string"
-                }
-            }
-        },
-        "opscore_backend_internal_document_interfaces_api_schema.VariableDefinitionRequest": {
-            "type": "object",
-            "required": [
-                "label",
-                "name",
-                "type"
-            ],
-            "properties": {
-                "default_value": {},
-                "description": {
-                    "type": "string",
-                    "example": "The target server name"
-                },
-                "label": {
-                    "type": "string",
-                    "example": "Server Name"
-                },
-                "name": {
-                    "type": "string",
-                    "example": "server_name"
-                },
-                "required": {
-                    "type": "boolean",
-                    "example": true
-                },
-                "type": {
-                    "type": "string",
-                    "example": "string"
                 }
             }
         },
@@ -4509,12 +4568,50 @@ const docTemplate = `{
                 }
             }
         },
+        "opscore_backend_internal_git_repository_interfaces_api_schema.FileCommitInfo": {
+            "type": "object",
+            "properties": {
+                "author": {
+                    "type": "string",
+                    "example": "John Doe"
+                },
+                "author_email": {
+                    "type": "string",
+                    "example": "john@example.com"
+                },
+                "commit_hash": {
+                    "type": "string",
+                    "example": "abc1234567890def"
+                },
+                "date": {
+                    "type": "string",
+                    "example": "2025-04-22T10:00:00Z"
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Updated documentation"
+                }
+            }
+        },
         "opscore_backend_internal_git_repository_interfaces_api_schema.FileNode": {
             "type": "object",
             "properties": {
+                "commit_hash": {
+                    "type": "string",
+                    "example": "def4567890123abc"
+                },
                 "path": {
                     "type": "string",
                     "example": "src/main.go"
+                },
+                "sha": {
+                    "type": "string",
+                    "example": "abc1234567890def"
+                },
+                "size": {
+                    "description": "File size in bytes (only for files)",
+                    "type": "integer",
+                    "example": 1024
                 },
                 "type": {
                     "description": "\"file\" or \"dir\"",
@@ -4526,6 +4623,11 @@ const docTemplate = `{
         "opscore_backend_internal_git_repository_interfaces_api_schema.GetFileContentsResponse": {
             "type": "object",
             "properties": {
+                "commit_hash": {
+                    "description": "Commit hash of the file",
+                    "type": "string",
+                    "example": "abc1234567890def"
+                },
                 "content": {
                     "type": "string",
                     "example": "# Project Title\n\nThis is the README content..."
@@ -4537,6 +4639,26 @@ const docTemplate = `{
                 "repoId": {
                     "type": "string",
                     "example": "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+                },
+                "sha": {
+                    "description": "SHA of the file content",
+                    "type": "string",
+                    "example": "def4567890123abc"
+                }
+            }
+        },
+        "opscore_backend_internal_git_repository_interfaces_api_schema.GetFileHistoryResponse": {
+            "type": "object",
+            "properties": {
+                "commits": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.FileCommitInfo"
+                    }
+                },
+                "file_path": {
+                    "type": "string",
+                    "example": "docs/procedure.md"
                 }
             }
         },
@@ -4548,6 +4670,15 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.FileNode"
                     }
+                },
+                "latest_commit": {
+                    "description": "Latest commit hash of the repository",
+                    "type": "string",
+                    "example": "abc1234567890def"
+                },
+                "latest_commit_at": {
+                    "type": "string",
+                    "example": "2025-04-22T10:00:00Z"
                 }
             }
         },
@@ -5119,6 +5250,14 @@ const docTemplate = `{
                 }
             }
         }
+    },
+    "securityDefinitions": {
+        "BearerAuth": {
+            "description": "Enter \"Bearer \" followed by your JWT token. Example: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        }
     }
 }`
 
@@ -5132,8 +5271,8 @@ var SwaggerInfo = &swag.Spec{
 	Description:      "This is the API documentation for the OpsCore backend service.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
-	// LeftDelim:        "{{",
-	// RightDelim:       "}}",
+	LeftDelim:        "{{",
+	RightDelim:       "}}",
 }
 
 func init() {

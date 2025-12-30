@@ -97,6 +97,7 @@ func (h *OAuthHandler) HandleCallback(c *gin.Context) {
 // @Tags OAuth
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param request body domain.OAuthCallbackRequest true "OAuth callback request"
 // @Success 200 {object} OAuthConnectionResponse
 // @Failure 400 {object} map[string]interface{} "Invalid request"
@@ -161,6 +162,7 @@ func (h *OAuthHandler) HandleCallbackWithSave(c *gin.Context) {
 // @Description List all OAuth connections for the authenticated user
 // @Tags OAuth
 // @Produce json
+// @Security BearerAuth
 // @Success 200 {object} map[string]interface{}
 // @Failure 401 {object} map[string]interface{} "Unauthorized"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
@@ -205,6 +207,7 @@ func (h *OAuthHandler) ListConnections(c *gin.Context) {
 // @Summary Disconnect OAuth provider
 // @Description Remove an OAuth connection for the authenticated user
 // @Tags OAuth
+// @Security BearerAuth
 // @Param provider path string true "Provider name (github, gitlab)"
 // @Success 204 "No Content"
 // @Failure 400 {object} map[string]interface{} "Invalid provider"
