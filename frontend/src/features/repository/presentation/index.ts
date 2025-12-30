@@ -9,7 +9,6 @@ export {
 
 export {
   RepositoryList,
-  AccessTokenForm,
   FileList,
   RepositoryRegistrationForm,
   RepositorySelector,

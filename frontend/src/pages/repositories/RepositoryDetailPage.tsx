@@ -1,21 +1,10 @@
 import { Link } from "react-router-dom";
-import { useRepositoryDetail, AccessTokenForm, FileList } from "@/features/repository";
+import { useRepositoryDetail, FileList } from "@/features/repository";
 import { Page } from "@/shared/types/Page";
 
 export const RepositoryDetailPage: Page<"repoId"> = ({ path: { repoId } }) => {
-  const {
-    repository,
-    isLoading,
-    error,
-    fileError,
-    needsToken,
-    accessToken,
-    isUpdatingToken,
-    tokenMessage,
-    handleTokenSubmit,
-    setAccessToken,
-    markdownFiles,
-  } = useRepositoryDetail(repoId);
+  const { repository, isLoading, error, fileError, needsToken, markdownFiles } =
+    useRepositoryDetail(repoId);
 
   return (
     <div className="space-y-6">
@@ -50,16 +39,6 @@ export const RepositoryDetailPage: Page<"repoId"> = ({ path: { repoId } }) => {
             {new Date(repository.createdAt).toLocaleString()}
           </p>
         </div>
-      )}
-
-      {repository && (needsToken || fileError) && (
-        <AccessTokenForm
-          accessToken={accessToken}
-          isUpdatingToken={isUpdatingToken}
-          tokenMessage={tokenMessage}
-          onTokenChange={setAccessToken}
-          onSubmit={handleTokenSubmit}
-        />
       )}
 
       <FileList

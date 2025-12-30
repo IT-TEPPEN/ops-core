@@ -7,7 +7,6 @@
 // Presentation layer exports (components and hooks)
 export {
   RepositoryList,
-  AccessTokenForm,
   FileList,
   RepositoryRegistrationForm,
   RepositorySelector,
