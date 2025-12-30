@@ -1,16 +1,27 @@
 // Document feature public API
 
-// Hooks
-export { useDocumentExecution } from "./hooks/useDocumentExecution";
-export { useDocumentList } from "./hooks/useDocumentList";
-export { useDocumentView } from "./hooks/useDocumentView";
-export { useVersionHistory } from "./hooks/useVersionHistory";
+// Application layer (DTOs and Service interfaces)
+export type {
+  DocumentQueryService,
+  DocumentCommandService,
+  CreateDocumentRequest,
+  UpdateDocumentRequest,
+  DocumentViewData,
+  DocumentListItem,
+  VersionHistoryItem,
+  PagedResponse,
+} from "./application";
 
-// Components
-export { DocumentContentPane } from "./components/DocumentContentPane";
-export { DocumentFilterBar } from "./components/DocumentFilterBar";
-export { DocumentMetadata } from "./components/DocumentMetadata";
-export { DocumentTable } from "./components/DocumentTable";
-export { ExecutionRecordPane } from "./components/ExecutionRecordPane";
-export { VariableInputPanel } from "./components/VariableInputPanel";
-export { VersionTable } from "./components/VersionTable";
+// Infrastructure layer (Service implementations)
+export {
+  HttpDocumentQueryService,
+  HttpDocumentCommandService,
+} from "./infrastructure";
+
+// Presentation layer (Components, Hooks, Contexts)
+export * from "./presentation";
+
+// Legacy exports (for backward compatibility)
+// TODO: Remove these after updating all imports
+export { useDocumentExecution } from "./hooks/useDocumentExecution";
+export { DocumentRegistrationDialog } from "./components/DocumentRegistrationDialog";
