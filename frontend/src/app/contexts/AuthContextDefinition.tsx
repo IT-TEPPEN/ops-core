@@ -22,7 +22,7 @@ export interface AuthContextType {
   identities: Identity[];
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (token: string, user: User) => void;
+  login: (token: string, user: User, refreshToken: string) => void;
   logout: () => void;
   linkProvider: (provider: string) => void;
   unlinkIdentity: (identityId: string) => Promise<void>;

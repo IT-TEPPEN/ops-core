@@ -19,6 +19,7 @@ interface Identity {
 }
 
 const TOKEN_KEY = "auth_token";
+const REFRESH_TOKEN_KEY = "refresh_token";
 const USER_KEY = "auth_user";
 
 interface AuthProviderProps {
@@ -29,6 +30,7 @@ interface AuthProviderProps {
 interface AuthState {
   user: User | null;
   token: string | null;
+  refreshToken: string | null;
   identities: Identity[];
   isLoading: boolean;
 }
@@ -36,10 +38,11 @@ interface AuthState {
 // Action types
 type AuthAction =
   | { type: "SET_TOKEN"; payload: string | null }
+  | { type: "SET_REFRESH_TOKEN"; payload: string | null }
   | { type: "SET_USER"; payload: User | null }
   | { type: "SET_IDENTITIES"; payload: Identity[] }
   | { type: "SET_LOADING"; payload: boolean }
-  | { type: "LOGIN"; payload: { token: string; user: User } }
+  | { type: "LOGIN"; payload: { token: string; refreshToken: string; user: User } }
   | { type: "LOGOUT" };
 
 // Reducer
@@ -47,6 +50,8 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
   switch (action.type) {
     case "SET_TOKEN":
       return { ...state, token: action.payload };
+    case "SET_REFRESH_TOKEN":
+      return { ...state, refreshToken: action.payload };
     case "SET_USER":
       return { ...state, user: action.payload };
     case "SET_IDENTITIES":
@@ -57,12 +62,14 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
       return {
         ...state,
         token: action.payload.token,
+        refreshToken: action.payload.refreshToken,
         user: action.payload.user,
       };
     case "LOGOUT":
       return {
         ...state,
         token: null,
+        refreshToken: null,
         user: null,
         identities: [],
       };
@@ -75,6 +82,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [state, dispatch] = useReducer(authReducer, {
     user: null,
     token: null,
+    refreshToken: null,
     identities: [],
     isLoading: true,
   });
@@ -85,16 +93,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Initialize auth state from localStorage
   useEffect(() => {
     const storedToken = localStorage.getItem(TOKEN_KEY);
+    const storedRefreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
     const storedUser = localStorage.getItem(USER_KEY);
 
-    if (storedToken && storedUser) {
+    if (storedToken && storedRefreshToken && storedUser) {
       try {
         const parsedUser = JSON.parse(storedUser);
         dispatch({ type: "SET_TOKEN", payload: storedToken });
+        dispatch({ type: "SET_REFRESH_TOKEN", payload: storedRefreshToken });
         dispatch({ type: "SET_USER", payload: parsedUser });
       } catch (error) {
         console.error("Failed to parse stored user data:", error);
         localStorage.removeItem(TOKEN_KEY);
+        localStorage.removeItem(REFRESH_TOKEN_KEY);
         localStorage.removeItem(USER_KEY);
       }
     }
@@ -121,14 +132,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
-  const login = (newToken: string, newUser: User) => {
+  const login = (newToken: string, newUser: User, newRefreshToken: string) => {
     localStorage.setItem(TOKEN_KEY, newToken);
+    localStorage.setItem(REFRESH_TOKEN_KEY, newRefreshToken);
     localStorage.setItem(USER_KEY, JSON.stringify(newUser));
-    dispatch({ type: "LOGIN", payload: { token: newToken, user: newUser } });
+    dispatch({ type: "LOGIN", payload: { token: newToken, refreshToken: newRefreshToken, user: newUser } });
   };
 
   const logout = () => {
     localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(REFRESH_TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
     // Also remove OAuth token if it exists
     localStorage.removeItem("oauth_token");

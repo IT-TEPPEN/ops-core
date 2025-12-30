@@ -30,6 +30,7 @@ export default function AuthCallbackPage() {
       // Verify state for CSRF protection
       const storedState = sessionStorage.getItem("auth_state");
       const storedProvider = sessionStorage.getItem("auth_provider");
+      const rememberMe = sessionStorage.getItem("auth_remember_me") === "true";
 
       if (state !== storedState || provider !== storedProvider) {
         console.error("State or provider mismatch - potential CSRF attack");
@@ -38,19 +39,21 @@ export default function AuthCallbackPage() {
       }
 
       try {
-        // Exchange code for token
+        // Exchange code for token (with remember_me preference)
         const data = await authApi.handleProviderCallback(
           provider,
           code,
-          state
+          state,
+          rememberMe
         );
 
-        // Store token and user info
-        login(data.token, data.user);
+        // Store token, refresh token, and user info
+        login(data.token, data.user, data.refresh_token);
 
         // Clean up
         sessionStorage.removeItem("auth_state");
         sessionStorage.removeItem("auth_provider");
+        sessionStorage.removeItem("auth_remember_me");
 
         // Get the originally requested page or default to home
         const from =

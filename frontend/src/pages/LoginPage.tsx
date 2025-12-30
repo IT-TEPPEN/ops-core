@@ -45,6 +45,7 @@ export default function LoginPage() {
   const location = useLocation();
   const { isAuthenticated, isLoading } = useAuth();
   const [error, setError] = useState<string | null>(null);
+  const [rememberMe, setRememberMe] = useState(false);
   const authApi = useMemo(() => new AuthApi(), []);
 
   const from =
@@ -63,9 +64,10 @@ export default function LoginPage() {
       setError(null);
       const data = await authApi.getProviderLoginUrl(provider);
 
-      // Store state and provider for CSRF protection
+      // Store state, provider, and remember_me for CSRF protection and callback
       sessionStorage.setItem("auth_state", data.state);
       sessionStorage.setItem("auth_provider", provider);
+      sessionStorage.setItem("auth_remember_me", rememberMe.toString());
 
       // Redirect to provider's authorization page
       window.location.href = data.auth_url;
@@ -103,6 +105,22 @@ export default function LoginPage() {
               <span className="block sm:inline">{error}</span>
             </div>
           )}
+
+          {/* Remember Me checkbox */}
+          <div className="flex items-center justify-center mb-4">
+            <input
+              id="remember-me"
+              name="remember-me"
+              type="checkbox"
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
+              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+            />
+            <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
+              Remember me for 30 days (otherwise 7 days)
+            </label>
+          </div>
+
           {(["google", "github", "gitlab", "microsoft"] as Provider[]).map(
             (provider) => {
               const info = providerInfo[provider];

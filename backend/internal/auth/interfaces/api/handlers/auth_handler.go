@@ -15,11 +15,12 @@ import (
 
 // AuthHandler handles authentication-related HTTP requests
 type AuthHandler struct {
-	providerFactory  *service.ProviderFactory
-	jwtService       *service.JWTService
-	userRepository   domain.UserRepository
-	userIdentityRepo domain.UserIdentityRepository
-	logger           Logger
+	providerFactory    *service.ProviderFactory
+	jwtService         *service.JWTService
+	userRepository     domain.UserRepository
+	userIdentityRepo   domain.UserIdentityRepository
+	refreshTokenRepo   domain.RefreshTokenRepository
+	logger             Logger
 }
 
 // Logger interface for structured logging
@@ -36,6 +37,7 @@ func NewAuthHandler(
 	jwtService *service.JWTService,
 	userRepository domain.UserRepository,
 	userIdentityRepo domain.UserIdentityRepository,
+	refreshTokenRepo domain.RefreshTokenRepository,
 	logger Logger,
 ) *AuthHandler {
 	return &AuthHandler{
@@ -43,6 +45,7 @@ func NewAuthHandler(
 		jwtService:       jwtService,
 		userRepository:   userRepository,
 		userIdentityRepo: userIdentityRepo,
+		refreshTokenRepo: refreshTokenRepo,
 		logger:           logger,
 	}
 }
@@ -55,14 +58,27 @@ type ProviderLoginResponse struct {
 
 // ProviderCallbackRequest represents the request body for OIDC callback
 type ProviderCallbackRequest struct {
-	Code  string `json:"code" binding:"required"`
-	State string `json:"state" binding:"required"`
+	Code       string `json:"code" binding:"required"`
+	State      string `json:"state" binding:"required"`
+	RememberMe bool   `json:"remember_me"` // Optional, defaults to false
 }
 
 // AuthResponse represents the authentication response
 type AuthResponse struct {
-	Token string      `json:"token"`
-	User  UserProfile `json:"user"`
+	Token        string      `json:"token"`
+	RefreshToken string      `json:"refresh_token"`
+	User         UserProfile `json:"user"`
+}
+
+// RefreshTokenRequest represents the refresh token request
+type RefreshTokenRequest struct {
+	RefreshToken string `json:"refresh_token" binding:"required"`
+}
+
+// RefreshTokenResponse represents the refresh token response
+type RefreshTokenResponse struct {
+	Token        string `json:"token"`
+	RefreshToken string `json:"refresh_token"`
 }
 
 // UserProfile represents user profile information
@@ -216,16 +232,24 @@ func (h *AuthHandler) ProviderCallback(c *gin.Context) {
 		h.logger.Info("User logged in", "user_id", user.ID, "email", user.PrimaryEmail, "provider", provider)
 	}
 
-	// Generate JWT token
-	jwtToken, err := h.jwtService.GenerateToken(c.Request.Context(), user)
+	// Generate token pair (access + refresh)
+	tokenPair, refreshToken, err := h.jwtService.GenerateTokenPair(c.Request.Context(), user, req.RememberMe)
 	if err != nil {
-		h.logger.Error("Failed to generate JWT token", "error", err.Error())
+		h.logger.Error("Failed to generate token pair", "error", err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate session token"})
 		return
 	}
 
+	// Save refresh token to database
+	if err := h.refreshTokenRepo.Create(c.Request.Context(), refreshToken); err != nil {
+		h.logger.Error("Failed to save refresh token", "error", err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save session"})
+		return
+	}
+
 	c.JSON(http.StatusOK, AuthResponse{
-		Token: jwtToken,
+		Token:        tokenPair.AccessToken,
+		RefreshToken: tokenPair.RefreshToken,
 		User: UserProfile{
 			ID:      user.ID,
 			Email:   user.PrimaryEmail,
@@ -367,15 +391,105 @@ func (h *AuthHandler) UnlinkIdentity(c *gin.Context) {
 
 // Logout godoc
 // @Summary Logout user
-// @Description Logout endpoint (client-side token deletion primarily)
+// @Description Revokes all refresh tokens for the user
 // @Tags auth
 // @Produce json
 // @Security BearerAuth
 // @Success 200 {object} map[string]string
 // @Router /auth/logout [post]
 func (h *AuthHandler) Logout(c *gin.Context) {
-	// Since we're using stateless JWT, logout is primarily client-side
+	// Get user ID from context (set by auth middleware)
+	userID, exists := c.Get("user_id")
+	if exists {
+		// Revoke all refresh tokens for the user
+		if err := h.refreshTokenRepo.RevokeByUserID(c.Request.Context(), userID.(string)); err != nil {
+			h.logger.Error("Failed to revoke refresh tokens", "user_id", userID, "error", err.Error())
+			// Don't return error to client, just log it
+		}
+		h.logger.Info("User logged out", "user_id", userID)
+	}
+
 	c.JSON(http.StatusOK, gin.H{"message": "Logged out successfully"})
+}
+
+// RefreshToken godoc
+// @Summary Refresh access token
+// @Description Exchanges a refresh token for a new access token and refresh token pair
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body RefreshTokenRequest true "Refresh token"
+// @Success 200 {object} RefreshTokenResponse
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Router /auth/refresh [post]
+func (h *AuthHandler) RefreshToken(c *gin.Context) {
+	var req RefreshTokenRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		h.logger.Error("Invalid refresh token request", "error", err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+		return
+	}
+
+	// Validate and hash the refresh token
+	tokenHash, err := h.jwtService.ValidateRefreshToken(req.RefreshToken)
+	if err != nil {
+		h.logger.Error("Invalid refresh token format", "error", err.Error())
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid refresh token"})
+		return
+	}
+
+	// Find refresh token in database
+	storedToken, err := h.refreshTokenRepo.FindByTokenHash(c.Request.Context(), tokenHash)
+	if err != nil {
+		h.logger.Error("Refresh token not found", "error", err.Error())
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid refresh token"})
+		return
+	}
+
+	// Validate refresh token (not expired, not revoked)
+	if !storedToken.IsValid() {
+		h.logger.Warn("Refresh token is invalid or revoked", "token_id", storedToken.ID, "user_id", storedToken.UserID)
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Refresh token expired or revoked"})
+		return
+	}
+
+	// Get user
+	user, err := h.userRepository.FindByID(c.Request.Context(), storedToken.UserID)
+	if err != nil {
+		h.logger.Error("Failed to find user", "user_id", storedToken.UserID, "error", err.Error())
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
+		return
+	}
+
+	// Revoke old refresh token (token rotation)
+	storedToken.Revoke()
+	if err := h.refreshTokenRepo.Update(c.Request.Context(), storedToken); err != nil {
+		h.logger.Error("Failed to revoke old refresh token", "error", err.Error())
+		// Continue anyway, token rotation is a security enhancement
+	}
+
+	// Generate new token pair
+	tokenPair, newRefreshToken, err := h.jwtService.GenerateTokenPair(c.Request.Context(), user, storedToken.RememberMe)
+	if err != nil {
+		h.logger.Error("Failed to generate new token pair", "error", err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate tokens"})
+		return
+	}
+
+	// Save new refresh token
+	if err := h.refreshTokenRepo.Create(c.Request.Context(), newRefreshToken); err != nil {
+		h.logger.Error("Failed to save new refresh token", "error", err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save session"})
+		return
+	}
+
+	h.logger.Info("Tokens refreshed", "user_id", user.ID)
+
+	c.JSON(http.StatusOK, RefreshTokenResponse{
+		Token:        tokenPair.AccessToken,
+		RefreshToken: tokenPair.RefreshToken,
+	})
 }
 
 // generateRandomState generates a cryptographically secure random state for CSRF protection

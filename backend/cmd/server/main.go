@@ -108,6 +108,7 @@ func main() {
 			// Public routes - no authentication required
 			authGroup.GET("/:provider/login", authHandler.ProviderLogin)
 			authGroup.POST("/:provider/callback", authHandler.ProviderCallback)
+			authGroup.POST("/refresh", authHandler.RefreshToken)
 
 			// Legacy OAuth routes for repository access (returns token without saving)
 			authGroup.POST("/oauth/callback", oauthHandler.HandleCallback)

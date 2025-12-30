@@ -408,14 +408,18 @@ func InitializeAPI(db *pgxpool.Pool) (*repohandlers.RepositoryHandler,
 	if jwtIssuer == "" {
 		jwtIssuer = "opscore"
 	}
-	jwtExpirationHours := 24
-	jwtService := authservice.NewJWTService(jwtSecret, jwtIssuer, time.Duration(jwtExpirationHours)*time.Hour)
+	// Access token expiration: 15 minutes (refresh token will handle long-term sessions)
+	accessTokenExpiration := 15 * time.Minute
+	jwtService := authservice.NewJWTService(jwtSecret, jwtIssuer, accessTokenExpiration)
+
+	// Create refresh token repository
+	refreshTokenRepository := authpersistence.NewPostgresRefreshTokenRepository(db)
 
 	// Create auth logger
 	authLogger := provideAuthHandlerLogger()
 
 	// Create auth handler
-	authHandler := authhandlers.NewAuthHandler(providerFactory, jwtService, authUserRepository, userIdentityRepository, authLogger)
+	authHandler := authhandlers.NewAuthHandler(providerFactory, jwtService, authUserRepository, userIdentityRepository, refreshTokenRepository, authLogger)
 
 	// Return the app logger for use in middleware
 	appLogger := provideAppLogger()

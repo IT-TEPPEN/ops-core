@@ -2,10 +2,25 @@
  * API communication utility
  */
 
-import axios, { AxiosInstance, AxiosResponse } from "axios";
+import axios, { AxiosInstance, AxiosResponse, AxiosError, InternalAxiosRequestConfig } from "axios";
 import type { ApiError } from "../types/api";
 
 const TOKEN_KEY = "auth_token";
+const REFRESH_TOKEN_KEY = "refresh_token";
+const USER_KEY = "auth_user";
+
+// Global state for token refresh (to prevent duplicate refresh calls)
+let isRefreshing = false;
+let refreshSubscribers: Array<(token: string) => void> = [];
+
+function subscribeTokenRefresh(cb: (token: string) => void) {
+  refreshSubscribers.push(cb);
+}
+
+function onTokenRefreshed(token: string) {
+  refreshSubscribers.forEach((cb) => cb(token));
+  refreshSubscribers = [];
+}
 
 export class V1ApiClient {
   private client: AxiosInstance;
@@ -33,6 +48,80 @@ export class V1ApiClient {
       }
       return config;
     });
+
+    // Add response interceptor to handle 401 errors with token refresh
+    this.client.interceptors.response.use(
+      (response) => response,
+      async (error: AxiosError) => {
+        const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+
+        // If error is 401 and we haven't retried yet
+        if (error.response?.status === 401 && !originalRequest._retry) {
+          if (isRefreshing) {
+            // Token refresh is already in progress, queue this request
+            return new Promise((resolve) => {
+              subscribeTokenRefresh((token: string) => {
+                originalRequest.headers.Authorization = `Bearer ${token}`;
+                resolve(this.client(originalRequest));
+              });
+            });
+          }
+
+          originalRequest._retry = true;
+          isRefreshing = true;
+
+          try {
+            const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
+
+            if (!refreshToken) {
+              // No refresh token available, logout
+              this.handleLogout();
+              return Promise.reject(error);
+            }
+
+            // Attempt to refresh the token
+            const response = await axios.post(`${this.client.defaults.baseURL?.replace(/(\/[^\/]*)?$/, '')}/api/v1/auth/refresh`, {
+              refresh_token: refreshToken,
+            });
+
+            const { token: newAccessToken, refresh_token: newRefreshToken } = response.data;
+
+            // Update stored tokens
+            localStorage.setItem(TOKEN_KEY, newAccessToken);
+            localStorage.setItem(REFRESH_TOKEN_KEY, newRefreshToken);
+
+            // Update authorization header for the original request
+            originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+
+            // Notify all subscribers with the new token
+            onTokenRefreshed(newAccessToken);
+
+            isRefreshing = false;
+
+            // Retry the original request
+            return this.client(originalRequest);
+          } catch (refreshError) {
+            // Token refresh failed, logout
+            isRefreshing = false;
+            refreshSubscribers = [];
+            this.handleLogout();
+            return Promise.reject(refreshError);
+          }
+        }
+
+        return Promise.reject(error);
+      }
+    );
+  }
+
+  private handleLogout() {
+    // Clear tokens and user data
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(REFRESH_TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
+
+    // Redirect to login page
+    window.location.href = "/login";
   }
 
   protected async get<ResponseData>(endpoint: string): Promise<ResponseData> {

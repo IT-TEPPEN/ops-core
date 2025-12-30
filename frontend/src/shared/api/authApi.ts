@@ -12,6 +12,7 @@ export interface ProviderLoginResponse {
 
 export interface AuthCallbackResponse {
   token: string;
+  refresh_token: string;
   user: UserProfile;
 }
 
@@ -104,11 +105,19 @@ export class AuthApi extends V1ApiClient implements AuthApiAdapter {
   async handleProviderCallback(
     provider: string,
     code: string,
-    state: string
+    state: string,
+    rememberMe: boolean = false
   ): Promise<AuthCallbackResponse> {
-    return this.post<AuthCallbackResponse, { code: string; state: string }>(
+    return this.post<AuthCallbackResponse, { code: string; state: string; remember_me: boolean }>(
       `/${provider}/callback`,
-      { code, state }
+      { code, state, remember_me: rememberMe }
+    );
+  }
+
+  async refreshToken(refreshToken: string): Promise<AuthCallbackResponse> {
+    return this.post<AuthCallbackResponse, { refresh_token: string }>(
+      `/refresh`,
+      { refresh_token: refreshToken }
     );
   }
 
