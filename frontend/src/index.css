@@ -130,6 +130,7 @@
 
 .markdown-content .code-block-copy-btn {
   @apply absolute top-2 right-2 px-3 py-1 text-xs font-medium bg-gray-700 hover:bg-gray-600 text-white rounded opacity-0 transition-opacity;
+  cursor: pointer;
 }
 
 .markdown-content .code-block-copy-btn:focus {
