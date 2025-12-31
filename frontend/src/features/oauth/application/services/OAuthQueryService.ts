@@ -12,11 +12,6 @@ export interface OAuthQueryService {
   listConnections(): Promise<Connection[]>;
 
   /**
-   * Check if connected to a specific provider.
-   */
-  isConnected(provider: GitProvider): Promise<boolean>;
-
-  /**
    * List repositories for a specific provider.
    */
   listRepositories(provider: GitProvider): Promise<GitRepository[]>;

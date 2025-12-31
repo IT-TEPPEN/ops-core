@@ -45,15 +45,6 @@ export class HttpOAuthQueryService
     }));
   }
 
-  async isConnected(provider: GitProvider): Promise<boolean> {
-    try {
-      const connections = await this.listConnections();
-      return connections.some((conn) => conn.provider === provider);
-    } catch {
-      return false;
-    }
-  }
-
   async listRepositories(provider: GitProvider): Promise<GitRepository[]> {
     const response = await this.get<ListRepositoriesResponse>(
       `/git-providers/${provider}/repositories`

@@ -1,6 +1,1 @@
-export type {
-  GitProvider,
-  GitRepository,
-  UseGitProviderState,
-  UseGitProviderReturn,
-} from "./oauth";
+export type { GitProvider, GitRepository } from "./oauth";
