@@ -14,7 +14,7 @@ export interface RepositoryQueryService {
   /**
    * List all repositories with pagination.
    */
-  list(): Promise<PagedResponse<RepositoryViewData>>;
+  list(connectionId: string): Promise<PagedResponse<RepositoryViewData>>;
 
   /**
    * Get repository details by ID.

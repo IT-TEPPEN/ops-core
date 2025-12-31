@@ -137,7 +137,6 @@ func main() {
 		gitProviders.Use(authMiddleware)
 		{
 			gitProviders.GET("/:provider/repositories", gitProviderHandler.ListUserRepositories)
-			gitProviders.GET("/:provider/repos/:owner/:repo/contents", gitProviderHandler.GetRepositoryContent)
 		}
 
 		// Repository routes - public routes
