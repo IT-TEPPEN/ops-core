@@ -2,8 +2,16 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { OAuthConnection, ConnectionStatus, useGitProvider } from "@/features/oauth";
-import { RepositorySelector, RepositoryConfirmation, useRepositoryRegistration } from "@/features/repository";
+import {
+  OAuthConnection,
+  ConnectionStatus,
+  useGitProvider,
+} from "@/features/oauth";
+import {
+  RepositorySelector,
+  RepositoryConfirmation,
+  useRepositoryRegistration,
+} from "@/features/repository";
 import {
   repositoryFormSchema,
   type RepositoryFormData,
@@ -35,9 +43,6 @@ export function RepositoryCreatePage() {
     formState: { errors },
   } = useForm<RepositoryFormData>({
     resolver: zodResolver(repositoryFormSchema),
-    defaultValues: {
-      provider: "github",
-    },
   });
 
   const gitlabUrl = watch("gitlabUrl");
@@ -52,7 +57,6 @@ export function RepositoryCreatePage() {
       clientSecret: string;
     }
   ) => {
-    setSelectedProvider(provider);
     handleOAuthConnect(provider, selfHostedParams);
   };
 
@@ -85,6 +89,7 @@ export function RepositoryCreatePage() {
         gitlabUrl={gitlabUrl}
         gitlabClientId={gitlabClientId}
         gitlabClientSecret={gitlabClientSecret}
+        onChangeSelectedProvider={setSelectedProvider}
       />
 
       {/* 接続状態表示 */}

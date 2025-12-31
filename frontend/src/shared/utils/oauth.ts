@@ -52,7 +52,7 @@ function getOAuthConfig(
       return {
         authUrl: "https://gitlab.com/oauth/authorize",
         clientId: import.meta.env.VITE_GITLAB_CLIENT_ID || "",
-        scope: "api,read_user,read_repository",
+        scope: "read_user read_api read_repository",
         redirectUri,
       };
     case "gitlab-self-hosted":
@@ -86,9 +86,8 @@ export async function initiateOAuthFlow(
   const config = getOAuthConfig(provider, selfHostedParams);
 
   if (!config.clientId) {
-    throw new Error(
-      `OAuth client ID not configured for ${provider}. Please set VITE_${provider.toUpperCase()}_CLIENT_ID in your environment.`
-    );
+    const error = `OAuth client ID not configured for ${provider}. Please set VITE_${provider.toUpperCase()}_CLIENT_ID in your environment.`;
+    throw new Error(error);
   }
 
   // CSRF対策のstateパラメータを生成
