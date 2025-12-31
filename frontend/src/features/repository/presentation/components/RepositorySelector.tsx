@@ -2,11 +2,13 @@ import { useState, useEffect } from "react";
 import { GitRepository, GitProvider } from "@/shared/api/gitProviderApi";
 import { SpinnerIcon, CheckCircleFilledIcon } from "@/ui";
 import { useGitProvider } from "@/features/oauth";
+import { Connection } from "@/features/oauth/application/dto";
 
 interface RepositorySelectorProps {
   provider: GitProvider;
   onSelect: (repository: GitRepository) => void;
   selectedRepository?: GitRepository | null;
+  selectedConnection?: Connection | null;
 }
 
 /**
@@ -16,6 +18,7 @@ export function RepositorySelector({
   provider,
   onSelect,
   selectedRepository,
+  selectedConnection,
 }: RepositorySelectorProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const { repositories, isLoadingRepositories, isConnected, loadRepositories } =
@@ -56,7 +59,18 @@ export function RepositorySelector({
 
   return (
     <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
-      <h3 className="text-lg font-semibold mb-4">Select Repository</h3>
+      <div className="mb-4">
+        <h3 className="text-lg font-semibold">Select Repository</h3>
+        {selectedConnection && (
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+            Showing repositories for{" "}
+            <span className="font-medium text-gray-900 dark:text-gray-100">
+              @{selectedConnection.providerUsername}
+            </span>{" "}
+            on {provider}
+          </p>
+        )}
+      </div>
 
       {/* 検索ボックス */}
       <div className="mb-4">

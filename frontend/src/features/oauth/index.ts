@@ -4,7 +4,6 @@
 // Types
 export type {
   GitProvider,
-  OAuthConnection as OAuthConnectionType,
   GitRepository,
   UseGitProviderState,
   UseGitProviderReturn,
@@ -28,4 +27,4 @@ export {
 export { useGitProvider } from "./hooks";
 
 // Components
-export { OAuthConnection, ConnectionStatus } from "./components";
+export { OAuthConnection, ConnectionList } from "./components";

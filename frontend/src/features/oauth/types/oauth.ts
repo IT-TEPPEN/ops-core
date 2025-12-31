@@ -5,14 +5,14 @@
 
 // Re-export types from shared API for convenience
 // These types are defined in @/shared/api/gitProviderApi
-export type { GitProvider, OAuthConnection, GitRepository } from "@/shared/api/gitProviderApi";
+export type { GitProvider, GitRepository } from "@/shared/api/gitProviderApi";
 
 /**
  * Git provider state for UI.
  */
 export interface UseGitProviderState {
-  connections: any[]; // OAuthConnection[]
-  repositories: any[]; // GitRepository[]
+  connections: any[];
+  repositories: any[];
   isLoadingConnections: boolean;
   isLoadingRepositories: boolean;
   error: string | null;

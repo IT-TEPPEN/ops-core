@@ -1,2 +1,2 @@
 export { OAuthConnection } from "./OAuthConnection";
-export { ConnectionStatus } from "./ConnectionStatus";
+export { ConnectionList } from "./ConnectionList";

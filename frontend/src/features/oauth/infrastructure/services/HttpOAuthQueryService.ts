@@ -1,6 +1,15 @@
 import type { OAuthQueryService } from "../../application";
-import type { GitProvider, OAuthConnection, GitRepository } from "../../types";
+import { Connection } from "../../application/dto/connection";
+import type { GitProvider, GitRepository } from "../../types";
 import { V1ApiClient } from "@/shared/api/client";
+
+interface OAuthConnection {
+  id: string;
+  provider: string;
+  provider_username: string;
+  scopes: string[];
+  connected_at: string;
+}
 
 interface ListConnectionsResponse {
   connections: OAuthConnection[];
@@ -23,11 +32,17 @@ export class HttpOAuthQueryService
     super("");
   }
 
-  async listConnections(): Promise<OAuthConnection[]> {
+  async listConnections(): Promise<Connection[]> {
     const response = await this.get<ListConnectionsResponse>(
       "/auth/oauth/connections"
     );
-    return response.connections || [];
+
+    return response.connections.map((conn) => ({
+      id: conn.id,
+      provider: conn.provider,
+      providerUsername: conn.provider_username,
+      connectedAt: new Date(conn.connected_at),
+    }));
   }
 
   async isConnected(provider: GitProvider): Promise<boolean> {

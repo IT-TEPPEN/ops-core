@@ -1,16 +1,13 @@
 import { useState, useEffect, useCallback } from "react";
-import type {
-  GitProvider,
-  OAuthConnection,
-  GitRepository,
-} from "../types";
+import type { GitProvider, GitRepository } from "../types";
 import {
   useOAuthQueryService,
   useOAuthCommandService,
 } from "../presentation/contexts";
+import { Connection } from "../application/dto";
 
 interface UseGitProviderState {
-  connections: OAuthConnection[];
+  connections: Connection[];
   repositories: GitRepository[];
   isLoadingConnections: boolean;
   isLoadingRepositories: boolean;
@@ -19,7 +16,7 @@ interface UseGitProviderState {
 
 interface UseGitProviderReturn extends UseGitProviderState {
   isConnected: (provider: GitProvider) => boolean;
-  getConnection: (provider: GitProvider) => OAuthConnection | undefined;
+  getConnection: (provider: GitProvider) => Connection | undefined;
   loadRepositories: (provider: GitProvider) => Promise<void>;
   disconnect: (provider: GitProvider) => Promise<void>;
   refreshConnections: () => Promise<void>;
@@ -69,7 +66,7 @@ export function useGitProvider(): UseGitProviderReturn {
   );
 
   const getConnection = useCallback(
-    (provider: GitProvider): OAuthConnection | undefined => {
+    (provider: GitProvider): Connection | undefined => {
       return state.connections.find((conn) => conn.provider === provider);
     },
     [state.connections]
