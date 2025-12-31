@@ -81,7 +81,17 @@ export function useGitProvider(): UseGitProviderReturn {
         error: null,
       }));
       try {
-        const repositories = await oauthQueryService.listRepositories(provider);
+        const connection = state.connections.find(
+          (conn) => conn.provider === provider
+        );
+        if (!connection) {
+          throw new Error(
+            `No OAuth connection found for provider: ${provider}`
+          );
+        }
+        const repositories = await oauthQueryService.listRepositories(
+          connection.id
+        );
         setState((prev) => ({
           ...prev,
           repositories,
@@ -96,7 +106,7 @@ export function useGitProvider(): UseGitProviderReturn {
         }));
       }
     },
-    [oauthQueryService]
+    [oauthQueryService, state.connections]
   );
 
   const disconnect = useCallback(

@@ -1,6 +1,6 @@
 import type { OAuthQueryService } from "../../application";
 import { Connection } from "../../application/dto/connection";
-import type { GitProvider, GitRepository } from "../../types";
+import type { GitRepository } from "../../types";
 import { V1ApiClient } from "@/shared/api/client";
 
 interface OAuthConnection {
@@ -45,9 +45,9 @@ export class HttpOAuthQueryService
     }));
   }
 
-  async listRepositories(provider: GitProvider): Promise<GitRepository[]> {
+  async listRepositories(connectionId: string): Promise<GitRepository[]> {
     const response = await this.get<ListRepositoriesResponse>(
-      `/git-providers/${provider}/repositories`
+      `/auth/oauth/connections/${connectionId}/repositories`
     );
     return response.repositories || [];
   }

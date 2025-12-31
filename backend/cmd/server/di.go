@@ -317,11 +317,11 @@ func InitializeAPI(db *pgxpool.Pool) (*repohandlers.RepositoryHandler,
 	// Create OAuth logger
 	oauthLogger := provideOAuthHandlerLogger()
 
-	// Create OAuth handler
-	oauthHandler := oauthhandlers.NewOAuthHandler(oauthService, oauthLogger)
-
 	// Create Git provider service
 	gitProviderService := oauthservice.NewGitProviderService(oauthService)
+
+	// Create OAuth handler (needs gitProviderService for connection-based repository listing)
+	oauthHandler := oauthhandlers.NewOAuthHandler(oauthService, gitProviderService, oauthLogger)
 
 	// Create Git provider handler
 	gitProviderHandler := oauthhandlers.NewGitProviderHandler(gitProviderService, oauthLogger)

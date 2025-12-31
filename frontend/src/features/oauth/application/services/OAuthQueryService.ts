@@ -1,4 +1,4 @@
-import type { GitProvider, GitRepository } from "../../types";
+import type { GitRepository } from "../../types";
 import { Connection } from "../dto/connection";
 
 /**
@@ -12,7 +12,7 @@ export interface OAuthQueryService {
   listConnections(): Promise<Connection[]>;
 
   /**
-   * List repositories for a specific provider.
+   * List repositories for a specific OAuth connection.
    */
-  listRepositories(provider: GitProvider): Promise<GitRepository[]>;
+  listRepositories(connectionId: string): Promise<GitRepository[]>;
 }

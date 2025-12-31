@@ -129,6 +129,7 @@ func main() {
 			// New OAuth routes for Git provider connections (saves token to database)
 			authProtected.POST("/oauth/connect", oauthHandler.HandleCallbackWithSave)
 			authProtected.GET("/oauth/connections", oauthHandler.ListConnections)
+			authProtected.GET("/oauth/connections/:connectionId/repositories", oauthHandler.ListRepositoriesByConnection)
 			authProtected.DELETE("/oauth/connections/:provider", oauthHandler.DisconnectProvider)
 		}
 

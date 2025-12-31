@@ -11,15 +11,17 @@ import (
 
 // OAuthHandler handles OAuth-related HTTP requests
 type OAuthHandler struct {
-	oauthService *service.OAuthService
-	logger       domain.Logger
+	oauthService       *service.OAuthService
+	gitProviderService *service.GitProviderService
+	logger             domain.Logger
 }
 
 // NewOAuthHandler creates a new OAuthHandler
-func NewOAuthHandler(oauthService *service.OAuthService, logger domain.Logger) *OAuthHandler {
+func NewOAuthHandler(oauthService *service.OAuthService, gitProviderService *service.GitProviderService, logger domain.Logger) *OAuthHandler {
 	return &OAuthHandler{
-		oauthService: oauthService,
-		logger:       logger,
+		oauthService:       oauthService,
+		gitProviderService: gitProviderService,
+		logger:             logger,
 	}
 }
 
@@ -281,5 +283,52 @@ func (h *OAuthHandler) GetAccessToken(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"access_token": token,
+	})
+}
+
+// ListRepositoriesByConnection lists repositories for a specific OAuth connection
+// @Summary List repositories by OAuth connection
+// @Description List all repositories accessible via a specific OAuth connection
+// @Tags OAuth
+// @Produce json
+// @Security BearerAuth
+// @Param connectionId path string true "OAuth connection ID"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} map[string]interface{} "Invalid connection ID"
+// @Failure 401 {object} map[string]interface{} "Unauthorized"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /auth/oauth/connections/{connectionId}/repositories [get]
+func (h *OAuthHandler) ListRepositoriesByConnection(c *gin.Context) {
+	connectionID := c.Param("connectionId")
+	if connectionID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   "invalid_request",
+			"message": "Connection ID is required",
+		})
+		return
+	}
+
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error":   "unauthorized",
+			"message": "Authentication required",
+		})
+		return
+	}
+
+	repos, err := h.gitProviderService.ListUserRepositoriesByConnectionID(c.Request.Context(), userID.(string), connectionID)
+	if err != nil {
+		h.logger.Error("Failed to list repositories", "error", err, "connectionId", connectionID)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "internal_error",
+			"message": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"repositories": repos,
+		"count":        len(repos),
 	})
 }

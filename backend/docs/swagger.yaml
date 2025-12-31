@@ -2,6 +2,8 @@ basePath: /api/v1
 definitions:
   internal_auth_interfaces_api_handlers.AuthResponse:
     properties:
+      refresh_token:
+        type: string
       token:
         type: string
       user:
@@ -26,6 +28,9 @@ definitions:
     properties:
       code:
         type: string
+      remember_me:
+        description: Optional, defaults to false
+        type: boolean
       state:
         type: string
     required:
@@ -37,6 +42,20 @@ definitions:
       auth_url:
         type: string
       state:
+        type: string
+    type: object
+  internal_auth_interfaces_api_handlers.RefreshTokenRequest:
+    properties:
+      refresh_token:
+        type: string
+    required:
+    - refresh_token
+    type: object
+  internal_auth_interfaces_api_handlers.RefreshTokenResponse:
+    properties:
+      refresh_token:
+        type: string
+      token:
         type: string
     type: object
   internal_auth_interfaces_api_handlers.UserProfile:
@@ -1472,7 +1491,7 @@ paths:
       - auth
   /auth/logout:
     post:
-      description: Logout endpoint (client-side token deletion primarily)
+      description: Revokes all refresh tokens for the user
       produces:
       - application/json
       responses:
@@ -1612,6 +1631,43 @@ paths:
       summary: List OAuth connections
       tags:
       - OAuth
+  /auth/oauth/connections/{connectionId}/repositories:
+    get:
+      description: List all repositories accessible via a specific OAuth connection
+      parameters:
+      - description: OAuth connection ID
+        in: path
+        name: connectionId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid connection ID
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List repositories by OAuth connection
+      tags:
+      - OAuth
   /auth/oauth/connections/{provider}:
     delete:
       description: Remove an OAuth connection for the authenticated user
@@ -1644,6 +1700,41 @@ paths:
       summary: Disconnect OAuth provider
       tags:
       - OAuth
+  /auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Exchanges a refresh token for a new access token and refresh token
+        pair
+      parameters:
+      - description: Refresh token
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_auth_interfaces_api_handlers.RefreshTokenRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_auth_interfaces_api_handlers.RefreshTokenResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Refresh access token
+      tags:
+      - auth
   /documents:
     get:
       description: Retrieves a list of all published documents
@@ -2607,62 +2698,6 @@ paths:
       summary: Update execution record title
       tags:
       - execution-records
-  /git-providers/{provider}/repos/{owner}/{repo}/contents:
-    get:
-      description: Get the content of a file from a repository using OAuth token
-      parameters:
-      - description: Provider name (github, gitlab)
-        in: path
-        name: provider
-        required: true
-        type: string
-      - description: Repository owner
-        in: path
-        name: owner
-        required: true
-        type: string
-      - description: Repository name
-        in: path
-        name: repo
-        required: true
-        type: string
-      - description: File path
-        in: query
-        name: path
-        required: true
-        type: string
-      - description: Branch or commit ref
-        in: query
-        name: ref
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            additionalProperties: true
-            type: object
-        "400":
-          description: Invalid request
-          schema:
-            additionalProperties: true
-            type: object
-        "401":
-          description: Unauthorized
-          schema:
-            additionalProperties: true
-            type: object
-        "500":
-          description: Internal server error
-          schema:
-            additionalProperties: true
-            type: object
-      security:
-      - BearerAuth: []
-      summary: Get file content from a repository
-      tags:
-      - GitProvider
   /git-providers/{provider}/repositories:
     get:
       description: List all repositories accessible to the authenticated user from
@@ -3101,7 +3136,8 @@ paths:
   /repositories/{repoId}/files/content:
     get:
       description: Retrieves the content of a specific file from a repository by its
-        file path provided as a query parameter.
+        file path provided as a query parameter. Optionally specify a commit hash
+        to retrieve a specific version.
       parameters:
       - description: Repository ID
         in: path
@@ -3112,6 +3148,10 @@ paths:
         in: query
         name: path
         required: true
+        type: string
+      - description: Commit hash (defaults to latest)
+        in: query
+        name: commit
         type: string
       produces:
       - application/json

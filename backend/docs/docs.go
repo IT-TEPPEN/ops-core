@@ -678,7 +678,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Logout endpoint (client-side token deletion primarily)",
+                "description": "Revokes all refresh tokens for the user",
                 "produces": [
                     "application/json"
                 ],
@@ -890,6 +890,62 @@ const docTemplate = `{
                 }
             }
         },
+        "/auth/oauth/connections/{connectionId}/repositories": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "List all repositories accessible via a specific OAuth connection",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "OAuth"
+                ],
+                "summary": "List repositories by OAuth connection",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "OAuth connection ID",
+                        "name": "connectionId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid connection ID",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
         "/auth/oauth/connections/{provider}": {
             "delete": {
                 "security": [
@@ -934,6 +990,58 @@ const docTemplate = `{
                         "schema": {
                             "type": "object",
                             "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/refresh": {
+            "post": {
+                "description": "Exchanges a refresh token for a new access token and refresh token pair",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Refresh access token",
+                "parameters": [
+                    {
+                        "description": "Refresh token",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_auth_interfaces_api_handlers.RefreshTokenRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_auth_interfaces_api_handlers.RefreshTokenResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
                         }
                     }
                 }
@@ -2459,89 +2567,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/git-providers/{provider}/repos/{owner}/{repo}/contents": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Get the content of a file from a repository using OAuth token",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "GitProvider"
-                ],
-                "summary": "Get file content from a repository",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Provider name (github, gitlab)",
-                        "name": "provider",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Repository owner",
-                        "name": "owner",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Repository name",
-                        "name": "repo",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "File path",
-                        "name": "path",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Branch or commit ref",
-                        "name": "ref",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid request",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    }
-                }
-            }
-        },
         "/git-providers/{provider}/repositories": {
             "get": {
                 "security": [
@@ -3210,7 +3235,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Retrieves the content of a specific file from a repository by its file path provided as a query parameter.",
+                "description": "Retrieves the content of a specific file from a repository by its file path provided as a query parameter. Optionally specify a commit hash to retrieve a specific version.",
                 "produces": [
                     "application/json"
                 ],
@@ -3232,6 +3257,12 @@ const docTemplate = `{
                         "name": "path",
                         "in": "query",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Commit hash (defaults to latest)",
+                        "name": "commit",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -3860,6 +3891,9 @@ const docTemplate = `{
         "internal_auth_interfaces_api_handlers.AuthResponse": {
             "type": "object",
             "properties": {
+                "refresh_token": {
+                    "type": "string"
+                },
                 "token": {
                     "type": "string"
                 },
@@ -3901,6 +3935,10 @@ const docTemplate = `{
                 "code": {
                     "type": "string"
                 },
+                "remember_me": {
+                    "description": "Optional, defaults to false",
+                    "type": "boolean"
+                },
                 "state": {
                     "type": "string"
                 }
@@ -3913,6 +3951,28 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "state": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_auth_interfaces_api_handlers.RefreshTokenRequest": {
+            "type": "object",
+            "required": [
+                "refresh_token"
+            ],
+            "properties": {
+                "refresh_token": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_auth_interfaces_api_handlers.RefreshTokenResponse": {
+            "type": "object",
+            "properties": {
+                "refresh_token": {
+                    "type": "string"
+                },
+                "token": {
                     "type": "string"
                 }
             }

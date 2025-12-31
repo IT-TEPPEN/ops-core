@@ -598,3 +598,58 @@ func (s *OAuthService) ListConnections(ctx context.Context, userID string) ([]*d
 	}
 	return s.repo.FindByUser(ctx, userID)
 }
+
+// GetAccessTokenByConnectionID retrieves a valid access token for a specific connection ID
+// If the token is expired, it will attempt to refresh it
+func (s *OAuthService) GetAccessTokenByConnectionID(ctx context.Context, userID string, connectionID string) (string, error) {
+	if s.repo == nil {
+		return "", fmt.Errorf("repository not configured")
+	}
+
+	conn, err := s.repo.FindByID(ctx, connectionID)
+	if err != nil {
+		return "", err
+	}
+	if conn == nil {
+		return "", fmt.Errorf("no oauth connection found for connection ID %s", connectionID)
+	}
+
+	// Verify the connection belongs to the user
+	if conn.UserID() != userID {
+		return "", fmt.Errorf("connection %s does not belong to user %s", connectionID, userID)
+	}
+
+	// Check if token is expired
+	if conn.IsTokenExpired() {
+		// Try to refresh the token
+		refreshedConn, err := s.RefreshToken(ctx, conn)
+		if err != nil {
+			return "", fmt.Errorf("token expired and refresh failed: %w", err)
+		}
+		return refreshedConn.AccessToken(), nil
+	}
+
+	return conn.AccessToken(), nil
+}
+
+// GetConnectionByID retrieves a connection by its ID
+func (s *OAuthService) GetConnectionByID(ctx context.Context, userID string, connectionID string) (*domain.OAuthConnection, error) {
+	if s.repo == nil {
+		return nil, fmt.Errorf("repository not configured")
+	}
+
+	conn, err := s.repo.FindByID(ctx, connectionID)
+	if err != nil {
+		return nil, err
+	}
+	if conn == nil {
+		return nil, fmt.Errorf("no oauth connection found for connection ID %s", connectionID)
+	}
+
+	// Verify the connection belongs to the user
+	if conn.UserID() != userID {
+		return nil, fmt.Errorf("connection %s does not belong to user %s", connectionID, userID)
+	}
+
+	return conn, nil
+}

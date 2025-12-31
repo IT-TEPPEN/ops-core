@@ -65,6 +65,34 @@ func (s *GitProviderService) ListUserRepositories(ctx context.Context, userID st
 	}
 }
 
+// ListUserRepositoriesByConnectionID lists repositories accessible via a specific OAuth connection
+func (s *GitProviderService) ListUserRepositoriesByConnectionID(ctx context.Context, userID string, connectionID string) ([]GitRepository, error) {
+	// Get the OAuth connection
+	conn, err := s.oauthService.GetConnectionByID(ctx, userID, connectionID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get connection: %w", err)
+	}
+
+	// Get access token for the connection
+	token, err := s.oauthService.GetAccessTokenByConnectionID(ctx, userID, connectionID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get access token: %w", err)
+	}
+
+	switch conn.Provider() {
+	case domain.ProviderGitHub:
+		return s.listGitHubRepositories(ctx, token)
+	case domain.ProviderGitLab:
+		return s.listGitLabRepositories(ctx, token, "https://gitlab.com")
+	case domain.ProviderGitLabSelfHosted:
+		// For self-hosted GitLab, use the provider host from the connection
+		baseURL := fmt.Sprintf("https://%s", conn.ProviderHost())
+		return s.listGitLabRepositories(ctx, token, baseURL)
+	default:
+		return nil, fmt.Errorf("unsupported provider: %s", conn.Provider())
+	}
+}
+
 // listGitHubRepositories lists repositories from GitHub
 func (s *GitProviderService) listGitHubRepositories(ctx context.Context, accessToken string) ([]GitRepository, error) {
 	var allRepos []GitRepository
