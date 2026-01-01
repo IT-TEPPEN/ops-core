@@ -3,6 +3,7 @@ import { Route } from "react-router-dom";
 import { DocumentGuard } from "./DocumentGuard";
 import { DocumentDetailPage } from "./DocumentDetailPage";
 import { DocumentListPage } from "./DocumentListPage";
+import { DocumentPublishPage } from "./DocumentPublishPage";
 import { DocumentVersionHistoryPage } from "./DocumentVersionHistoryPage";
 import { DocumentViewPage } from "./DocumentViewPage";
 import { ProtectedRoute } from "@/features/common/components/ProtectedRoute";
@@ -16,6 +17,14 @@ export function DocumentRoutes() {
         element={
           <ProtectedRoute>
             <DocumentListPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="publish"
+        element={
+          <ProtectedRoute>
+            <DocumentPublishPage />
           </ProtectedRoute>
         }
       />

@@ -20,10 +20,23 @@ export function DocumentListPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Documents</h1>
         <Link
-          to="/repositories"
-          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          to="/documents/publish"
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
         >
-          Add File from Repository
+          <svg
+            className="w-5 h-5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 4v16m8-8H4"
+            />
+          </svg>
+          Publish Document
         </Link>
       </div>
 
@@ -52,10 +65,23 @@ export function DocumentListPage() {
           </p>
           {documents.length === 0 && (
             <Link
-              to="/repositories"
-              className="inline-block px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+              to="/documents/publish"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
-              Add File from Repository
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 4v16m8-8H4"
+                />
+              </svg>
+              Publish Document
             </Link>
           )}
         </div>

@@ -1,5 +1,4 @@
 import { Routes, Route } from "react-router-dom";
-import OAuthCallbackPage from "../pages/OAuthCallbackPage";
 import AuthCallbackPage from "../pages/AuthCallbackPage";
 import LoginPage from "../pages/LoginPage";
 import AccountSettingsPage from "../pages/AccountSettingsPage";
@@ -14,6 +13,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { ProtectedRoute } from "../features/common/components/ProtectedRoute";
 import { RepositoryRoutes } from "@/pages/repositories";
 import { MarkdownTestEditor } from "@/features/markdown";
+import { OAuthRoutes } from "@/pages/oauth";
 
 function App() {
   return (
@@ -33,7 +33,6 @@ function App() {
                 path="/auth/:provider/callback"
                 element={<AuthCallbackPage />}
               />
-              <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
               <Route
                 path="/settings/account"
                 element={
@@ -51,6 +50,7 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+              {OAuthRoutes()}
               {RepositoryRoutes()}
               {DocumentRoutes()}
               <Route

@@ -27,7 +27,7 @@ function OAuthCallbackPage() {
         setStatus("error");
         setMessage(errorDescription || error || "OAuth authentication failed");
         setTimeout(() => {
-          navigate("/repositories/new");
+          navigate("/documents/publish");
         }, 3000);
         return;
       }
@@ -37,7 +37,7 @@ function OAuthCallbackPage() {
         setStatus("error");
         setMessage("Invalid OAuth callback - missing code or state");
         setTimeout(() => {
-          navigate("/repositories/new");
+          navigate("/documents/publish");
         }, 3000);
         return;
       }
@@ -101,7 +101,7 @@ function OAuthCallbackPage() {
 
         // リポジトリ登録ページにリダイレクト
         setTimeout(() => {
-          navigate("/repositories/new", {
+          navigate("/documents/publish", {
             state: { oauthSuccess: true, provider: savedProvider },
           });
         }, 2000);
@@ -111,7 +111,7 @@ function OAuthCallbackPage() {
           err instanceof Error ? err.message : "An unknown error occurred"
         );
         setTimeout(() => {
-          navigate("/repositories/new");
+          navigate("/documents/publish");
         }, 3000);
       }
     };

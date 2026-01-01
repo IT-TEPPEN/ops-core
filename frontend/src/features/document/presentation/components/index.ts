@@ -6,3 +6,7 @@ export { VariableInputPanel } from "./VariableInputPanel";
 export { VersionTable } from "./VersionTable";
 export { ExecutionRecordPane } from "./ExecutionRecordPane";
 export { DocumentRegistrationDialog } from "./DocumentRegistrationDialog";
+export { ConnectionSelector } from "./ConnectionSelector";
+export { RepositoryBrowser } from "./RepositoryBrowser";
+export { FileBrowser } from "./FileBrowser";
+export { PublishDialog } from "./PublishDialog";

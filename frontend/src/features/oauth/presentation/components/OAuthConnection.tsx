@@ -1,48 +1,39 @@
-import { UseFormRegister, FieldErrors } from "react-hook-form";
-import { SelfHostedOAuthParams } from "@/shared/utils/oauth";
+import { useForm } from "react-hook-form";
 import { UI_Form_Field, UI_Form_Input } from "@/ui";
 import { SpinnerIcon, LightningIcon } from "@/ui";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useState } from "react";
 
 type GitProvider = "github" | "gitlab" | "gitlab-self-hosted";
 
-interface OAuthConnectionFormData {
-  url?: string;
-  gitlabUrl?: string;
-  gitlabClientId?: string;
-  gitlabClientSecret?: string;
-}
+const repositoryFormSchema = z.object({
+  gitlabUrl: z.string().optional(),
+  gitlabClientId: z.string().optional(),
+  gitlabClientSecret: z.string().optional(),
+  url: z.string().optional(),
+});
 
-interface OAuthConnectionProps {
-  selectedProvider: GitProvider;
-  register: UseFormRegister<OAuthConnectionFormData>;
-  errors: FieldErrors<OAuthConnectionFormData>;
-  isAuthenticating: boolean;
-  onConnect: (
-    provider: GitProvider,
-    selfHostedParams?: SelfHostedOAuthParams
-  ) => void;
-  gitlabUrl?: string;
-  gitlabClientId?: string;
-  gitlabClientSecret?: string;
-  onChangeSelectedProvider: (provider: GitProvider) => void;
-}
+export type RepositoryFormData = z.infer<typeof repositoryFormSchema>;
 
-export function OAuthConnection({
-  selectedProvider,
-  register,
-  errors,
-  isAuthenticating,
-  onConnect,
-  gitlabUrl,
-  gitlabClientId,
-  gitlabClientSecret,
-  onChangeSelectedProvider,
-}: OAuthConnectionProps) {
+export function OAuthConnection() {
+  const [selectedProvider, setSelectedProvider] =
+    useState<GitProvider>("github");
+  const { isAuthenticating, handleOAuthConnect } = useRepositoryRegistration();
+
+  const {
+    register,
+    watch,
+    formState: { errors },
+  } = useForm<RepositoryFormData>({
+    resolver: zodResolver(repositoryFormSchema),
+  });
+
+  const gitlabUrl = watch("gitlabUrl");
+  const gitlabClientId = watch("gitlabClientId");
+  const gitlabClientSecret = watch("gitlabClientSecret");
+
   const handleConnect = () => {
-    console.log(
-      "[OAuthConnection] handleConnect called with provider:",
-      selectedProvider
-    );
     // セルフホストの場合の追加バリデーション
     if (selectedProvider === "gitlab-self-hosted") {
       if (!gitlabUrl || !gitlabClientId || !gitlabClientSecret) {
@@ -51,20 +42,13 @@ export function OAuthConnection({
         );
         return;
       }
-      console.log(
-        "[OAuthConnection] Calling onConnect with self-hosted params"
-      );
-      onConnect(selectedProvider, {
+      handleOAuthConnect(selectedProvider, {
         gitlabUrl,
         clientId: gitlabClientId,
         clientSecret: gitlabClientSecret,
       });
     } else {
-      console.log(
-        "[OAuthConnection] Calling onConnect for provider:",
-        selectedProvider
-      );
-      onConnect(selectedProvider);
+      handleOAuthConnect(selectedProvider);
     }
   };
 
@@ -83,7 +67,7 @@ export function OAuthConnection({
           <select
             onChange={(e) => {
               e.preventDefault();
-              onChangeSelectedProvider(
+              setSelectedProvider(
                 e.currentTarget.value as unknown as GitProvider
               );
             }}
@@ -175,4 +159,124 @@ export function OAuthConnection({
       </div>
     </div>
   );
+}
+
+import { useReducer } from "react";
+import { initiateOAuthFlow, SelfHostedOAuthParams } from "@/shared/utils/oauth";
+import { useRepositoryCommandService } from "@/features/repository";
+
+type RegistrationState = {
+  isAuthenticating: boolean;
+  isSubmitting: boolean;
+  message: {
+    type: "success" | "error";
+    text: string;
+  } | null;
+};
+
+type RegistrationAction =
+  | { type: "START_AUTH" }
+  | { type: "AUTH_ERROR"; error: string }
+  | { type: "START_SUBMIT" }
+  | { type: "SUBMIT_SUCCESS"; message: string }
+  | { type: "SUBMIT_ERROR"; error: string }
+  | { type: "CLEAR_MESSAGE" };
+
+const initialState: RegistrationState = {
+  isAuthenticating: false,
+  isSubmitting: false,
+  message: null,
+};
+
+function registrationReducer(
+  state: RegistrationState,
+  action: RegistrationAction
+): RegistrationState {
+  switch (action.type) {
+    case "START_AUTH":
+      return { ...state, isAuthenticating: true, message: null };
+    case "AUTH_ERROR":
+      return {
+        ...state,
+        isAuthenticating: false,
+        message: { type: "error", text: action.error },
+      };
+    case "START_SUBMIT":
+      return { ...state, isSubmitting: true, message: null };
+    case "SUBMIT_SUCCESS":
+      return {
+        ...state,
+        isSubmitting: false,
+        message: { type: "success", text: action.message },
+      };
+    case "SUBMIT_ERROR":
+      return {
+        ...state,
+        isSubmitting: false,
+        message: { type: "error", text: action.error },
+      };
+    case "CLEAR_MESSAGE":
+      return { ...state, message: null };
+    default:
+      return state;
+  }
+}
+
+export function useRepositoryRegistration() {
+  const [state, dispatch] = useReducer(registrationReducer, initialState);
+  const commandService = useRepositoryCommandService();
+
+  const handleOAuthConnect = async (
+    provider: "github" | "gitlab" | "gitlab-self-hosted",
+    selfHostedParams?: SelfHostedOAuthParams
+  ) => {
+    dispatch({ type: "START_AUTH" });
+
+    try {
+      await initiateOAuthFlow(provider, selfHostedParams);
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Failed to initiate OAuth flow";
+      dispatch({ type: "AUTH_ERROR", error: message });
+    }
+  };
+
+  const handleSubmitRepository = async (data: {
+    provider: string;
+    url: string;
+    name: string;
+  }): Promise<boolean> => {
+    dispatch({ type: "START_SUBMIT" });
+
+    try {
+      await commandService.create({
+        name: data.name,
+        url: data.url,
+        provider: data.provider,
+      });
+
+      dispatch({
+        type: "SUBMIT_SUCCESS",
+        message: "Repository registered successfully!",
+      });
+
+      return true;
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "An unknown error occurred";
+      dispatch({ type: "SUBMIT_ERROR", error: message });
+      return false;
+    }
+  };
+
+  const clearMessage = () => {
+    dispatch({ type: "CLEAR_MESSAGE" });
+  };
+
+  return {
+    ...state,
+    handleOAuthConnect,
+    handleSubmitRepository,
+    clearMessage,
+  };
 }
