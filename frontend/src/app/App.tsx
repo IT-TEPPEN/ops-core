@@ -3,8 +3,6 @@ import AuthCallbackPage from "../pages/AuthCallbackPage";
 import LoginPage from "../pages/LoginPage";
 import AccountSettingsPage from "../pages/AccountSettingsPage";
 import { DocumentRoutes } from "@/pages/documents";
-import GroupListPage from "../pages/GroupListPage";
-import GroupDetailPage from "../pages/GroupDetailPage";
 import { Header } from "../features/common/components/Layout/Header";
 import { HomePage } from "../pages/Home";
 import { DiProviders } from "./providers";
@@ -14,6 +12,7 @@ import { ProtectedRoute } from "../features/common/components/ProtectedRoute";
 import { RepositoryRoutes } from "@/pages/repositories";
 import { MarkdownTestEditor } from "@/features/markdown";
 import { OAuthRoutes } from "@/pages/oauth";
+import { GroupRoutes } from "@/pages/groups";
 
 function App() {
   return (
@@ -53,22 +52,7 @@ function App() {
               {OAuthRoutes()}
               {RepositoryRoutes()}
               {DocumentRoutes()}
-              <Route
-                path="/groups"
-                element={
-                  <ProtectedRoute>
-                    <GroupListPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/groups/:groupId"
-                element={
-                  <ProtectedRoute>
-                    <GroupDetailPage />
-                  </ProtectedRoute>
-                }
-              />
+              {GroupRoutes()}
             </Routes>
           </main>
 

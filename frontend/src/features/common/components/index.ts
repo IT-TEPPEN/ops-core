@@ -121,3 +121,5 @@ export type { ModalProps } from "./Feedback/Modal";
 
 export { ConfirmDialog } from "./Feedback/ConfirmDialog";
 export type { ConfirmDialogProps } from "./Feedback/ConfirmDialog";
+
+export * from "./ProtectedRoute";
