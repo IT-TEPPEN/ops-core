@@ -39,13 +39,6 @@ export function RepositoryCreatePage() {
   const { connections, error: gitProviderError } = useGitProvider();
   const { isAuthenticating, handleOAuthConnect } = useRepositoryRegistration();
 
-  // コネクション選択ハンドラー
-  const handleSelectConnection = (connection: Connection) => {
-    setSelectedConnection(connection);
-    setSelectedRepository(null); // リポジトリ選択をリセット
-    setMode("select"); // 選択モードに切り替え
-  };
-
   // コネクション追加モードに切り替え
   const handleAddConnection = () => {
     setMode("add");
@@ -129,10 +122,7 @@ export function RepositoryCreatePage() {
                   + Add
                 </button>
               </div>
-              <ConnectionList
-                selectedConnectionId={selectedConnection?.id || null}
-                onSelectConnection={handleSelectConnection}
-              />
+              <ConnectionList />
             </div>
           </div>
         </div>

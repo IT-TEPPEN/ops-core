@@ -1,25 +1,22 @@
 import { useQuery } from "@tanstack/react-query";
-import { Connection } from "../../application/dto";
+import { useSearchParams } from "react-router-dom";
 import { useOAuthQueryService } from "../contexts";
-
-interface ConnectionListProps {
-  selectedConnectionId: string | null;
-  onSelectConnection: (connection: Connection) => void;
-}
 
 /**
  * コネクション一覧コンポーネント
  * 登録済みのOAuthコネクションを一覧表示し、選択できるようにする
  */
-export function ConnectionList({
-  selectedConnectionId,
-  onSelectConnection,
-}: ConnectionListProps) {
+export function ConnectionList() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const oauthQueryService = useOAuthQueryService();
   const query = useQuery({
     queryKey: ["connections"],
     queryFn: async () => oauthQueryService.listConnections(),
   });
+
+  const selected_connection_id = searchParams.get("selected_connection_id");
+
+  console.log("ConnectionList render", { selected_connection_id });
 
   if (query.isLoading) {
     return <div className="text-sm text-gray-500">Loading connections...</div>;
@@ -46,12 +43,20 @@ export function ConnectionList({
 
   return (
     <div className="space-y-2">
-      {connections.map((connection) => {
-        const isSelected = connection.id === selectedConnectionId;
+      {connections.map((connection, i) => {
+        const isSelected =
+          connection.id === selected_connection_id ||
+          (selected_connection_id === "first" && i === 0);
         return (
           <button
             key={connection.id}
-            onClick={() => onSelectConnection(connection)}
+            onClick={(e) => {
+              e.preventDefault();
+              setSearchParams((searchParams) => {
+                searchParams.set("selected_connection_id", connection.id);
+                return searchParams;
+              });
+            }}
             className={`w-full text-left p-4 rounded-lg border transition-all ${
               isSelected
                 ? "border-blue-500 bg-blue-50 dark:bg-gray-800 shadow-md"
@@ -98,18 +103,5 @@ const getProviderIcon = (provider: string) => {
       return "🦊"; // GitLab Fox placeholder
     default:
       return "🔗";
-  }
-};
-
-const getProviderLabel = (provider: string) => {
-  switch (provider) {
-    case "github":
-      return "GitHub";
-    case "gitlab":
-      return "GitLab";
-    case "gitlab-self-hosted":
-      return "GitLab (Self-Hosted)";
-    default:
-      return provider;
   }
 };
