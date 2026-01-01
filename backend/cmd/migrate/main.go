@@ -51,7 +51,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "Failed to get current file path\n")
 		os.Exit(1)
 	}
-	migrationsPath := filepath.Join(filepath.Dir(filename), "..", "..", "internal", "git_repository", "infrastructure", "persistence", "migrations")
+	migrationsPath := filepath.Join(filepath.Dir(filename), "..", "..", "migrate")
 	absPath, err := filepath.Abs(migrationsPath)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to get absolute path: %v\n", err)

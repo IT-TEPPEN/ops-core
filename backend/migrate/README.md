@@ -190,32 +190,14 @@ export DATABASE_URL="postgres://username:password@host:port/database?sslmode=dis
 
 Default: `postgres://opscore_user:opscore_password@db:5432/opscore_db?sslmode=disable`
 
-### Using golang-migrate CLI
-
-If you have the `migrate` CLI installed:
-
-```bash
-# Apply all migrations
-migrate -database "${DATABASE_URL}" -path ./migrations up
-
-# Check status
-migrate -database "${DATABASE_URL}" -path ./migrations version
-
-# Rollback one migration
-migrate -database "${DATABASE_URL}" -path ./migrations down 1
-```
-
 ## Testing
 
-Migration tests are located in `migrations_test.go`.
+Migration tests should verify migration correctness.
 
 ```bash
-# Run migration tests
-cd backend/internal/git_repository/infrastructure/persistence
-go test -v -run TestMigrations
-
-# Run constraint tests
-go test -v -run TestMigrationConstraints
+# Run migration tests from backend directory
+cd backend
+go test -v ./... -run Migration
 ```
 
 Tests verify:

@@ -23,20 +23,23 @@ We will use **`golang-migrate/migrate`** for managing database schema migrations
 
 **Process:**
 
-1. **Migration Files:** Schema changes will be defined in sequentially numbered SQL files located in a dedicated directory (e.g., `backend/db/migrations`). Each change requires two files:
+1. **Migration Files:** Schema changes will be defined in sequentially numbered SQL files located in a dedicated directory (e.g., `backend/migrate`). Each change requires two files:
     * `{version}_{description}.up.sql`: Contains the SQL statements to apply the change.
     * `{version}_{description}.down.sql`: Contains the SQL statements to revert the change.
     * Example: `0001_create_repository_configurations_table.up.sql`, `0001_create_repository_configurations_table.down.sql`
-2. **Applying Migrations:** Migrations will be applied using the `migrate` CLI tool or potentially integrated into the application's deployment process.
+2. **Applying Migrations:** Migrations will be applied using the custom migration tool (`cmd/migrate`) which wraps `golang-migrate/migrate` library.
 
     ```sh
-    migrate -database ${DATABASE_URL} -path backend/db/migrations up
+    cd backend
+    go run ./cmd/migrate up
     ```
 
 3. **Rolling Back Migrations:** Rollbacks (if necessary) are performed using the `.down.sql` files.
 
     ```sh
-    migrate -database ${DATABASE_URL} -path backend/db/migrations down 1 # Rolls back the last migration
+    cd backend
+    go run ./cmd/migrate down    # Rolls back the last migration
+    go run ./cmd/migrate down 2  # Rolls back 2 migrations
     ```
 
 4. **Version Tracking:** `golang-migrate/migrate` uses a dedicated table in the database (usually `schema_migrations`) to track which migrations have been applied.

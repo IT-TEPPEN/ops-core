@@ -50,7 +50,8 @@ cd backend
 go mod download
 
 # データベースマイグレーション（初回のみ）
-# migrate -path db/migrations -database "postgres://user:pass@localhost:5432/opscore?sslmode=disable" up
+export DATABASE_URL="postgres://opscore:opscore@localhost:5432/opscore?sslmode=disable"
+go run ./cmd/migrate up
 
 # サーバーの起動
 go run cmd/server/main.go

@@ -593,7 +593,7 @@ See: ADR 0004, 0005, 0006 for database specification and migration strategy
 
 #### Migrations
 
-- Located in `backend/migrations/`
+- Located in `backend/migrate/`
 - Use `golang-migrate` library
 - Migration files follow format: `<version>_<description>.up.sql` and `.down.sql`
 - See: ADR 0006

@@ -134,7 +134,7 @@ docker compose ps
 
 ```bash
 # マイグレーションの実行
-docker compose exec backend migrate -path /app/migrations -database "postgres://opscore:password@postgres:5432/opscore?sslmode=disable" up
+docker compose exec backend go run ./cmd/migrate up
 ```
 
 ### 5. 動作確認
@@ -252,14 +252,16 @@ GRANT ALL PRIVILEGES ON DATABASE opscore TO opscore;
 ### マイグレーションの実行
 
 ```bash
-# migrate CLIのインストール
-go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
+cd backend
+
+# 環境変数の設定
+export DATABASE_URL="postgres://opscore:password@localhost:5432/opscore?sslmode=disable"
 
 # マイグレーションの実行
-migrate -path backend/migrations -database "postgres://opscore:password@localhost:5432/opscore?sslmode=disable" up
+go run ./cmd/migrate up
 
 # マイグレーションバージョンの確認
-migrate -path backend/migrations -database "postgres://opscore:password@localhost:5432/opscore?sslmode=disable" version
+go run ./cmd/migrate status
 ```
 
 ### バックアップとリストア

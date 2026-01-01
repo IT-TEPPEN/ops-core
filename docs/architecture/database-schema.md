@@ -450,7 +450,7 @@ CREATE TABLE view_statistics (
 
 詳細は [ADR 0006: Database Migration](../../adr/0006-database-migration.md) を参照してください。
 
-マイグレーションファイルは `backend/migrations/` に配置されています。
+マイグレーションファイルは `backend/migrate/` に配置されています。
 
 ## 関連ドキュメント
 

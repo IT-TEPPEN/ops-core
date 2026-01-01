@@ -119,8 +119,8 @@ openssl rand -base64 32
 - `backend/internal/git_repository/infrastructure/encryption/README.md`
 - `backend/internal/git_repository/infrastructure/encryption/DEPLOYMENT.md`
 - `backend/internal/git_repository/infrastructure/persistence/encryption_integration_test.go`
-- `backend/internal/git_repository/infrastructure/persistence/migrations/000003_document_access_token_encryption.up.sql`
-- `backend/internal/git_repository/infrastructure/persistence/migrations/000003_document_access_token_encryption.down.sql`
+- `backend/migrate/000003_document_access_token_encryption.up.sql`
+- `backend/migrate/000003_document_access_token_encryption.down.sql`
 
 ### Modified Files
 - `backend/cmd/server/wire.go` - Added encryptor provider
