@@ -1,1 +1,1 @@
-export { useGitProvider } from "./useGitProvider";
+export * from "./useGitProvider";

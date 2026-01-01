@@ -1,1 +1,1 @@
-export type { GitProvider, GitRepository } from "./oauth";
+export type { GitProvider, GitRepository } from "@/shared/api/gitProviderApi";

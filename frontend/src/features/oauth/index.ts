@@ -16,10 +16,9 @@ export {
   useOAuthQueryService,
   OAuthCommandServiceProvider,
   useOAuthCommandService,
-} from "./presentation/contexts";
+  OAuthConnection,
+  ConnectionList,
+} from "./presentation";
 
 // Hooks
 export { useGitProvider } from "./hooks";
-
-// Components
-export { OAuthConnection, ConnectionList } from "./components";

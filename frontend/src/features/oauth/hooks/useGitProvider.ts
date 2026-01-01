@@ -9,7 +9,6 @@ import { Connection } from "../application/dto";
 interface UseGitProviderState {
   connections: Connection[];
   repositories: GitRepository[];
-  isLoadingConnections: boolean;
   isLoadingRepositories: boolean;
   error: string | null;
 }
@@ -32,24 +31,21 @@ export function useGitProvider(): UseGitProviderReturn {
   const [state, setState] = useState<UseGitProviderState>({
     connections: [],
     repositories: [],
-    isLoadingConnections: true,
     isLoadingRepositories: false,
     error: null,
   });
 
   const refreshConnections = useCallback(async () => {
-    setState((prev) => ({ ...prev, isLoadingConnections: true, error: null }));
+    setState((prev) => ({ ...prev, error: null }));
     try {
       const connections = await oauthQueryService.listConnections();
       setState((prev) => ({
         ...prev,
         connections,
-        isLoadingConnections: false,
       }));
     } catch (err) {
       setState((prev) => ({
         ...prev,
-        isLoadingConnections: false,
         error:
           err instanceof Error
             ? err.message

@@ -36,11 +36,7 @@ export function RepositoryCreatePage() {
     useState<GitRepository | null>(null);
 
   // 各コンポーネントが自分で必要なロジックを呼び出す
-  const {
-    connections,
-    isLoadingConnections,
-    error: gitProviderError,
-  } = useGitProvider();
+  const { connections, error: gitProviderError } = useGitProvider();
   const { isAuthenticating, handleOAuthConnect } = useRepositoryRegistration();
 
   // コネクション選択ハンドラー
@@ -123,13 +119,21 @@ export function RepositoryCreatePage() {
         {/* 左ペイン: コネクション一覧 */}
         <div className="col-span-12 lg:col-span-4 xl:col-span-3">
           <div className="sticky top-6">
-            <ConnectionList
-              connections={connections}
-              selectedConnectionId={selectedConnection?.id || null}
-              onSelectConnection={handleSelectConnection}
-              onAddConnection={handleAddConnection}
-              isLoading={isLoadingConnections}
-            />
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold">Connections</h2>
+                <button
+                  onClick={handleAddConnection}
+                  className="px-3 py-1.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+                >
+                  + Add
+                </button>
+              </div>
+              <ConnectionList
+                selectedConnectionId={selectedConnection?.id || null}
+                onSelectConnection={handleSelectConnection}
+              />
+            </div>
           </div>
         </div>
 
