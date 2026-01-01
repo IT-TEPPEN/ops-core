@@ -64,8 +64,8 @@ export function ConnectionList({
               </span>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-semibold text-sm truncate">
-                    {getProviderLabel(connection.provider)}
+                  <h3 className="font-semibold text-base truncate">
+                    {connection.providerHost}
                   </h3>
                   {isSelected && (
                     <span className="text-xs text-blue-600 font-medium">
@@ -73,10 +73,10 @@ export function ConnectionList({
                     </span>
                   )}
                 </div>
-                <p className="text-sm text-gray-600 truncate">
+                <p className="text-sm text-gray-600 dark:text-gray-300 mt-1 truncate">
                   @{connection.providerUsername}
                 </p>
-                <p className="text-xs text-gray-400 mt-1">
+                <p className="text-xs text-gray-600 dark:text-gray-300">
                   Connected:{" "}
                   {new Date(connection.connectedAt).toLocaleDateString()}
                 </p>

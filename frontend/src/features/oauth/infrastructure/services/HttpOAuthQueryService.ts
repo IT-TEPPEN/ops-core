@@ -6,6 +6,7 @@ import { V1ApiClient } from "@/shared/api/client";
 interface OAuthConnection {
   id: string;
   provider: string;
+  provider_host: string;
   provider_username: string;
   scopes: string[];
   connected_at: string;
@@ -40,6 +41,7 @@ export class HttpOAuthQueryService
     return response.connections.map((conn) => ({
       id: conn.id,
       provider: conn.provider,
+      providerHost: conn.provider_host,
       providerUsername: conn.provider_username,
       connectedAt: new Date(conn.connected_at),
     }));

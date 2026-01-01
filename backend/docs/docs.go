@@ -4006,6 +4006,9 @@ const docTemplate = `{
                 "provider": {
                     "type": "string"
                 },
+                "provider_host": {
+                    "type": "string"
+                },
                 "provider_username": {
                     "type": "string"
                 },

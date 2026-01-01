@@ -77,6 +77,8 @@ definitions:
         type: string
       provider:
         type: string
+      provider_host:
+        type: string
       provider_username:
         type: string
       scopes:

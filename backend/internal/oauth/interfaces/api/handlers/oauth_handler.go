@@ -29,6 +29,7 @@ func NewOAuthHandler(oauthService *service.OAuthService, gitProviderService *ser
 type OAuthConnectionResponse struct {
 	ID               string   `json:"id"`
 	Provider         string   `json:"provider"`
+	ProviderHost     string   `json:"provider_host"`
 	ProviderUsername string   `json:"provider_username"`
 	Scopes           []string `json:"scopes"`
 	ConnectedAt      string   `json:"connected_at"`
@@ -153,6 +154,7 @@ func (h *OAuthHandler) HandleCallbackWithSave(c *gin.Context) {
 	c.JSON(http.StatusOK, OAuthConnectionResponse{
 		ID:               conn.ID(),
 		Provider:         string(conn.Provider()),
+		ProviderHost:     conn.ProviderHost(),
 		ProviderUsername: conn.ProviderUsername(),
 		Scopes:           conn.Scopes(),
 		ConnectedAt:      conn.CreatedAt().Format("2006-01-02T15:04:05Z07:00"),
@@ -194,6 +196,7 @@ func (h *OAuthHandler) ListConnections(c *gin.Context) {
 		response[i] = OAuthConnectionResponse{
 			ID:               conn.ID(),
 			Provider:         string(conn.Provider()),
+			ProviderHost:     conn.ProviderHost(),
 			ProviderUsername: conn.ProviderUsername(),
 			Scopes:           conn.Scopes(),
 			ConnectedAt:      conn.CreatedAt().Format("2006-01-02T15:04:05Z07:00"),
