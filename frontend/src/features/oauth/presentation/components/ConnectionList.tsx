@@ -52,6 +52,8 @@ export function ConnectionList() {
               e.preventDefault();
               setSearchParams((searchParams) => {
                 searchParams.set("selected_connection_id", connection.id);
+                searchParams.delete("selected_repository_full_name");
+                searchParams.delete("prefix");
                 return searchParams;
               });
             }}

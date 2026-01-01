@@ -335,3 +335,113 @@ func (h *OAuthHandler) ListRepositoriesByConnection(c *gin.Context) {
 		"count":        len(repos),
 	})
 }
+
+// GetRepositoryContents lists files and directories at a specific path in a repository
+// @Summary Get repository contents
+// @Description Get files and directories at a specific path via OAuth connection
+// @Tags OAuth
+// @Produce json
+// @Security BearerAuth
+// @Param connectionId path string true "OAuth connection ID"
+// @Param owner path string true "Repository owner"
+// @Param repo path string true "Repository name"
+// @Param path query string false "Directory path (empty for root)"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} map[string]interface{} "Invalid request"
+// @Failure 401 {object} map[string]interface{} "Unauthorized"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /auth/oauth/connections/{connectionId}/repositories/{owner}/{repo}/contents [get]
+func (h *OAuthHandler) GetRepositoryContents(c *gin.Context) {
+	connectionID := c.Param("connectionId")
+	owner := c.Param("owner")
+	repo := c.Param("repo")
+	path := c.DefaultQuery("path", "")
+
+	if connectionID == "" || owner == "" || repo == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   "invalid_request",
+			"message": "Connection ID, owner, and repo are required",
+		})
+		return
+	}
+
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error":   "unauthorized",
+			"message": "Authentication required",
+		})
+		return
+	}
+
+	contents, err := h.gitProviderService.GetRepositoryContents(c.Request.Context(), userID.(string), connectionID, owner, repo, path)
+	if err != nil {
+		h.logger.Error("Failed to get repository contents", "error", err, "connectionId", connectionID, "owner", owner, "repo", repo, "path", path)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "internal_error",
+			"message": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"files": contents,
+		"path":  path,
+	})
+}
+
+// GetRepositoryFileContent gets the content of a specific file
+// @Summary Get file content
+// @Description Get the content of a specific file via OAuth connection
+// @Tags OAuth
+// @Produce json
+// @Security BearerAuth
+// @Param connectionId path string true "OAuth connection ID"
+// @Param owner path string true "Repository owner"
+// @Param repo path string true "Repository name"
+// @Param filePath path string true "File path"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} map[string]interface{} "Invalid request"
+// @Failure 401 {object} map[string]interface{} "Unauthorized"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /auth/oauth/connections/{connectionId}/repositories/{owner}/{repo}/files/{filePath} [get]
+func (h *OAuthHandler) GetRepositoryFileContent(c *gin.Context) {
+	connectionID := c.Param("connectionId")
+	owner := c.Param("owner")
+	repo := c.Param("repo")
+	filePath := c.Param("filePath")
+
+	if connectionID == "" || owner == "" || repo == "" || filePath == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   "invalid_request",
+			"message": "Connection ID, owner, repo, and file path are required",
+		})
+		return
+	}
+
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error":   "unauthorized",
+			"message": "Authentication required",
+		})
+		return
+	}
+
+	content, err := h.gitProviderService.GetFileContent(c.Request.Context(), userID.(string), connectionID, owner, repo, filePath)
+	if err != nil {
+		h.logger.Error("Failed to get file content", "error", err, "connectionId", connectionID, "owner", owner, "repo", repo, "filePath", filePath)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "internal_error",
+			"message": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"content":  content.Content,
+		"path":     filePath,
+		"sha":      content.SHA,
+		"encoding": content.Encoding,
+	})
+}

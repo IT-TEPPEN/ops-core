@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 
 	apperror "opscore/backend/internal/document/application/error"
@@ -10,8 +11,11 @@ import (
 	"opscore/backend/internal/document/domain/repository"
 	"opscore/backend/internal/document/domain/value_object"
 	"opscore/backend/internal/document/infrastructure/parser"
+	gitentity "opscore/backend/internal/git_repository/domain/entity"
 	gitrepo "opscore/backend/internal/git_repository/domain/repository"
 	"opscore/backend/internal/git_repository/infrastructure/git"
+	oauthdomain "opscore/backend/internal/oauth/domain"
+	oauthservice "opscore/backend/internal/oauth/application/service"
 )
 
 // DocumentUseCase defines the interface for document related use cases.
@@ -45,14 +49,30 @@ type DocumentUseCase interface {
 
 	// UpdateDocumentMetadata updates the document metadata (owner, access scope, etc.).
 	UpdateDocumentMetadata(ctx context.Context, documentID string, req *dto.UpdateDocumentMetadataRequest) (*dto.DocumentResponse, error)
+
+	// PublishDocument publishes a document from an OAuth connection (auto-creates repository if needed).
+	PublishDocument(ctx context.Context, userID string, req *dto.PublishDocumentRequest) (*dto.DocumentResponse, error)
 }
 
 // documentUseCase implements the DocumentUseCase interface.
 type documentUseCase struct {
-	repo        repository.DocumentRepository
-	gitRepo     gitrepo.Repository
-	gitManager  git.GitManager
-	fmParser    parser.FrontmatterParser
+	repo               repository.DocumentRepository
+	gitRepo            gitrepo.Repository
+	gitManager         git.GitManager
+	fmParser           parser.FrontmatterParser
+	oauthService       OAuthService // Added for publish from OAuth connection
+	gitProviderService GitProviderService // Added for publish from OAuth connection
+}
+
+// OAuthService interface for getting OAuth connections
+type OAuthService interface {
+	GetConnectionByID(ctx context.Context, userID string, connectionID string) (*oauthdomain.OAuthConnection, error)
+	GetAccessTokenByConnectionID(ctx context.Context, userID string, connectionID string) (string, error)
+}
+
+// GitProviderService interface for getting file content from Git providers
+type GitProviderService interface {
+	GetFileContent(ctx context.Context, userID string, connectionID string, owner string, repo string, filePath string) (*oauthservice.FileContent, error)
 }
 
 // NewDocumentUseCase creates a new instance of documentUseCase.
@@ -61,12 +81,16 @@ func NewDocumentUseCase(
 	gitRepo gitrepo.Repository,
 	gitManager git.GitManager,
 	fmParser parser.FrontmatterParser,
+	oauthService OAuthService,
+	gitProviderService GitProviderService,
 ) DocumentUseCase {
 	return &documentUseCase{
-		repo:       repo,
-		gitRepo:    gitRepo,
-		gitManager: gitManager,
-		fmParser:   fmParser,
+		repo:               repo,
+		gitRepo:            gitRepo,
+		gitManager:         gitManager,
+		fmParser:           fmParser,
+		oauthService:       oauthService,
+		gitProviderService: gitProviderService,
 	}
 }
 
@@ -640,6 +664,205 @@ func (uc *documentUseCase) UpdateDocumentMetadata(ctx context.Context, documentI
 	err = uc.repo.Update(ctx, doc)
 	if err != nil {
 		return nil, fmt.Errorf("failed to update document: %w", err)
+	}
+
+	// Return the response
+	response := dto.ToDocumentResponse(doc)
+	return &response, nil
+}
+
+// PublishDocument publishes a document from an OAuth connection.
+// This method auto-creates repository records based on the provided information.
+func (uc *documentUseCase) PublishDocument(ctx context.Context, userID string, req *dto.PublishDocumentRequest) (*dto.DocumentResponse, error) {
+	// Validate access scope
+	accessScope, err := value_object.NewAccessScope(req.AccessScope)
+	if err != nil {
+		return nil, apperror.NewValidationFailedError([]apperror.FieldError{
+			{Field: "access_scope", Message: err.Error()},
+		})
+	}
+
+	// Validate file path
+	filePath, err := value_object.NewFilePath(req.FilePath)
+	if err != nil {
+		return nil, apperror.NewValidationFailedError([]apperror.FieldError{
+			{Field: "file_path", Message: err.Error()},
+		})
+	}
+
+	// Get OAuth connection
+	conn, err := uc.oauthService.GetConnectionByID(ctx, userID, req.ConnectionID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get OAuth connection: %w", err)
+	}
+
+	// Get access token
+	accessToken, err := uc.oauthService.GetAccessTokenByConnectionID(ctx, userID, req.ConnectionID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get access token: %w", err)
+	}
+
+	// Construct repository URL based on provider
+	var repoURL string
+	provider := conn.Provider()
+	switch provider {
+	case oauthdomain.ProviderGitHub:
+		repoURL = fmt.Sprintf("https://github.com/%s/%s", req.Owner, req.Repository)
+	case oauthdomain.ProviderGitLab:
+		repoURL = fmt.Sprintf("https://gitlab.com/%s/%s", req.Owner, req.Repository)
+	case oauthdomain.ProviderGitLabSelfHosted:
+		repoURL = fmt.Sprintf("https://%s/%s/%s", conn.ProviderHost(), req.Owner, req.Repository)
+	default:
+		return nil, apperror.NewValidationFailedError([]apperror.FieldError{
+			{Field: "connection_id", Message: fmt.Sprintf("unsupported provider: %s", provider)},
+		})
+	}
+
+	// Find or create repository
+	repoEntity, err := uc.gitRepo.FindByURL(ctx, repoURL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find repository: %w", err)
+	}
+
+	if repoEntity == nil {
+		// Repository doesn't exist, create it
+		// Generate new repository ID (UUID)
+		repoID := value_object.GenerateDocumentID() // Reuse document ID generator
+		repoName := fmt.Sprintf("%s/%s", req.Owner, req.Repository)
+
+		// Create new repository entity
+		newRepo := gitentity.NewRepository(repoID.String(), repoName, repoURL, accessToken)
+
+		// Save the repository
+		if err := uc.gitRepo.Save(ctx, newRepo); err != nil {
+			return nil, fmt.Errorf("failed to save repository: %w", err)
+		}
+
+		repoEntity = newRepo
+	} else {
+		// Repository exists, update its access token
+		repoEntity.SetAccessToken(accessToken)
+		if err := uc.gitRepo.Save(ctx, repoEntity); err != nil {
+			return nil, fmt.Errorf("failed to update repository: %w", err)
+		}
+	}
+
+	// Fetch file content via GitProviderService
+	fileContent, err := uc.gitProviderService.GetFileContent(ctx, userID, req.ConnectionID, req.Owner, req.Repository, req.FilePath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get file content: %w", err)
+	}
+
+	// Decode base64 content if needed (GitHub returns base64)
+	var markdownContent string
+	if fileContent.Encoding == "base64" {
+		decoded, err := base64.StdEncoding.DecodeString(fileContent.Content)
+		if err != nil {
+			return nil, fmt.Errorf("failed to decode base64 content: %w", err)
+		}
+		markdownContent = string(decoded)
+	} else {
+		markdownContent = fileContent.Content
+	}
+
+	// Parse frontmatter from markdown file
+	frontmatterData, err := uc.fmParser.Parse(markdownContent)
+	if err != nil {
+		return nil, apperror.NewValidationFailedError([]apperror.FieldError{
+			{Field: "file_content", Message: fmt.Sprintf("failed to parse frontmatter: %s", err.Error())},
+		})
+	}
+
+	// Validate and create document type
+	docType, err := value_object.NewDocumentType(frontmatterData.Type)
+	if err != nil {
+		return nil, apperror.NewValidationFailedError([]apperror.FieldError{
+			{Field: "doc_type", Message: err.Error()},
+		})
+	}
+
+	// Convert tags from frontmatter
+	tags := make([]value_object.Tag, len(frontmatterData.Tags))
+	for i, tagStr := range frontmatterData.Tags {
+		tag, err := value_object.NewTag(tagStr)
+		if err != nil {
+			return nil, apperror.NewValidationFailedError([]apperror.FieldError{
+				{Field: fmt.Sprintf("tags[%d]", i), Message: err.Error()},
+			})
+		}
+		tags[i] = tag
+	}
+
+	// Convert variables from frontmatter
+	variables := make([]value_object.VariableDefinition, len(frontmatterData.Variables))
+	for i, v := range frontmatterData.Variables {
+		varType, err := value_object.NewVariableType(v.Type)
+		if err != nil {
+			return nil, apperror.NewValidationFailedError([]apperror.FieldError{
+				{Field: fmt.Sprintf("variables[%d].type", i), Message: err.Error()},
+			})
+		}
+		varDef, err := value_object.NewVariableDefinition(
+			v.Name,
+			v.Label,
+			v.Description,
+			varType,
+			v.Required,
+			v.DefaultValue,
+		)
+		if err != nil {
+			return nil, apperror.NewValidationFailedError([]apperror.FieldError{
+				{Field: fmt.Sprintf("variables[%d]", i), Message: err.Error()},
+			})
+		}
+		variables[i] = varDef
+	}
+
+	// Use SHA as commit hash
+	commitHash, err := value_object.NewCommitHash(fileContent.SHA)
+	if err != nil {
+		// If SHA is empty or invalid, use "HEAD" as fallback
+		commitHash, _ = value_object.NewCommitHash("HEAD")
+	}
+
+	// Create document source
+	source, err := value_object.NewDocumentSource(filePath, commitHash)
+	if err != nil {
+		return nil, apperror.NewValidationFailedError([]apperror.FieldError{
+			{Field: "source", Message: err.Error()},
+		})
+	}
+
+	// Generate new document ID
+	documentID := value_object.GenerateDocumentID()
+
+	// Get repository ID
+	repositoryID, err := value_object.NewRepositoryID(repoEntity.ID())
+	if err != nil {
+		return nil, fmt.Errorf("failed to create repository ID: %w", err)
+	}
+
+	// Create the document entity
+	doc, err := entity.NewDocument(documentID, repositoryID, frontmatterData.Owner, accessScope)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create document: %w", err)
+	}
+
+	// Set auto update if specified
+	if req.IsAutoUpdate {
+		doc.EnableAutoUpdate()
+	}
+
+	// Publish the initial version
+	err = doc.Publish(source, frontmatterData.Title, docType, tags, variables, frontmatterData.Content)
+	if err != nil {
+		return nil, fmt.Errorf("failed to publish initial version: %w", err)
+	}
+
+	// Save the document
+	err = uc.repo.Save(ctx, doc)
+	if err != nil {
+		return nil, fmt.Errorf("failed to save document: %w", err)
 	}
 
 	// Return the response

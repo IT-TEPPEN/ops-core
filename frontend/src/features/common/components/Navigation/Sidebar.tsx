@@ -50,9 +50,7 @@ export function Sidebar({
 
     const itemContent = (
       <>
-        {item.icon && (
-          <span className="flex-shrink-0 w-5 h-5">{item.icon}</span>
-        )}
+        {item.icon && <span className="shrink-0 w-5 h-5">{item.icon}</span>}
         <span className="flex-1 truncate">{item.label}</span>
       </>
     );
@@ -97,7 +95,7 @@ export function Sidebar({
   return (
     <nav className={`flex flex-col h-full ${className}`}>
       {header && (
-        <div className="flex-shrink-0 px-4 py-4 border-b border-gray-200 dark:border-gray-700">
+        <div className="shrink-0 px-4 py-4 border-b border-gray-200 dark:border-gray-700">
           {header}
         </div>
       )}
@@ -107,7 +105,7 @@ export function Sidebar({
       </ul>
 
       {footer && (
-        <div className="flex-shrink-0 px-4 py-4 border-t border-gray-200 dark:border-gray-700">
+        <div className="shrink-0 px-4 py-4 border-t border-gray-200 dark:border-gray-700">
           {footer}
         </div>
       )}

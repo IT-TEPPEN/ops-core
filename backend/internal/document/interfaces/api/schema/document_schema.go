@@ -12,6 +12,17 @@ type CreateDocumentRequest struct {
 	IsAutoUpdate bool   `json:"is_auto_update" example:"true"`
 }
 
+// PublishDocumentRequest represents the API request for publishing a document from an OAuth connection
+// This endpoint auto-creates repository records based on the file URL
+type PublishDocumentRequest struct {
+	ConnectionID string `json:"connection_id" binding:"required" example:"conn_a1b2c3d4"`
+	Owner        string `json:"owner" binding:"required" example:"myorg"`
+	Repository   string `json:"repository" binding:"required" example:"myrepo"`
+	FilePath     string `json:"file_path" binding:"required" example:"docs/backup-procedure.md"`
+	AccessScope  string `json:"access_scope" binding:"required" example:"public"`
+	IsAutoUpdate bool   `json:"is_auto_update" example:"true"`
+}
+
 // UpdateDocumentRequest represents the API request for updating a document
 // Frontmatter fields (Title, DocType, Tags, Variables, Content) are automatically extracted from the file
 type UpdateDocumentRequest struct {

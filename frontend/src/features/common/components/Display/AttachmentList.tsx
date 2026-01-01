@@ -25,7 +25,7 @@ function formatFileSize(bytes: number): string {
   const k = 1024;
   const sizes = ["Bytes", "KB", "MB", "GB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return Math.round(bytes / Math.pow(k, i) * 100) / 100 + " " + sizes[i];
+  return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i];
 }
 
 /**
@@ -34,7 +34,8 @@ function formatFileSize(bytes: number): string {
 function formatDate(dateString: string): string {
   const date = new Date(dateString);
   // Use user's locale or fallback to en-US
-  const locale = typeof navigator !== "undefined" ? navigator.language : "en-US";
+  const locale =
+    typeof navigator !== "undefined" ? navigator.language : "en-US";
   return new Intl.DateTimeFormat(locale, {
     year: "numeric",
     month: "short",
@@ -53,7 +54,8 @@ function getFileIcon(mimeType: string): string {
   if (mimeType.startsWith("audio/")) return "🎵";
   if (mimeType.includes("pdf")) return "📄";
   if (mimeType.includes("word") || mimeType.includes("document")) return "📝";
-  if (mimeType.includes("excel") || mimeType.includes("spreadsheet")) return "📊";
+  if (mimeType.includes("excel") || mimeType.includes("spreadsheet"))
+    return "📊";
   if (mimeType.includes("text")) return "📃";
   return "📎";
 }
@@ -71,9 +73,7 @@ export function AttachmentList({
   if (attachments.length === 0) {
     return (
       <div className={`text-center py-8 ${className}`}>
-        <p className="text-gray-500 dark:text-gray-400">
-          No attachments
-        </p>
+        <p className="text-gray-500 dark:text-gray-400">No attachments</p>
       </div>
     );
   }
@@ -89,7 +89,7 @@ export function AttachmentList({
             className="flex items-center flex-1 min-w-0 cursor-pointer"
             onClick={() => onAttachmentClick?.(attachment)}
           >
-            <span className="text-2xl mr-3 flex-shrink-0">
+            <span className="text-2xl mr-3 shrink-0">
               {getFileIcon(attachment.mime_type)}
             </span>
             <div className="flex-1 min-w-0">
@@ -97,11 +97,12 @@ export function AttachmentList({
                 {attachment.file_name}
               </p>
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                {formatFileSize(attachment.file_size)} • {formatDate(attachment.uploaded_at)}
+                {formatFileSize(attachment.file_size)} •{" "}
+                {formatDate(attachment.uploaded_at)}
               </p>
             </div>
           </div>
-          
+
           <div className="flex items-center space-x-2 ml-4">
             <a
               href={`/api/v1/attachments/${attachment.id}/download`}
@@ -124,12 +125,16 @@ export function AttachmentList({
                 />
               </svg>
             </a>
-            
+
             {showDelete && onDelete && (
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  if (window.confirm("Are you sure you want to delete this attachment?")) {
+                  if (
+                    window.confirm(
+                      "Are you sure you want to delete this attachment?"
+                    )
+                  ) {
                     onDelete(attachment.id);
                   }
                 }}

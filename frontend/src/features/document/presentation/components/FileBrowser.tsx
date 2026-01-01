@@ -1,68 +1,13 @@
-import { useState, useMemo } from "react";
-
-interface FileNode {
-  name: string;
-  path: string;
-  type: "file" | "directory";
-  size?: number;
-  url?: string;
-}
+import { useOAuthQueryService } from "@/features/oauth";
+import { Content } from "@/features/oauth/application/dto";
+import { useQuery } from "@tanstack/react-query";
+import { Link, useSearchParams } from "react-router-dom";
 
 interface FileBrowserProps {
   connectionId: string;
-  repository: {
-    owner: string;
-    name: string;
-    fullName: string;
-  };
+  repositoryFullName: string;
   onFileSelect: (file: { path: string; url: string }) => void;
 }
-
-// Mock data - will be replaced with actual API call
-const getMockFileTree = (path: string = ""): FileNode[] => {
-  if (path === "") {
-    // Root directory
-    return [
-      { name: "docs", path: "docs", type: "directory" },
-      { name: "procedures", path: "procedures", type: "directory" },
-      { name: "README.md", path: "README.md", type: "file", size: 1024 },
-      {
-        name: "CONTRIBUTING.md",
-        path: "CONTRIBUTING.md",
-        type: "file",
-        size: 2048,
-      },
-    ];
-  } else if (path === "docs") {
-    return [
-      { name: "getting-started.md", path: "docs/getting-started.md", type: "file", size: 3072 },
-      { name: "api", path: "docs/api", type: "directory" },
-      { name: "guides", path: "docs/guides", type: "directory" },
-    ];
-  } else if (path === "docs/api") {
-    return [
-      { name: "authentication.md", path: "docs/api/authentication.md", type: "file", size: 4096 },
-      { name: "endpoints.md", path: "docs/api/endpoints.md", type: "file", size: 5120 },
-    ];
-  } else if (path === "docs/guides") {
-    return [
-      { name: "deployment.md", path: "docs/guides/deployment.md", type: "file", size: 6144 },
-      { name: "monitoring.md", path: "docs/guides/monitoring.md", type: "file", size: 7168 },
-    ];
-  } else if (path === "procedures") {
-    return [
-      { name: "backup.md", path: "procedures/backup.md", type: "file", size: 8192 },
-      { name: "rollback.md", path: "procedures/rollback.md", type: "file", size: 9216 },
-      { name: "incident-response", path: "procedures/incident-response", type: "directory" },
-    ];
-  } else if (path === "procedures/incident-response") {
-    return [
-      { name: "severity-1.md", path: "procedures/incident-response/severity-1.md", type: "file", size: 10240 },
-      { name: "severity-2.md", path: "procedures/incident-response/severity-2.md", type: "file", size: 11264 },
-    ];
-  }
-  return [];
-};
 
 const formatFileSize = (bytes: number): string => {
   if (bytes < 1024) return `${bytes} B`;
@@ -82,35 +27,51 @@ const formatFileSize = (bytes: number): string => {
  * - ファイルの選択（Markdownファイルのみ）
  */
 export function FileBrowser({
-  repository,
+  connectionId,
+  repositoryFullName,
   onFileSelect,
 }: FileBrowserProps) {
-  const [currentPath, setCurrentPath] = useState("");
-  const fileNodes = useMemo(() => getMockFileTree(currentPath), [currentPath]);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const prefix = searchParams.get("prefix") || "";
+  const oauthQueryService = useOAuthQueryService();
+  const query = useQuery({
+    queryKey: ["repositoryContents", connectionId, repositoryFullName, prefix],
+    queryFn: async () =>
+      oauthQueryService.listRepositoryContents(
+        connectionId,
+        repositoryFullName,
+        prefix
+      ),
+  });
 
-  const breadcrumbs = useMemo(() => {
-    if (!currentPath) return [{ name: repository.name, path: "" }];
-    const parts = currentPath.split("/");
-    const crumbs = [{ name: repository.name, path: "" }];
-    let accumulatedPath = "";
-    for (const part of parts) {
-      accumulatedPath = accumulatedPath ? `${accumulatedPath}/${part}` : part;
-      crumbs.push({ name: part, path: accumulatedPath });
-    }
-    return crumbs;
-  }, [currentPath, repository.name]);
+  if (query.isLoading) {
+    return <div className="text-sm text-gray-500">Loading files...</div>;
+  }
 
-  const handleNodeClick = (node: FileNode) => {
+  if (query.isError || !query.data) {
+    return (
+      <div className="text-sm text-red-500">
+        Failed to load files. Please try again.
+      </div>
+    );
+  }
+
+  const fileNodes = query.data;
+
+  const handleNodeClick = (node: Content) => {
     if (node.type === "directory") {
-      setCurrentPath(node.path);
+      setSearchParams((searchParams) => {
+        searchParams.set("prefix", node.path);
+        return searchParams;
+      });
     } else if (node.name.endsWith(".md") || node.name.endsWith(".markdown")) {
       // Only allow selection of Markdown files
-      const fileUrl = `https://github.com/${repository.fullName}/blob/main/${node.path}`;
+      const fileUrl = `https://github.com/${repositoryFullName}/blob/main/${node.path}`;
       onFileSelect({ path: node.path, url: fileUrl });
     }
   };
 
-  const getFileIcon = (node: FileNode) => {
+  const getFileIcon = (node: Content) => {
     if (node.type === "directory") {
       return (
         <svg
@@ -129,7 +90,8 @@ export function FileBrowser({
       );
     }
 
-    const isMarkdown = node.name.endsWith(".md") || node.name.endsWith(".markdown");
+    const isMarkdown =
+      node.name.endsWith(".md") || node.name.endsWith(".markdown");
     return (
       <svg
         className={`w-5 h-5 ${isMarkdown ? "text-green-500" : "text-gray-400"}`}
@@ -147,7 +109,7 @@ export function FileBrowser({
     );
   };
 
-  const isClickable = (node: FileNode) => {
+  const isClickable = (node: Content) => {
     return (
       node.type === "directory" ||
       node.name.endsWith(".md") ||
@@ -162,7 +124,7 @@ export function FileBrowser({
         <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
           Browse Files
         </h2>
-        <nav className="flex items-center space-x-2 text-sm">
+        {/* <nav className="flex items-center space-x-2 text-sm">
           {breadcrumbs.map((crumb, index) => (
             <div key={crumb.path} className="flex items-center">
               {index > 0 && (
@@ -192,7 +154,7 @@ export function FileBrowser({
               </button>
             </div>
           ))}
-        </nav>
+        </nav> */}
       </header>
 
       {/* File list */}
@@ -215,7 +177,7 @@ export function FileBrowser({
                       : "cursor-not-allowed opacity-50"
                   }`}
                 >
-                  <div className="flex-shrink-0">{getFileIcon(node)}</div>
+                  <div className="shrink-0">{getFileIcon(node)}</div>
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
                       {node.name}
@@ -225,10 +187,22 @@ export function FileBrowser({
                         {formatFileSize(node.size)}
                       </div>
                     )}
+
+                    {isClickable(node) && node.type === "file" && (
+                      <Link
+                        to={`/documents/preview?connection_id=${connectionId}&repository_full_name=${encodeURIComponent(
+                          repositoryFullName
+                        )}&path=${encodeURIComponent(node.path)}`}
+                        className="text-blue-500 hover:text-blue-700 font-medium"
+                      >
+                        Preview
+                      </Link>
+                    )}
                   </div>
+
                   {node.type === "directory" && (
                     <svg
-                      className="w-4 h-4 text-gray-400 flex-shrink-0"
+                      className="w-4 h-4 text-gray-400 shrink-0"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"

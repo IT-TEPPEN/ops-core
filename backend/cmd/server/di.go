@@ -224,8 +224,11 @@ func InitializeAPI(db *pgxpool.Pool) (*repohandlers.RepositoryHandler,
 	// Create frontmatter parser
 	frontmatterParser := parser.NewFrontmatterParser()
 
-	// Create document use case
-	documentUseCase := docusecase.NewDocumentUseCase(documentRepository, repositoryRepository, gitManager, frontmatterParser)
+	// Create Git provider service (needed for document use case)
+	gitProviderService := oauthservice.NewGitProviderService(oauthService)
+
+	// Create document use case with OAuth and GitProvider services
+	documentUseCase := docusecase.NewDocumentUseCase(documentRepository, repositoryRepository, gitManager, frontmatterParser, oauthService, gitProviderService)
 
 	// Create variable use case
 	variableUseCase := docusecase.NewVariableUseCase(documentRepository)
@@ -317,8 +320,7 @@ func InitializeAPI(db *pgxpool.Pool) (*repohandlers.RepositoryHandler,
 	// Create OAuth logger
 	oauthLogger := provideOAuthHandlerLogger()
 
-	// Create Git provider service
-	gitProviderService := oauthservice.NewGitProviderService(oauthService)
+	// Git provider service was already created above for document use case
 
 	// Create OAuth handler (needs gitProviderService for connection-based repository listing)
 	oauthHandler := oauthhandlers.NewOAuthHandler(oauthService, gitProviderService, oauthLogger)

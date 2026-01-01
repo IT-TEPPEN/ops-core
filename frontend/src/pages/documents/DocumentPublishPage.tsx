@@ -24,27 +24,15 @@ export function DocumentPublishPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const selectedConnectionId = searchParams.get("selected_connection_id");
+  const selectedRepositoryFullName = searchParams.get(
+    "selected_repository_full_name"
+  );
 
-  const [selectedRepository, setSelectedRepository] = useState<{
-    owner: string;
-    name: string;
-    fullName: string;
-  } | null>(null);
   const [selectedFile, setSelectedFile] = useState<{
     path: string;
     url: string;
   } | null>(null);
   const [isPublishDialogOpen, setIsPublishDialogOpen] = useState(false);
-
-  const handleRepositorySelect = (repository: {
-    owner: string;
-    name: string;
-    fullName: string;
-  }) => {
-    setSelectedRepository(repository);
-    // Reset file selection when repository changes
-    setSelectedFile(null);
-  };
 
   const handleFileSelect = (file: { path: string; url: string }) => {
     setSelectedFile(file);
@@ -86,11 +74,7 @@ export function DocumentPublishPage() {
           {/* Repository Browser */}
           <div className="flex-1 overflow-y-auto p-4">
             {selectedConnectionId ? (
-              <RepositoryBrowser
-                connectionId={selectedConnectionId}
-                selectedRepository={selectedRepository}
-                onRepositorySelect={handleRepositorySelect}
-              />
+              <RepositoryBrowser connectionId={selectedConnectionId} />
             ) : (
               <div className="text-center text-gray-500 dark:text-gray-400 py-8">
                 <p>Select a connection to view repositories</p>
@@ -101,10 +85,10 @@ export function DocumentPublishPage() {
 
         {/* Right Pane: File Browser */}
         <main className="flex-1 bg-gray-50 dark:bg-gray-900 overflow-hidden">
-          {selectedRepository ? (
+          {selectedConnectionId && selectedRepositoryFullName ? (
             <FileBrowser
-              connectionId={selectedConnectionId!}
-              repository={selectedRepository}
+              connectionId={selectedConnectionId}
+              repositoryFullName={selectedRepositoryFullName}
               onFileSelect={handleFileSelect}
             />
           ) : (

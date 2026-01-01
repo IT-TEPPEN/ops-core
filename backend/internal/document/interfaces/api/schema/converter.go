@@ -15,6 +15,18 @@ func ToCreateDocumentDTO(req CreateDocumentRequest) dto.CreateDocumentRequest {
 	}
 }
 
+// ToPublishDocumentDTO converts API schema to application DTO
+func ToPublishDocumentDTO(req PublishDocumentRequest) dto.PublishDocumentRequest {
+	return dto.PublishDocumentRequest{
+		ConnectionID: req.ConnectionID,
+		Owner:        req.Owner,
+		Repository:   req.Repository,
+		FilePath:     req.FilePath,
+		AccessScope:  req.AccessScope,
+		IsAutoUpdate: req.IsAutoUpdate,
+	}
+}
+
 // ToUpdateDocumentDTO converts API schema to application DTO
 func ToUpdateDocumentDTO(req UpdateDocumentRequest) dto.UpdateDocumentRequest {
 	return dto.UpdateDocumentRequest{

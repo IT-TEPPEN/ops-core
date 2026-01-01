@@ -261,3 +261,258 @@ func (s *GitProviderService) listGitLabRepositories(ctx context.Context, accessT
 
 	return allRepos, nil
 }
+
+// FileNode represents a file or directory in a repository
+type FileNode struct {
+	Name string `json:"name"`
+	Path string `json:"path"`
+	Type string `json:"type"` // "file" or "directory"
+	Size int64  `json:"size,omitempty"`
+	URL  string `json:"url,omitempty"`
+}
+
+// FileContent represents the content of a file
+type FileContent struct {
+	Content  string `json:"content"`
+	Path     string `json:"path"`
+	SHA      string `json:"sha"`
+	Encoding string `json:"encoding"`
+}
+
+// GetRepositoryContents gets files and directories at a specific path
+func (s *GitProviderService) GetRepositoryContents(ctx context.Context, userID string, connectionID string, owner string, repo string, path string) ([]FileNode, error) {
+	// Get the OAuth connection
+	conn, err := s.oauthService.GetConnectionByID(ctx, userID, connectionID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get connection: %w", err)
+	}
+
+	// Get access token
+	token, err := s.oauthService.GetAccessTokenByConnectionID(ctx, userID, connectionID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get access token: %w", err)
+	}
+
+	switch conn.Provider() {
+	case domain.ProviderGitHub:
+		return s.getGitHubRepositoryContents(ctx, token, owner, repo, path)
+	case domain.ProviderGitLab, domain.ProviderGitLabSelfHosted:
+		baseURL := "https://gitlab.com"
+		if conn.Provider() == domain.ProviderGitLabSelfHosted {
+			baseURL = fmt.Sprintf("https://%s", conn.ProviderHost())
+		}
+		return s.getGitLabRepositoryContents(ctx, token, baseURL, owner, repo, path)
+	default:
+		return nil, fmt.Errorf("unsupported provider: %s", conn.Provider())
+	}
+}
+
+// GetFileContent gets the content of a specific file
+func (s *GitProviderService) GetFileContent(ctx context.Context, userID string, connectionID string, owner string, repo string, filePath string) (*FileContent, error) {
+	// Get the OAuth connection
+	conn, err := s.oauthService.GetConnectionByID(ctx, userID, connectionID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get connection: %w", err)
+	}
+
+	// Get access token
+	token, err := s.oauthService.GetAccessTokenByConnectionID(ctx, userID, connectionID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get access token: %w", err)
+	}
+
+	switch conn.Provider() {
+	case domain.ProviderGitHub:
+		return s.getGitHubFileContent(ctx, token, owner, repo, filePath)
+	case domain.ProviderGitLab, domain.ProviderGitLabSelfHosted:
+		baseURL := "https://gitlab.com"
+		if conn.Provider() == domain.ProviderGitLabSelfHosted {
+			baseURL = fmt.Sprintf("https://%s", conn.ProviderHost())
+		}
+		return s.getGitLabFileContent(ctx, token, baseURL, owner, repo, filePath)
+	default:
+		return nil, fmt.Errorf("unsupported provider: %s", conn.Provider())
+	}
+}
+
+// getGitHubRepositoryContents gets contents from GitHub API
+func (s *GitProviderService) getGitHubRepositoryContents(ctx context.Context, token string, owner string, repo string, path string) ([]FileNode, error) {
+	url := fmt.Sprintf("https://api.github.com/repos/%s/%s/contents/%s", owner, repo, path)
+
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("Accept", "application/vnd.github+json")
+
+	resp, err := s.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("GitHub API error: %d - %s", resp.StatusCode, string(body))
+	}
+
+	var githubContents []struct {
+		Name string `json:"name"`
+		Path string `json:"path"`
+		Type string `json:"type"`
+		Size int64  `json:"size"`
+		URL  string `json:"url"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&githubContents); err != nil {
+		return nil, err
+	}
+
+	fileNodes := make([]FileNode, len(githubContents))
+	for i, item := range githubContents {
+		nodeType := "file"
+		if item.Type == "dir" {
+			nodeType = "directory"
+		}
+		fileNodes[i] = FileNode{
+			Name: item.Name,
+			Path: item.Path,
+			Type: nodeType,
+			Size: item.Size,
+			URL:  item.URL,
+		}
+	}
+
+	return fileNodes, nil
+}
+
+// getGitHubFileContent gets file content from GitHub API
+func (s *GitProviderService) getGitHubFileContent(ctx context.Context, token string, owner string, repo string, filePath string) (*FileContent, error) {
+	url := fmt.Sprintf("https://api.github.com/repos/%s/%s/contents/%s", owner, repo, filePath)
+
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("Accept", "application/vnd.github+json")
+
+	resp, err := s.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("GitHub API error: %d - %s", resp.StatusCode, string(body))
+	}
+
+	var githubFile struct {
+		Content  string `json:"content"`
+		Path     string `json:"path"`
+		SHA      string `json:"sha"`
+		Encoding string `json:"encoding"`
+		Size     int64  `json:"size"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&githubFile); err != nil {
+		return nil, err
+	}
+
+	return &FileContent{
+		Content:  githubFile.Content,
+		Path:     githubFile.Path,
+		SHA:      githubFile.SHA,
+		Encoding: githubFile.Encoding,
+	}, nil
+}
+
+// getGitLabRepositoryContents gets contents from GitLab API
+func (s *GitProviderService) getGitLabRepositoryContents(ctx context.Context, token string, baseURL string, owner string, repo string, path string) ([]FileNode, error) {
+	projectPath := fmt.Sprintf("%s/%s", owner, repo)
+	url := fmt.Sprintf("%s/api/v4/projects/%s/repository/tree?path=%s", baseURL, projectPath, path)
+
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Authorization", "Bearer "+token)
+
+	resp, err := s.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("GitLab API error: %d - %s", resp.StatusCode, string(body))
+	}
+
+	var gitlabContents []struct {
+		Name string `json:"name"`
+		Path string `json:"path"`
+		Type string `json:"type"`
+		Mode string `json:"mode"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&gitlabContents); err != nil {
+		return nil, err
+	}
+
+	fileNodes := make([]FileNode, len(gitlabContents))
+	for i, item := range gitlabContents {
+		nodeType := "file"
+		if item.Type == "tree" {
+			nodeType = "directory"
+		}
+		fileNodes[i] = FileNode{
+			Name: item.Name,
+			Path: item.Path,
+			Type: nodeType,
+		}
+	}
+
+	return fileNodes, nil
+}
+
+// getGitLabFileContent gets file content from GitLab API
+func (s *GitProviderService) getGitLabFileContent(ctx context.Context, token string, baseURL string, owner string, repo string, filePath string) (*FileContent, error) {
+	projectPath := fmt.Sprintf("%s/%s", owner, repo)
+	url := fmt.Sprintf("%s/api/v4/projects/%s/repository/files/%s/raw", baseURL, projectPath, filePath)
+
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Authorization", "Bearer "+token)
+
+	resp, err := s.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("GitLab API error: %d - %s", resp.StatusCode, string(body))
+	}
+
+	content, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	return &FileContent{
+		Content:  string(content),
+		Path:     filePath,
+		SHA:      "",
+		Encoding: "utf-8",
+	}, nil
+}

@@ -38,7 +38,7 @@ export function SidebarLayout({
 }: SidebarLayoutProps) {
   const sidebarClasses = `
     ${isCollapsed ? "w-0 overflow-hidden" : sidebarWidth}
-    flex-shrink-0
+    shrink-0
     bg-white dark:bg-gray-800
     border-gray-200 dark:border-gray-700
     transition-all duration-300 ease-in-out
@@ -47,9 +47,7 @@ export function SidebarLayout({
 
   const sidebarElement = (
     <aside className={sidebarClasses}>
-      <div className="h-full overflow-y-auto">
-        {sidebar}
-      </div>
+      <div className="h-full overflow-y-auto">{sidebar}</div>
     </aside>
   );
 
@@ -78,8 +76,8 @@ export function SidebarLayout({
                     ? ""
                     : "rotate-180"
                   : sidebarPosition === "left"
-                    ? "rotate-180"
-                    : ""
+                  ? "rotate-180"
+                  : ""
               }`}
               fill="none"
               stroke="currentColor"

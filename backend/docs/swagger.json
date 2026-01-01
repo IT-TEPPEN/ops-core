@@ -940,6 +940,159 @@
                 }
             }
         },
+        "/auth/oauth/connections/{connectionId}/repositories/{owner}/{repo}/contents": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get files and directories at a specific path via OAuth connection",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "OAuth"
+                ],
+                "summary": "Get repository contents",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "OAuth connection ID",
+                        "name": "connectionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Repository owner",
+                        "name": "owner",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Repository name",
+                        "name": "repo",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Directory path (empty for root)",
+                        "name": "path",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/oauth/connections/{connectionId}/repositories/{owner}/{repo}/files/{filePath}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get the content of a specific file via OAuth connection",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "OAuth"
+                ],
+                "summary": "Get file content",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "OAuth connection ID",
+                        "name": "connectionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Repository owner",
+                        "name": "owner",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Repository name",
+                        "name": "repo",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "File path",
+                        "name": "filePath",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
         "/auth/oauth/connections/{provider}": {
             "delete": {
                 "security": [
@@ -1194,6 +1347,63 @@
                     },
                     "400": {
                         "description": "Invalid request body",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_document_interfaces_api_schema.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_document_interfaces_api_schema.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/documents/publish": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Publish a document by fetching it from a Git repository via OAuth connection",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "documents"
+                ],
+                "summary": "Publish a document from an OAuth connection",
+                "parameters": [
+                    {
+                        "description": "Document publish information",
+                        "name": "document",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_document_interfaces_api_schema.PublishDocumentRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Document published successfully",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_document_interfaces_api_schema.DocumentResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body",
+                        "schema": {
+                            "$ref": "#/definitions/opscore_backend_internal_document_interfaces_api_schema.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
                         "schema": {
                             "$ref": "#/definitions/opscore_backend_internal_document_interfaces_api_schema.ErrorResponse"
                         }
@@ -2996,56 +3206,6 @@
                         }
                     }
                 }
-            },
-            "post": {
-                "description": "Add a new repository to be managed by OpsCore by providing its Git URL and optional access token.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "repositories"
-                ],
-                "summary": "Register a new repository",
-                "parameters": [
-                    {
-                        "description": "Repository information",
-                        "name": "repository",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.RegisterRepositoryRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Repository registered successfully",
-                        "schema": {
-                            "$ref": "#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.RepositoryResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid request body or URL format",
-                        "schema": {
-                            "$ref": "#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse"
-                        }
-                    },
-                    "409": {
-                        "description": "Repository with this URL already exists",
-                        "schema": {
-                            "$ref": "#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse"
-                        }
-                    }
-                }
             }
         },
         "/repositories/{repoId}": {
@@ -3339,68 +3499,6 @@
                     },
                     "404": {
                         "description": "Repository or file not found",
-                        "schema": {
-                            "$ref": "#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/repositories/{repoId}/token": {
-            "put": {
-                "description": "Updates the access token used for accessing a private repository",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "repositories"
-                ],
-                "summary": "Update repository access token",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Repository ID",
-                        "name": "repoId",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Access token information",
-                        "name": "tokenInfo",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.UpdateAccessTokenRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Access token updated successfully",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid request body or repository ID",
-                        "schema": {
-                            "$ref": "#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Repository not found",
                         "schema": {
                             "$ref": "#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse"
                         }
@@ -4247,6 +4345,42 @@
                 }
             }
         },
+        "opscore_backend_internal_document_interfaces_api_schema.PublishDocumentRequest": {
+            "type": "object",
+            "required": [
+                "access_scope",
+                "connection_id",
+                "file_path",
+                "owner",
+                "repository"
+            ],
+            "properties": {
+                "access_scope": {
+                    "type": "string",
+                    "example": "public"
+                },
+                "connection_id": {
+                    "type": "string",
+                    "example": "conn_a1b2c3d4"
+                },
+                "file_path": {
+                    "type": "string",
+                    "example": "docs/backup-procedure.md"
+                },
+                "is_auto_update": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "owner": {
+                    "type": "string",
+                    "example": "myorg"
+                },
+                "repository": {
+                    "type": "string",
+                    "example": "myrepo"
+                }
+            }
+        },
         "opscore_backend_internal_document_interfaces_api_schema.UpdateDocumentMetadataRequest": {
             "type": "object",
             "properties": {
@@ -4750,23 +4884,6 @@
                 }
             }
         },
-        "opscore_backend_internal_git_repository_interfaces_api_schema.RegisterRepositoryRequest": {
-            "type": "object",
-            "required": [
-                "url"
-            ],
-            "properties": {
-                "accessToken": {
-                    "description": "Optional access token for private repositories",
-                    "type": "string",
-                    "example": "ghp_1234567890abcdefghijklmnopqrstuvwxyz"
-                },
-                "url": {
-                    "type": "string",
-                    "example": "https://github.com/user/repo.git"
-                }
-            }
-        },
         "opscore_backend_internal_git_repository_interfaces_api_schema.RepositoryResponse": {
             "type": "object",
             "properties": {
@@ -4789,18 +4906,6 @@
                 "url": {
                     "type": "string",
                     "example": "https://github.com/user/repo.git"
-                }
-            }
-        },
-        "opscore_backend_internal_git_repository_interfaces_api_schema.UpdateAccessTokenRequest": {
-            "type": "object",
-            "required": [
-                "accessToken"
-            ],
-            "properties": {
-                "accessToken": {
-                    "type": "string",
-                    "example": "ghp_1234567890abcdefghijklmnopqrstuvwxyz"
                 }
             }
         },

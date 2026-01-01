@@ -35,7 +35,7 @@ export function ThreePaneLayout({
     <div className={`flex h-full min-h-0 ${className}`}>
       {/* Left Pane */}
       <aside
-        className={`${leftWidth} flex-shrink-0 border-r border-gray-200 dark:border-gray-700 overflow-y-auto bg-white dark:bg-gray-800`}
+        className={`${leftWidth} shrink-0 border-r border-gray-200 dark:border-gray-700 overflow-y-auto bg-white dark:bg-gray-800`}
       >
         {leftPane}
       </aside>
@@ -47,7 +47,7 @@ export function ThreePaneLayout({
 
       {/* Right Pane */}
       <aside
-        className={`${rightWidth} flex-shrink-0 border-l border-gray-200 dark:border-gray-700 overflow-y-auto bg-white dark:bg-gray-800`}
+        className={`${rightWidth} shrink-0 border-l border-gray-200 dark:border-gray-700 overflow-y-auto bg-white dark:bg-gray-800`}
       >
         {rightPane}
       </aside>

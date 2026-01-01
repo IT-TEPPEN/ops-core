@@ -67,7 +67,7 @@ export function VariableInputPanel({
   }
 
   return (
-    <div className="w-80 flex-shrink-0">
+    <div className="w-80 shrink-0">
       <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow sticky top-20">
         <h2 className="text-lg font-semibold mb-4">Variables</h2>
         <div className="space-y-4">

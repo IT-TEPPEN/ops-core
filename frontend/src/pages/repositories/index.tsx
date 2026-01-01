@@ -1,8 +1,6 @@
 import { ProtectedRoute } from "@/features/common/components/ProtectedRoute";
 import { Route } from "react-router-dom";
-import { TypedParamsGuard } from "@/shared/components";
 import { RepositoryListPage } from "./RepositoryListPage";
-import { DocumentPreviewPage } from "./DocumentPreviewPage";
 import { RepositoryDetailPage } from "./RepositoryDetailPage";
 import { RepositoryIdGuard } from "./RepositoryGuard";
 
@@ -23,28 +21,6 @@ export function RepositoryRoutes() {
           element={
             <ProtectedRoute>
               <RepositoryIdGuard element={RepositoryDetailPage} />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="files/:filePath"
-          element={
-            <ProtectedRoute>
-              <TypedParamsGuard
-                element={DocumentPreviewPage}
-                pathParams={[
-                  {
-                    name: "repoId",
-                    required: true,
-                  },
-                  {
-                    name: "filePath",
-                    required: true,
-                  },
-                ]}
-                queryParams={undefined}
-                fallbackPath={"/repositories"}
-              />
             </ProtectedRoute>
           }
         />

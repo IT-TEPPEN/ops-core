@@ -1,5 +1,4 @@
-import { Connection } from "../dto/connection";
-import { Repository } from "../dto/repository";
+import { Content, Connection, Repository, Document } from "../dto";
 
 /**
  * OAuth Query Service interface for read operations (GET).
@@ -15,4 +14,23 @@ export interface OAuthQueryService {
    * List repositories for a specific OAuth connection.
    */
   listRepositories(connectionId: string): Promise<Repository[]>;
+
+  /**
+   * List Contents of a specific OAuth connection's repository.
+   */
+  listRepositoryContents(
+    connectionId: string,
+    repositoryFullName: string,
+    path?: string
+  ): Promise<Content[]>;
+
+  /**
+   * Get file content from a specific OAuth connection's repository.
+   */
+  getFileContent(
+    connectionId: string,
+    repositoryFullName: string,
+    filePath: string,
+    commitSha?: string
+  ): Promise<Document>;
 }

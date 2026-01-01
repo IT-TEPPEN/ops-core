@@ -256,6 +256,33 @@ definitions:
           $ref: '#/definitions/opscore_backend_internal_document_interfaces_api_schema.DocumentListItemResponse'
         type: array
     type: object
+  opscore_backend_internal_document_interfaces_api_schema.PublishDocumentRequest:
+    properties:
+      access_scope:
+        example: public
+        type: string
+      connection_id:
+        example: conn_a1b2c3d4
+        type: string
+      file_path:
+        example: docs/backup-procedure.md
+        type: string
+      is_auto_update:
+        example: true
+        type: boolean
+      owner:
+        example: myorg
+        type: string
+      repository:
+        example: myrepo
+        type: string
+    required:
+    - access_scope
+    - connection_id
+    - file_path
+    - owner
+    - repository
+    type: object
   opscore_backend_internal_document_interfaces_api_schema.UpdateDocumentMetadataRequest:
     properties:
       access_scope:
@@ -601,18 +628,6 @@ definitions:
           $ref: '#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.RepositoryResponse'
         type: array
     type: object
-  opscore_backend_internal_git_repository_interfaces_api_schema.RegisterRepositoryRequest:
-    properties:
-      accessToken:
-        description: Optional access token for private repositories
-        example: ghp_1234567890abcdefghijklmnopqrstuvwxyz
-        type: string
-      url:
-        example: https://github.com/user/repo.git
-        type: string
-    required:
-    - url
-    type: object
   opscore_backend_internal_git_repository_interfaces_api_schema.RepositoryResponse:
     properties:
       created_at:
@@ -630,14 +645,6 @@ definitions:
       url:
         example: https://github.com/user/repo.git
         type: string
-    type: object
-  opscore_backend_internal_git_repository_interfaces_api_schema.UpdateAccessTokenRequest:
-    properties:
-      accessToken:
-        example: ghp_1234567890abcdefghijklmnopqrstuvwxyz
-        type: string
-    required:
-    - accessToken
     type: object
   opscore_backend_internal_oauth_domain.OAuthCallbackRequest:
     properties:
@@ -1670,6 +1677,109 @@ paths:
       summary: List repositories by OAuth connection
       tags:
       - OAuth
+  /auth/oauth/connections/{connectionId}/repositories/{owner}/{repo}/contents:
+    get:
+      description: Get files and directories at a specific path via OAuth connection
+      parameters:
+      - description: OAuth connection ID
+        in: path
+        name: connectionId
+        required: true
+        type: string
+      - description: Repository owner
+        in: path
+        name: owner
+        required: true
+        type: string
+      - description: Repository name
+        in: path
+        name: repo
+        required: true
+        type: string
+      - description: Directory path (empty for root)
+        in: query
+        name: path
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get repository contents
+      tags:
+      - OAuth
+  /auth/oauth/connections/{connectionId}/repositories/{owner}/{repo}/files/{filePath}:
+    get:
+      description: Get the content of a specific file via OAuth connection
+      parameters:
+      - description: OAuth connection ID
+        in: path
+        name: connectionId
+        required: true
+        type: string
+      - description: Repository owner
+        in: path
+        name: owner
+        required: true
+        type: string
+      - description: Repository name
+        in: path
+        name: repo
+        required: true
+        type: string
+      - description: File path
+        in: path
+        name: filePath
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get file content
+      tags:
+      - OAuth
   /auth/oauth/connections/{provider}:
     delete:
       description: Remove an OAuth connection for the authenticated user
@@ -2118,6 +2228,43 @@ paths:
           schema:
             $ref: '#/definitions/opscore_backend_internal_document_interfaces_api_schema.ErrorResponse'
       summary: Rollback to a previous document version
+      tags:
+      - documents
+  /documents/publish:
+    post:
+      consumes:
+      - application/json
+      description: Publish a document by fetching it from a Git repository via OAuth
+        connection
+      parameters:
+      - description: Document publish information
+        in: body
+        name: document
+        required: true
+        schema:
+          $ref: '#/definitions/opscore_backend_internal_document_interfaces_api_schema.PublishDocumentRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Document published successfully
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_document_interfaces_api_schema.DocumentResponse'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_document_interfaces_api_schema.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_document_interfaces_api_schema.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/opscore_backend_internal_document_interfaces_api_schema.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Publish a document from an OAuth connection
       tags:
       - documents
   /execution-records:
@@ -2989,40 +3136,6 @@ paths:
       summary: List all repositories
       tags:
       - repositories
-    post:
-      consumes:
-      - application/json
-      description: Add a new repository to be managed by OpsCore by providing its
-        Git URL and optional access token.
-      parameters:
-      - description: Repository information
-        in: body
-        name: repository
-        required: true
-        schema:
-          $ref: '#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.RegisterRepositoryRequest'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Repository registered successfully
-          schema:
-            $ref: '#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.RepositoryResponse'
-        "400":
-          description: Invalid request body or URL format
-          schema:
-            $ref: '#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse'
-        "409":
-          description: Repository with this URL already exists
-          schema:
-            $ref: '#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse'
-      summary: Register a new repository
-      tags:
-      - repositories
   /repositories/{repoId}:
     get:
       description: Retrieves detailed information about a specific repository by ID
@@ -3219,47 +3332,6 @@ paths:
       security:
       - BearerAuth: []
       summary: Get file commit history
-      tags:
-      - repositories
-  /repositories/{repoId}/token:
-    put:
-      consumes:
-      - application/json
-      description: Updates the access token used for accessing a private repository
-      parameters:
-      - description: Repository ID
-        in: path
-        name: repoId
-        required: true
-        type: string
-      - description: Access token information
-        in: body
-        name: tokenInfo
-        required: true
-        schema:
-          $ref: '#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.UpdateAccessTokenRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Access token updated successfully
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "400":
-          description: Invalid request body or repository ID
-          schema:
-            $ref: '#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse'
-        "404":
-          description: Repository not found
-          schema:
-            $ref: '#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/opscore_backend_internal_git_repository_interfaces_api_schema.ErrorResponse'
-      summary: Update repository access token
       tags:
       - repositories
   /users:

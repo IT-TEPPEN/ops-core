@@ -421,3 +421,52 @@ func (h *DocumentHandler) UpdateDocumentMetadata(c *gin.Context) {
 	response := schema.FromDocumentDTO(*result)
 	c.JSON(http.StatusOK, response)
 }
+
+// PublishDocument godoc
+// @Summary Publish a document from an OAuth connection
+// @Description Publish a document by fetching it from a Git repository via OAuth connection
+// @Tags documents
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param document body schema.PublishDocumentRequest true "Document publish information"
+// @Success 201 {object} schema.DocumentResponse "Document published successfully"
+// @Failure 400 {object} schema.ErrorResponse "Invalid request body"
+// @Failure 401 {object} schema.ErrorResponse "Unauthorized"
+// @Failure 500 {object} schema.ErrorResponse "Internal server error"
+// @Router /documents/publish [post]
+func (h *DocumentHandler) PublishDocument(c *gin.Context) {
+	var req schema.PublishDocumentRequest
+	requestID := c.GetString("request_id")
+
+	// Get user ID from context (requires authentication middleware)
+	userID, exists := c.Get("user_id")
+	if !exists {
+		h.logger.Error("User ID not found in context", "request_id", requestID)
+		c.JSON(http.StatusUnauthorized, schema.ErrorResponse{Code: "UNAUTHORIZED", Message: "Authentication required"})
+		return
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		h.logger.Error("Invalid request body", "request_id", requestID, "error", err.Error())
+		c.JSON(http.StatusBadRequest, schema.ErrorResponse{Code: "INVALID_REQUEST", Message: "Invalid request format"})
+		return
+	}
+
+	// Convert schema to DTO
+	dtoReq := schema.ToPublishDocumentDTO(req)
+
+	h.logger.Info("Publishing document", "request_id", requestID, "user_id", userID, "connection_id", dtoReq.ConnectionID, "file_path", dtoReq.FilePath)
+	result, err := h.docUseCase.PublishDocument(c.Request.Context(), userID.(string), &dtoReq)
+
+	if err != nil {
+		httpErr := intererror.MapToHTTPError(err, requestID)
+		h.logger.Error("Failed to publish document", "request_id", requestID, "error", err.Error(), "http_code", httpErr.Code)
+		c.JSON(httpErr.StatusCode, schema.ErrorResponse{Code: httpErr.Code, Message: httpErr.Message, Details: httpErr.Details})
+		return
+	}
+
+	h.logger.Info("Document published successfully", "request_id", requestID, "doc_id", result.ID)
+	response := schema.FromDocumentDTO(*result)
+	c.JSON(http.StatusCreated, response)
+}

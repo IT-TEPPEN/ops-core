@@ -1,5 +1,5 @@
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { useRepositoryQueryService } from "@/features/repository";
+import { Link, useSearchParams } from "react-router-dom";
+// import { useRepositoryQueryService } from "@/features/repository";
 import { useQuery } from "@tanstack/react-query";
 import type {
   DocumentKnowledgeMeta,
@@ -12,9 +12,10 @@ import { FileCommitHistory } from "@/features/repository/presentation/components
 import { VariableForm } from "@/features/common/components";
 import { substituteVariables } from "@/shared/utils/variableSubstitution";
 import { documentVariableToDefinition } from "@/features/repository/utils/variableAdapter";
-import { useDocumentRegistration } from "@/features/document/hooks/useDocumentRegistration";
+// import { useDocumentRegistration } from "@/features/document/hooks/useDocumentRegistration";
 import { DocumentRegistrationDialog } from "@/features/document/components/DocumentRegistrationDialog";
-import { useNotifications } from "@/features/notification";
+// import { useNotifications } from "@/features/notification";
+import { useOAuthQueryService } from "@/features/oauth";
 
 interface ProcedureMetaComponentProps {
   meta: DocumentProcedureMeta;
@@ -101,12 +102,10 @@ function KnowledgeMetaComponent(props: { meta: DocumentKnowledgeMeta }) {
     </div>
   );
 }
-
-export const DocumentPreviewPage: Page<"repoId" | "filePath"> = ({
-  path: { repoId, filePath },
-}) => {
-  console.log("Rendering DocumentPreviewPage");
-
+export const DocumentPreviewPage: Page<
+  never,
+  "connection_id" | "repository_full_name" | "path"
+> = ({ query: { connection_id, repository_full_name, path } }) => {
   const [Component, setComponent] = useState<React.ReactElement | null>(null);
   const [variableValues, setVariableValues] = useState<
     Record<string, string | number | boolean>
@@ -114,15 +113,30 @@ export const DocumentPreviewPage: Page<"repoId" | "filePath"> = ({
   const [searchParams, setSearchParams] = useSearchParams();
   const commit = searchParams.get("commit") || undefined;
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const queryService = useRepositoryQueryService();
-  const navigate = useNavigate();
-  const { registerDocument, isLoading: isRegistering } =
-    useDocumentRegistration();
-  const { actions: notificationActions } = useNotifications();
+  const queryService = useOAuthQueryService();
+  // const navigate = useNavigate();
+  // const { registerDocument, isLoading: isRegistering } =
+  //   useDocumentRegistration();
+  // const { actions: notificationActions } = useNotifications();
 
   const query = useQuery({
-    queryKey: ["repositories", repoId, "files", filePath, commit],
-    queryFn: () => queryService.getFileContent(repoId!, filePath!, commit),
+    queryKey: [
+      "connections",
+      connection_id,
+      "repositories",
+      repository_full_name,
+      "files",
+      path,
+      "commits",
+      commit,
+    ],
+    queryFn: () =>
+      queryService.getFileContent(
+        connection_id!,
+        repository_full_name,
+        path,
+        commit
+      ),
   });
 
   const handleVariableChange = useCallback(
@@ -183,52 +197,52 @@ export const DocumentPreviewPage: Page<"repoId" | "filePath"> = ({
     }
   }, [query.data, query.isLoading, query.error, variableValues]);
 
-  const handleCommitSelect = (commitHash: string) => {
-    setSearchParams({ commit: commitHash });
-  };
+  // const handleCommitSelect = (commitHash: string) => {
+  //   setSearchParams({ commit: commitHash });
+  // };
 
-  const handleRegisterDocument = useCallback(
-    async (options: {
-      accessScope: "public" | "private";
-      isAutoUpdate: boolean;
-    }) => {
-      if (!query.data) return;
+  // const handleRegisterDocument = useCallback(
+  //   async (options: {
+  //     accessScope: "public" | "private";
+  //     isAutoUpdate: boolean;
+  //   }) => {
+  //     if (!query.data) return;
 
-      try {
-        const result = await registerDocument(
-          repoId,
-          filePath!,
-          options,
-          commit
-        );
-        notificationActions.push({
-          title: "Success",
-          message: "Document registered successfully",
-          type: "success",
-        });
-        setIsDialogOpen(false);
-        navigate(`/documents/${result.id}`);
-      } catch (error) {
-        notificationActions.push({
-          title: "Error",
-          message:
-            error instanceof Error
-              ? error.message
-              : "Failed to register document",
-          type: "error",
-        });
-      }
-    },
-    [
-      registerDocument,
-      navigate,
-      notificationActions,
-      query.data,
-      commit,
-      repoId,
-      filePath,
-    ]
-  );
+  //     try {
+  //       const result = await registerDocument(
+  //         repoId,
+  //         filePath!,
+  //         options,
+  //         commit
+  //       );
+  //       notificationActions.push({
+  //         title: "Success",
+  //         message: "Document registered successfully",
+  //         type: "success",
+  //       });
+  //       setIsDialogOpen(false);
+  //       navigate(`/documents/${result.id}`);
+  //     } catch (error) {
+  //       notificationActions.push({
+  //         title: "Error",
+  //         message:
+  //           error instanceof Error
+  //             ? error.message
+  //             : "Failed to register document",
+  //         type: "error",
+  //       });
+  //     }
+  //   },
+  //   [
+  //     registerDocument,
+  //     navigate,
+  //     notificationActions,
+  //     query.data,
+  //     commit,
+  //     repoId,
+  //     filePath,
+  //   ]
+  // );
 
   if (query.isLoading) {
     return (
@@ -280,12 +294,6 @@ export const DocumentPreviewPage: Page<"repoId" | "filePath"> = ({
           >
             Register as Document
           </button>
-          <Link
-            to={`/repositories/${repoId}`}
-            className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
-          >
-            Back to Repository
-          </Link>
         </div>
       </div>
 
@@ -306,12 +314,12 @@ export const DocumentPreviewPage: Page<"repoId" | "filePath"> = ({
           </div>
 
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4">
-            <FileCommitHistory
+            {/* <FileCommitHistory
               repoId={repoId!}
               filePath={filePath!}
               currentCommit={query.data?.commitHash}
               onCommitSelect={handleCommitSelect}
-            />
+            /> */}
           </div>
         </div>
 
@@ -320,12 +328,12 @@ export const DocumentPreviewPage: Page<"repoId" | "filePath"> = ({
         </div>
       </div>
 
-      <DocumentRegistrationDialog
+      {/* <DocumentRegistrationDialog
         isOpen={isDialogOpen}
         onClose={() => setIsDialogOpen(false)}
         onConfirm={handleRegisterDocument}
         isLoading={isRegistering}
-      />
+      /> */}
     </div>
   );
 };

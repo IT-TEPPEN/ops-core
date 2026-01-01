@@ -8,6 +8,8 @@ import { DocumentVersionHistoryPage } from "./DocumentVersionHistoryPage";
 import { DocumentViewPage } from "./DocumentViewPage";
 import { ProtectedRoute } from "@/features/common/components/ProtectedRoute";
 import ExecutionRecordPage from "../ExecutionRecordPage";
+import { TypedParamsGuard } from "@/shared/components";
+import { DocumentPreviewPage } from "./DocumentPreviewPage";
 
 export function DocumentRoutes() {
   return (
@@ -25,6 +27,32 @@ export function DocumentRoutes() {
         element={
           <ProtectedRoute>
             <DocumentPublishPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="preview/"
+        element={
+          <ProtectedRoute>
+            <TypedParamsGuard
+              element={DocumentPreviewPage}
+              pathParams={undefined}
+              queryParams={[
+                {
+                  name: "connection_id",
+                  required: true,
+                },
+                {
+                  name: "repository_full_name",
+                  required: true,
+                },
+                {
+                  name: "path",
+                  required: true,
+                },
+              ]}
+              fallbackPath={"/repositories"}
+            />
           </ProtectedRoute>
         }
       />

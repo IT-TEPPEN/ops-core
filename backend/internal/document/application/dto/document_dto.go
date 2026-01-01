@@ -12,6 +12,17 @@ type CreateDocumentRequest struct {
 	IsAutoUpdate bool
 }
 
+// PublishDocumentRequest represents the use case request for publishing a document via OAuth connection
+// Repository information is auto-extracted and created if needed
+type PublishDocumentRequest struct {
+	ConnectionID string
+	Owner        string
+	Repository   string
+	FilePath     string
+	AccessScope  string // "public" or "private"
+	IsAutoUpdate bool
+}
+
 // UpdateDocumentRequest represents the use case request for updating a document
 // Frontmatter fields (Title, DocType, Tags, Variables, Content) are extracted from the file
 type UpdateDocumentRequest struct {

@@ -16,26 +16,10 @@ export function Header() {
             </li>
             <li>
               <Link
-                to="/repositories"
-                className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 px-3 py-2 rounded-md text-sm font-medium transition duration-150 ease-in-out"
-              >
-                Repositories
-              </Link>
-            </li>
-            <li>
-              <Link
                 to="/documents"
                 className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 px-3 py-2 rounded-md text-sm font-medium transition duration-150 ease-in-out"
               >
                 Documents
-              </Link>
-            </li>
-            <li>
-              <Link
-                to="/blog"
-                className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 px-3 py-2 rounded-md text-sm font-medium transition duration-150 ease-in-out"
-              >
-                Documentation
               </Link>
             </li>
             <li>

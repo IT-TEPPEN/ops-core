@@ -130,6 +130,8 @@ func main() {
 			authProtected.POST("/oauth/connect", oauthHandler.HandleCallbackWithSave)
 			authProtected.GET("/oauth/connections", oauthHandler.ListConnections)
 			authProtected.GET("/oauth/connections/:connectionId/repositories", oauthHandler.ListRepositoriesByConnection)
+			authProtected.GET("/oauth/connections/:connectionId/repositories/:owner/:repo/contents", oauthHandler.GetRepositoryContents)
+			authProtected.GET("/oauth/connections/:connectionId/repositories/:owner/:repo/files/*filePath", oauthHandler.GetRepositoryFileContent)
 			authProtected.DELETE("/oauth/connections/:provider", oauthHandler.DisconnectProvider)
 		}
 
@@ -154,16 +156,23 @@ func main() {
 			repoFiles.GET("/:repoId/files/history", repoHandler.GetFileHistory)
 		}
 
-		// Document routes
-		v1.POST("/documents", docHandler.CreateDocument)
+		// Document routes - public routes
 		v1.GET("/documents", docHandler.ListDocuments)
 		v1.GET("/documents/:docId", docHandler.GetDocument)
-		v1.PUT("/documents/:docId", docHandler.UpdateDocument)
-		v1.PATCH("/documents/:docId/metadata", docHandler.UpdateDocumentMetadata)
-		v1.GET("/documents/:docId/versions", docHandler.GetDocumentVersions)
-		v1.GET("/documents/:docId/versions/:version", docHandler.GetDocumentVersion)
-		v1.POST("/documents/:docId/versions/:version/publish", docHandler.PublishDocumentVersion)
-		v1.POST("/documents/:docId/versions/:version/rollback", docHandler.RollbackDocumentVersion)
+
+		// Document routes - protected routes (require authentication)
+		documentsProtected := v1.Group("/documents")
+		documentsProtected.Use(authMiddleware)
+		{
+			documentsProtected.POST("", docHandler.CreateDocument)
+			documentsProtected.POST("/publish", docHandler.PublishDocument)
+			documentsProtected.PUT("/:docId", docHandler.UpdateDocument)
+			documentsProtected.PATCH("/:docId/metadata", docHandler.UpdateDocumentMetadata)
+			documentsProtected.GET("/:docId/versions", docHandler.GetDocumentVersions)
+			documentsProtected.GET("/:docId/versions/:version", docHandler.GetDocumentVersion)
+			documentsProtected.POST("/:docId/versions/:version/publish", docHandler.PublishDocumentVersion)
+			documentsProtected.POST("/:docId/versions/:version/rollback", docHandler.RollbackDocumentVersion)
+		}
 
 		// Variable routes
 		v1.GET("/documents/:docId/variables", varHandler.GetVariableDefinitions)
