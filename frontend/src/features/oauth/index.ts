@@ -19,6 +19,3 @@ export {
   OAuthConnection,
   ConnectionList,
 } from "./presentation";
-
-// Hooks
-export { useGitProvider } from "./hooks";

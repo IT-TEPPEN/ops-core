@@ -16,8 +16,6 @@ export function ConnectionList() {
 
   const selected_connection_id = searchParams.get("selected_connection_id");
 
-  console.log("ConnectionList render", { selected_connection_id });
-
   if (query.isLoading) {
     return <div className="text-sm text-gray-500">Loading connections...</div>;
   }

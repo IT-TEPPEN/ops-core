@@ -1,11 +1,11 @@
-import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   OAuthConnection,
   ConnectionList,
-  useGitProvider,
+  useOAuthQueryService,
 } from "@/features/oauth";
 import {
   RepositorySelector,
@@ -17,8 +17,7 @@ import {
   type RepositoryFormData,
 } from "@/features/repository/types/repositoryForm";
 import { GitProvider, GitRepository } from "@/shared/api/gitProviderApi";
-import { Alert } from "@/ui";
-import { Connection } from "@/features/oauth/application/dto";
+import { useQuery } from "@tanstack/react-query";
 
 /**
  * リポジトリ新規登録ページ
@@ -26,25 +25,19 @@ import { Connection } from "@/features/oauth/application/dto";
  */
 export function RepositoryCreatePage() {
   const navigate = useNavigate();
-  const previousConnectionCountRef = useRef(0);
-
-  // ページレベルの状態管理
-  const [mode, setMode] = useState<"add" | "select">("select");
-  const [selectedConnection, setSelectedConnection] =
-    useState<Connection | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const selected_connection_id = searchParams.get("selected_connection_id");
+  const mode = selected_connection_id ? "select" : "add";
+  const oauthQueryService = useOAuthQueryService();
+  const query = useQuery({
+    queryKey: ["connections"],
+    queryFn: async () => oauthQueryService.listConnections(),
+  });
   const [selectedRepository, setSelectedRepository] =
     useState<GitRepository | null>(null);
 
   // 各コンポーネントが自分で必要なロジックを呼び出す
-  const { connections, error: gitProviderError } = useGitProvider();
   const { isAuthenticating, handleOAuthConnect } = useRepositoryRegistration();
-
-  // コネクション追加モードに切り替え
-  const handleAddConnection = () => {
-    setMode("add");
-    setSelectedConnection(null);
-    setSelectedRepository(null);
-  };
 
   // フォーム管理
   const {
@@ -54,6 +47,34 @@ export function RepositoryCreatePage() {
   } = useForm<RepositoryFormData>({
     resolver: zodResolver(repositoryFormSchema),
   });
+
+  if (query.isLoading) {
+    return <div className="text-sm text-gray-500">Loading connections...</div>;
+  }
+
+  if (query.isError || !query.data) {
+    return (
+      <div className="text-sm text-red-500">
+        Failed to load connections. Please try again.
+      </div>
+    );
+  }
+
+  const connections = query.data;
+  const selectedConnection =
+    connections.find(
+      (conn, i) =>
+        conn.id === selected_connection_id ||
+        (selected_connection_id === "first" && i === 0)
+    ) || null;
+
+  // コネクション追加モードに切り替え
+  const handleAddConnection = () => {
+    setSearchParams((searchParams) => {
+      searchParams.delete("selected_connection_id");
+      return searchParams;
+    });
+  };
 
   const gitlabUrl = watch("gitlabUrl");
   const gitlabClientId = watch("gitlabClientId");
@@ -68,7 +89,10 @@ export function RepositoryCreatePage() {
     }
   ) => {
     handleOAuthConnect(provider, selfHostedParams);
-    setSelectedConnection(null); // コネクション選択をリセット
+    setSearchParams((searchParams) => {
+      searchParams.set("selected_connection_id", "first");
+      return searchParams;
+    });
   };
 
   const handleCancel = () => {
@@ -79,34 +103,9 @@ export function RepositoryCreatePage() {
     navigate("/repositories");
   };
 
-  // 初回ロード時にコネクションがある場合は最初のものを選択
-  useEffect(() => {
-    if (connections.length > 0 && !selectedConnection && mode === "select") {
-      setSelectedConnection(connections[0]);
-    }
-  }, [connections, selectedConnection, mode]);
-
-  // コネクション数が増えたら（新規追加された可能性）selectモードに戻る
-  useEffect(() => {
-    if (
-      mode === "add" &&
-      connections.length > previousConnectionCountRef.current &&
-      connections.length > 0
-    ) {
-      // 新しく追加されたコネクションを選択
-      const newConnection = connections[connections.length - 1];
-      setSelectedConnection(newConnection);
-      setMode("select");
-    }
-    previousConnectionCountRef.current = connections.length;
-  }, [connections, mode]);
-
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Register New Repository</h1>
-
-      {/* エラー表示 */}
-      {gitProviderError && <Alert type="error">{gitProviderError}</Alert>}
 
       <div className="grid grid-cols-12 gap-6">
         {/* 左ペイン: コネクション一覧 */}
@@ -143,7 +142,10 @@ export function RepositoryCreatePage() {
                 gitlabClientSecret={gitlabClientSecret}
                 onChangeSelectedProvider={() => {
                   // プロバイダー変更時、選択されたコネクションをリセット
-                  setSelectedConnection(null);
+                  setSearchParams((searchParams) => {
+                    searchParams.set("selected_connection_id", "first");
+                    return searchParams;
+                  });
                 }}
               />
             </>
@@ -162,7 +164,6 @@ export function RepositoryCreatePage() {
                 <>
                   {/* Step 2: リポジトリ選択 */}
                   <RepositorySelector
-                    provider={selectedConnection.provider as GitProvider}
                     onSelect={setSelectedRepository}
                     selectedRepository={selectedRepository}
                     selectedConnection={selectedConnection}

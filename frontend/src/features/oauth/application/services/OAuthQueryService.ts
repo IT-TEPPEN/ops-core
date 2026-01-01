@@ -1,5 +1,5 @@
-import type { GitRepository } from "../../types";
 import { Connection } from "../dto/connection";
+import { Repository } from "../dto/repository";
 
 /**
  * OAuth Query Service interface for read operations (GET).
@@ -14,5 +14,5 @@ export interface OAuthQueryService {
   /**
    * List repositories for a specific OAuth connection.
    */
-  listRepositories(connectionId: string): Promise<GitRepository[]>;
+  listRepositories(connectionId: string): Promise<Repository[]>;
 }

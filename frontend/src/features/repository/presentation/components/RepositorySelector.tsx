@@ -1,49 +1,33 @@
-import { useState, useEffect } from "react";
-import { GitRepository, GitProvider } from "@/shared/api/gitProviderApi";
+import { useState } from "react";
+import { GitRepository } from "@/shared/api/gitProviderApi";
 import { SpinnerIcon, CheckCircleFilledIcon } from "@/ui";
-import { useGitProvider } from "@/features/oauth";
+import { useOAuthQueryService } from "@/features/oauth";
 import { Connection } from "@/features/oauth/application/dto";
+import { useQuery } from "@tanstack/react-query";
 
 interface RepositorySelectorProps {
-  provider: GitProvider;
   onSelect: (repository: GitRepository) => void;
   selectedRepository?: GitRepository | null;
-  selectedConnection?: Connection | null;
+  selectedConnection: Connection;
 }
 
 /**
  * GitHubなどから取得したリポジトリ一覧から選択するコンポーネント
  */
 export function RepositorySelector({
-  provider,
   onSelect,
   selectedRepository,
   selectedConnection,
 }: RepositorySelectorProps) {
+  const oauthQueryService = useOAuthQueryService();
   const [searchQuery, setSearchQuery] = useState("");
-  const { repositories, isLoadingRepositories, isConnected, loadRepositories } =
-    useGitProvider();
-  const connected = isConnected(provider);
+  const query = useQuery({
+    queryKey: ["repositories", selectedConnection.id],
+    queryFn: async () =>
+      oauthQueryService.listRepositories(selectedConnection.id),
+  });
 
-  useEffect(() => {
-    if (connected) {
-      loadRepositories(provider);
-    }
-  }, [provider, connected, loadRepositories]);
-
-  if (!connected) {
-    return null;
-  }
-
-  const filteredRepositories = repositories.filter(
-    (repo) =>
-      repo.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      repo.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (repo.description &&
-        repo.description.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
-
-  if (isLoadingRepositories) {
+  if (query.isLoading) {
     return (
       <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
         <h3 className="text-lg font-semibold mb-4">Select Repository</h3>
@@ -57,6 +41,27 @@ export function RepositorySelector({
     );
   }
 
+  if (query.isError || !query.data) {
+    return (
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
+        <h3 className="text-lg font-semibold mb-4">Select Repository</h3>
+        <div className="text-sm text-red-500">
+          Failed to load repositories. Please try again.
+        </div>
+      </div>
+    );
+  }
+
+  const repositories = query.data;
+  console.log("RepositorySelector render", { repositories, searchQuery }); // --- IGNORE ---
+  const filteredRepositories = repositories.filter(
+    (repo) =>
+      repo.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      repo.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (repo.description &&
+        repo.description.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
+
   return (
     <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
       <div className="mb-4">
@@ -67,7 +72,7 @@ export function RepositorySelector({
             <span className="font-medium text-gray-900 dark:text-gray-100">
               @{selectedConnection.providerUsername}
             </span>{" "}
-            on {provider}
+            on {selectedConnection.provider}
           </p>
         )}
       </div>
