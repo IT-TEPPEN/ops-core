@@ -8,28 +8,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestToRegisterRepositoryDTO(t *testing.T) {
-	req := RegisterRepositoryRequest{
-		URL:         "https://github.com/test/repo.git",
-		AccessToken: "test-token",
-	}
-
-	dtoReq := ToRegisterRepositoryDTO(req)
-
-	assert.Equal(t, req.URL, dtoReq.URL)
-	assert.Equal(t, req.AccessToken, dtoReq.AccessToken)
-}
-
-func TestToUpdateAccessTokenDTO(t *testing.T) {
-	req := UpdateAccessTokenRequest{
-		AccessToken: "new-token",
-	}
-
-	dtoReq := ToUpdateAccessTokenDTO(req)
-
-	assert.Equal(t, req.AccessToken, dtoReq.AccessToken)
-}
-
 func TestFromRepositoryDTO(t *testing.T) {
 	now := time.Now()
 	dtoResp := dto.RepositoryResponse{

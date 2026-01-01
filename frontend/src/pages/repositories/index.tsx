@@ -3,7 +3,6 @@ import { Route } from "react-router-dom";
 import { TypedParamsGuard } from "@/shared/components";
 import { RepositoryListPage } from "./RepositoryListPage";
 import { DocumentPreviewPage } from "./DocumentPreviewPage";
-import { RepositoryCreatePage } from "./RepositoryCreatePage";
 import { RepositoryDetailPage } from "./RepositoryDetailPage";
 import { RepositoryIdGuard } from "./RepositoryGuard";
 
@@ -15,14 +14,6 @@ export function RepositoryRoutes() {
         element={
           <ProtectedRoute>
             <RepositoryListPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="new"
-        element={
-          <ProtectedRoute>
-            <RepositoryCreatePage />
           </ProtectedRoute>
         }
       />

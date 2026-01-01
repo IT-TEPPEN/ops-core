@@ -4,21 +4,6 @@ import (
 	"opscore/backend/internal/git_repository/application/dto"
 )
 
-// ToRegisterRepositoryDTO converts API schema to application DTO
-func ToRegisterRepositoryDTO(req RegisterRepositoryRequest) dto.RegisterRepositoryRequest {
-	return dto.RegisterRepositoryRequest{
-		URL:         req.URL,
-		AccessToken: req.AccessToken,
-	}
-}
-
-// ToUpdateAccessTokenDTO converts API schema to application DTO
-func ToUpdateAccessTokenDTO(req UpdateAccessTokenRequest) dto.UpdateAccessTokenRequest {
-	return dto.UpdateAccessTokenRequest{
-		AccessToken: req.AccessToken,
-	}
-}
-
 // FromRepositoryDTO converts application DTO to API schema
 func FromRepositoryDTO(dtoResp dto.RepositoryResponse) RepositoryResponse {
 	return RepositoryResponse{

@@ -8,12 +8,9 @@
 export {
   RepositoryList,
   FileList,
-  RepositoryRegistrationForm,
   RepositorySelector,
-  RepositoryConfirmation,
   useRepositoryList,
   useRepositoryDetail,
-  useRepositoryRegistration,
   useRepositoryQueryService,
   useRepositoryCommandService,
   RepositoryQueryServiceProvider,
@@ -30,8 +27,3 @@ export type {
 
 // Type exports from existing types
 export type { DocumentMeta, DocumentVariable } from "./types/repository";
-export type { RepositoryFormData } from "./types/repositoryForm";
-export {
-  repositoryFormSchema,
-  getProviderDisplayName,
-} from "./types/repositoryForm";

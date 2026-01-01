@@ -4,15 +4,12 @@ export {
   useRepositoryCommandService,
   useRepositoryList,
   useRepositoryDetail,
-  useRepositoryRegistration,
 } from "./hooks";
 
 export {
   RepositoryList,
   FileList,
-  RepositoryRegistrationForm,
   RepositorySelector,
-  RepositoryConfirmation,
 } from "./components";
 
 export {

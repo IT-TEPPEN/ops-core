@@ -141,10 +141,8 @@ func main() {
 		}
 
 		// Repository routes - public routes
-		v1.POST("/repositories", repoHandler.RegisterRepository)
 		v1.GET("/repositories", repoHandler.ListRepositories)
 		v1.GET("/repositories/:repoId", repoHandler.GetRepository)
-		v1.PUT("/repositories/:repoId/token", repoHandler.UpdateAccessToken)
 
 		// Repository file routes - require authentication (uses OAuth token)
 		repoFiles := v1.Group("/repositories")
