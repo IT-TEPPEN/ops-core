@@ -1,4 +1,4 @@
-import { Link, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 // import { useRepositoryQueryService } from "@/features/repository";
 import { useQuery } from "@tanstack/react-query";
 import type {
@@ -125,9 +125,9 @@ export const DocumentPreviewPage: Page<
   const [variableValues, setVariableValues] = useState<
     Record<string, string | number | boolean>
   >({});
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const commit = searchParams.get("commit") || undefined;
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [_, setIsDialogOpen] = useState(false);
   const queryService = useOAuthQueryService();
   // const navigate = useNavigate();
   // const { registerDocument, isLoading: isRegistering } =

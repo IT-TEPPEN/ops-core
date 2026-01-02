@@ -12,7 +12,6 @@ export * from "./authApi";
 export * from "./userApiClient";
 export * from "./groupApiClient";
 export * from "./executionRecordApiClient";
-export * from "./gitProviderApi";
 
 // Re-export instance methods as standalone functions for backwards compatibility
 import { userApi } from "./userApiClient";

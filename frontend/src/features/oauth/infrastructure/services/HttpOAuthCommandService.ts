@@ -13,7 +13,7 @@ export class HttpOAuthCommandService
   constructor() {
     super("");
   }
-  initiateOAuthFlow(provider: string, redirectUri: string): Promise<string> {
+  initiateOAuthFlow(_provider: string, _redirectUri: string): Promise<string> {
     throw new Error("Method not implemented.");
   }
 }

@@ -4,10 +4,8 @@
  */
 
 // Display components
-export * from "./Badge";
 export * from "./Card";
 export * from "./Tag";
-export * from "./StatusIndicator";
 export * from "./LoadingSpinner";
 export * from "./Alert";
 export * from "./Button";
@@ -24,17 +22,6 @@ export {
   MicrosoftIcon,
 } from "./Icon";
 export type { IconProps } from "./Icon";
-
-// Form components
-export * from "./TextInput";
-export * from "./SelectInput";
-export * from "./NumberInput";
-export * from "./DateInput";
-export * from "./CheckboxInput";
-
-// Layout components
-export * from "./Breadcrumb";
-export * from "./PageHeader";
 
 // Form sub-components
 export * from "./form";
