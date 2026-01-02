@@ -51,12 +51,3 @@ export interface DocumentKnowledgeMeta {
   type: "knowledge";
   tags: string[];
 }
-
-export type DocumentMeta = DocumentProcedureMeta | DocumentKnowledgeMeta;
-
-export interface Document {
-  getRepoId(): string;
-  getFilePath(): string;
-  getMeta(): DocumentMeta;
-  getContent(): string;
-}

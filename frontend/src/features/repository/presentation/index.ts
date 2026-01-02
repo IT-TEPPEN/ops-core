@@ -4,8 +4,6 @@ export {
   useRepositoryCommandService,
 } from "./hooks";
 
-export { RepositorySelector } from "./components";
-
 export {
   RepositoryQueryServiceProvider,
   RepositoryCommandServiceProvider,

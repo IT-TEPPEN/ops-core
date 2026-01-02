@@ -1,7 +1,6 @@
 import type {
   RepositoryViewData,
   FileNodeViewData,
-  DocumentContentViewData,
   FileCommitViewData,
   PagedResponse,
 } from "../dto";
@@ -25,16 +24,6 @@ export interface RepositoryQueryService {
    * List files in a repository.
    */
   listFiles(repoId: string): Promise<FileNodeViewData[]>;
-
-  /**
-   * Get file content from a repository.
-   * Optionally specify a commit hash to retrieve a specific version.
-   */
-  getFileContent(
-    repoId: string,
-    filePath: string,
-    commit?: string
-  ): Promise<DocumentContentViewData>;
 
   /**
    * Get file commit history for a specific file.

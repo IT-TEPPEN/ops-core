@@ -1,13 +1,10 @@
-import matter from "gray-matter";
 import type {
   RepositoryQueryService,
   RepositoryViewData,
   FileNodeViewData,
-  DocumentContentViewData,
   FileCommitViewData,
   PagedResponse,
 } from "../../application";
-import { DocumentMeta } from "../../types/repository";
 import { V1ApiClient } from "@/shared/api/client";
 import type {
   ApiListRepositoriesResponse,
@@ -66,34 +63,6 @@ export class HttpRepositoryQueryService
   async listFiles(repoId: string): Promise<FileNodeViewData[]> {
     const response = await this.get<ApiListFilesResponse>(`/${repoId}/files`);
     return response.files;
-  }
-
-  async getFileContent(
-    repoId: string,
-    filePath: string,
-    commit?: string
-  ): Promise<DocumentContentViewData> {
-    const params = new URLSearchParams({
-      path: filePath,
-    });
-
-    if (commit) {
-      params.append("commit", commit);
-    }
-
-    const response = await this.get<ApiFileContentResponse>(
-      `/${repoId}/files/content?${params.toString()}`
-    );
-
-    const { content, data: meta } = matter(response.content);
-
-    return {
-      repoId: response.repoId,
-      filePath: response.filePath,
-      content,
-      meta: meta as DocumentMeta,
-      commitHash: response.commit_hash,
-    };
   }
 
   async getFileHistory(

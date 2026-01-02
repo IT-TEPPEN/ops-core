@@ -4,18 +4,33 @@ import { useQuery } from "@tanstack/react-query";
 import type {
   DocumentKnowledgeMeta,
   DocumentProcedureMeta,
+  DocumentVariable,
+  // DocumentVariable,
 } from "@/features/repository/types";
 import { Page } from "@/shared/types/Page";
 import { useEffect, useState, useCallback } from "react";
 import { MarkdownProcessor } from "@/features/markdown/processor";
-import { FileCommitHistory } from "@/features/repository/presentation/components/FileCommitHistory";
+// import { FileCommitHistory } from "@/features/repository/presentation/components/FileCommitHistory";
 import { VariableForm } from "@/features/common/components";
 import { substituteVariables } from "@/shared/utils/variableSubstitution";
-import { documentVariableToDefinition } from "@/features/repository/utils/variableAdapter";
 // import { useDocumentRegistration } from "@/features/document/hooks/useDocumentRegistration";
-import { DocumentRegistrationDialog } from "@/features/document/components/DocumentRegistrationDialog";
+// import { DocumentRegistrationDialog } from "@/features/document/components/DocumentRegistrationDialog";
 // import { useNotifications } from "@/features/notification";
 import { useOAuthQueryService } from "@/features/oauth";
+import type { VariableDefinition } from "@/shared/types/domain";
+
+function documentVariableToDefinition(
+  docVar: DocumentVariable
+): VariableDefinition {
+  return {
+    name: docVar.name,
+    label: docVar.label,
+    description: docVar.description ?? undefined,
+    type: docVar.type,
+    required: docVar.required,
+    default_value: docVar.defaultValue ?? undefined,
+  };
+}
 
 interface ProcedureMetaComponentProps {
   meta: DocumentProcedureMeta;

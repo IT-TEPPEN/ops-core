@@ -3,10 +3,9 @@ import type {
   RepositoryViewData,
   CreateRepositoryRequest,
   UpdateRepositoryRequest,
-  UpdateTokenResult,
 } from "../../application";
 import { V1ApiClient } from "@/shared/api/client";
-import type { ApiRepositoryResponse, ApiUpdateTokenResponse } from "../types";
+import type { ApiRepositoryResponse } from "../types";
 
 /**
  * HTTP implementation of RepositoryCommandService.
@@ -39,20 +38,6 @@ export class HttpRepositoryCommandService
 
   async remove(repoId: string): Promise<void> {
     await super.delete<void>(`/${repoId}`);
-  }
-
-  async updateAccessToken(
-    repoId: string,
-    accessToken: string
-  ): Promise<UpdateTokenResult> {
-    const response = await this.put<ApiUpdateTokenResponse>(
-      `/${repoId}/token`,
-      { accessToken }
-    );
-    return {
-      message: response.message,
-      repoId: response.repoId,
-    };
   }
 
   /**

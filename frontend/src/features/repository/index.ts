@@ -6,7 +6,6 @@
 
 // Presentation layer exports (components and hooks)
 export {
-  RepositorySelector,
   useRepositoryQueryService,
   useRepositoryCommandService,
   RepositoryQueryServiceProvider,
@@ -17,9 +16,8 @@ export {
 export type {
   RepositoryViewData,
   FileNodeViewData,
-  DocumentContentViewData,
   PagedResponse,
 } from "./application";
 
 // Type exports from existing types
-export type { DocumentMeta, DocumentVariable } from "./types/repository";
+export type { DocumentVariable } from "./types/repository";

@@ -44,8 +44,3 @@ export interface ApiFileHistoryResponse {
   file_path: string;
   commits: ApiFileCommitInfo[];
 }
-
-export interface ApiUpdateTokenResponse {
-  message: string;
-  repoId: string;
-}

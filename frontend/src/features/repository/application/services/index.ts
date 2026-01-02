@@ -3,5 +3,4 @@ export type {
   RepositoryCommandService,
   CreateRepositoryRequest,
   UpdateRepositoryRequest,
-  UpdateTokenResult,
 } from "./RepositoryCommandService";

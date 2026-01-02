@@ -22,14 +22,6 @@ export interface RepositoryCommandService {
    * Remove a repository.
    */
   remove(repoId: string): Promise<void>;
-
-  /**
-   * Update repository access token.
-   */
-  updateAccessToken(
-    repoId: string,
-    accessToken: string
-  ): Promise<UpdateTokenResult>;
 }
 
 export interface CreateRepositoryRequest {
@@ -42,9 +34,4 @@ export interface CreateRepositoryRequest {
 export interface UpdateRepositoryRequest {
   name?: string;
   url?: string;
-}
-
-export interface UpdateTokenResult {
-  message: string;
-  repoId: string;
 }
