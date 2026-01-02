@@ -1,4 +1,1 @@
-export {
-  HttpRepositoryQueryService,
-  HttpRepositoryCommandService,
-} from "./services";
+export { HttpRepositoryQueryService } from "./services";

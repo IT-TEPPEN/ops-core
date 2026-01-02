@@ -10,8 +10,5 @@ export {
   RepositoryQueryServiceProvider,
 } from "./presentation";
 
-// Application layer exports (ViewData types for external usage)
-export type { RepositoryViewData } from "./application";
-
 // Type exports from existing types
 export type { DocumentVariable } from "./types/repository";
