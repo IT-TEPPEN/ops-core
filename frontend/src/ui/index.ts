@@ -5,7 +5,6 @@
 
 // Display components
 export * from "./Card";
-export * from "./Tag";
 export * from "./LoadingSpinner";
 export * from "./Alert";
 export * from "./Button";
