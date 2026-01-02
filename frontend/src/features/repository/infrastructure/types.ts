@@ -12,15 +12,6 @@ export interface ApiRepositoryResponse {
   updated_at: string;
 }
 
-export interface ApiListRepositoriesResponse {
-  repositories: ApiRepositoryResponse[];
-}
-
-export interface ApiFileNodeResponse {
-  path: string;
-  type: "file" | "dir";
-}
-
 export interface ApiFileCommitInfo {
   commit_hash: string;
   message: string;

@@ -5,8 +5,4 @@ export type {
   UpdateRepositoryRequest,
 } from "./services";
 
-export type {
-  RepositoryViewData,
-  FileCommitViewData,
-  PagedResponse,
-} from "./dto";
+export type { RepositoryViewData, FileCommitViewData } from "./dto";

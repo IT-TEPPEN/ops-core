@@ -13,7 +13,7 @@ export {
 } from "./presentation";
 
 // Application layer exports (ViewData types for external usage)
-export type { RepositoryViewData, PagedResponse } from "./application";
+export type { RepositoryViewData } from "./application";
 
 // Type exports from existing types
 export type { DocumentVariable } from "./types/repository";
