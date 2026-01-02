@@ -1,8 +1,8 @@
 import React from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useGroupDetail } from "../features/group/hooks/useGroupDetail";
-import { GroupInfoCard } from "../features/group/components/GroupInfoCard";
-import { MembersPanel } from "../features/group/components/MembersPanel";
+import { useGroupDetail } from "@/features/group/hooks/useGroupDetail";
+import { GroupInfoCard } from "@/features/group/components/GroupInfoCard";
+import { MembersPanel } from "@/features/group/components/MembersPanel";
 
 const GroupDetailPage: React.FC = () => {
   const { groupId } = useParams<{ groupId: string }>();

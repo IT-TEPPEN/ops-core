@@ -6,11 +6,7 @@
 
 // Presentation layer exports (components and hooks)
 export {
-  RepositoryList,
-  FileList,
   RepositorySelector,
-  useRepositoryList,
-  useRepositoryDetail,
   useRepositoryQueryService,
   useRepositoryCommandService,
   RepositoryQueryServiceProvider,

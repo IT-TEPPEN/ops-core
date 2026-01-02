@@ -9,7 +9,6 @@ import { DiProviders } from "./providers";
 import { NotificationCard } from "../features/notification";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ProtectedRoute } from "../features/common/components/ProtectedRoute";
-import { RepositoryRoutes } from "@/pages/repositories";
 import { MarkdownTestEditor } from "@/features/markdown";
 import { OAuthRoutes } from "@/pages/oauth";
 import { GroupRoutes } from "@/pages/groups";
@@ -50,7 +49,6 @@ function App() {
                 }
               />
               {OAuthRoutes()}
-              {RepositoryRoutes()}
               {DocumentRoutes()}
               {GroupRoutes()}
             </Routes>
