@@ -2,10 +2,7 @@ import React from "react";
 import { TanstackClientProvider } from "./TanstackClientProvider";
 import { AuthApiProvider } from "./AuthApiProvider";
 import { NotificationsProvider } from "@/features/notification";
-import {
-  RepositoryQueryServiceProvider,
-  RepositoryCommandServiceProvider,
-} from "@/features/repository";
+import { RepositoryQueryServiceProvider } from "@/features/repository";
 import {
   OAuthCommandServiceProvider,
   OAuthQueryServiceProvider,
@@ -18,9 +15,7 @@ export function DiProviders(props: { children: React.ReactNode }) {
         <OAuthQueryServiceProvider>
           <OAuthCommandServiceProvider>
             <RepositoryQueryServiceProvider>
-              <RepositoryCommandServiceProvider>
-                <NotificationsProvider>{props.children}</NotificationsProvider>
-              </RepositoryCommandServiceProvider>
+              <NotificationsProvider>{props.children}</NotificationsProvider>
             </RepositoryQueryServiceProvider>
           </OAuthCommandServiceProvider>
         </OAuthQueryServiceProvider>

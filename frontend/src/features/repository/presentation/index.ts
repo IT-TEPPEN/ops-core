@@ -1,10 +1,4 @@
 // Presentation layer public API
-export {
-  useRepositoryQueryService,
-  useRepositoryCommandService,
-} from "./hooks";
+export { useRepositoryQueryService } from "./hooks";
 
-export {
-  RepositoryQueryServiceProvider,
-  RepositoryCommandServiceProvider,
-} from "./contexts";
+export { RepositoryQueryServiceProvider } from "./contexts";

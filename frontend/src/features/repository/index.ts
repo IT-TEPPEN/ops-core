@@ -7,9 +7,7 @@
 // Presentation layer exports (components and hooks)
 export {
   useRepositoryQueryService,
-  useRepositoryCommandService,
   RepositoryQueryServiceProvider,
-  RepositoryCommandServiceProvider,
 } from "./presentation";
 
 // Application layer exports (ViewData types for external usage)

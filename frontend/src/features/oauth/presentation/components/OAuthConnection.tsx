@@ -163,7 +163,6 @@ export function OAuthConnection() {
 
 import { useReducer } from "react";
 import { initiateOAuthFlow, SelfHostedOAuthParams } from "@/shared/utils/oauth";
-import { useRepositoryCommandService } from "@/features/repository";
 
 type RegistrationState = {
   isAuthenticating: boolean;
@@ -224,7 +223,6 @@ function registrationReducer(
 
 export function useRepositoryRegistration() {
   const [state, dispatch] = useReducer(registrationReducer, initialState);
-  const commandService = useRepositoryCommandService();
 
   const handleOAuthConnect = async (
     provider: "github" | "gitlab" | "gitlab-self-hosted",
@@ -241,34 +239,6 @@ export function useRepositoryRegistration() {
     }
   };
 
-  const handleSubmitRepository = async (data: {
-    provider: string;
-    url: string;
-    name: string;
-  }): Promise<boolean> => {
-    dispatch({ type: "START_SUBMIT" });
-
-    try {
-      await commandService.create({
-        name: data.name,
-        url: data.url,
-        provider: data.provider,
-      });
-
-      dispatch({
-        type: "SUBMIT_SUCCESS",
-        message: "Repository registered successfully!",
-      });
-
-      return true;
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "An unknown error occurred";
-      dispatch({ type: "SUBMIT_ERROR", error: message });
-      return false;
-    }
-  };
-
   const clearMessage = () => {
     dispatch({ type: "CLEAR_MESSAGE" });
   };
@@ -276,7 +246,6 @@ export function useRepositoryRegistration() {
   return {
     ...state,
     handleOAuthConnect,
-    handleSubmitRepository,
     clearMessage,
   };
 }
