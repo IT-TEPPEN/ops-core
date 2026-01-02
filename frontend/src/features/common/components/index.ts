@@ -2,29 +2,6 @@
 export { ThreePaneLayout } from "./Layout/ThreePaneLayout";
 export type { ThreePaneLayoutProps } from "./Layout/ThreePaneLayout";
 
-export { SidebarLayout } from "./Layout/SidebarLayout";
-export type { SidebarLayoutProps } from "./Layout/SidebarLayout";
-
-// UI components moved to src/ui
-export { PageHeader } from "../../../ui/PageHeader";
-export type { PageHeaderProps } from "../../../ui/PageHeader";
-
-// Form components - UI components moved to src/ui
-export { TextInput } from "../../../ui/TextInput";
-export type { TextInputProps } from "../../../ui/TextInput";
-
-export { NumberInput } from "../../../ui/NumberInput";
-export type { NumberInputProps } from "../../../ui/NumberInput";
-
-export { SelectInput } from "../../../ui/SelectInput";
-export type { SelectInputProps } from "../../../ui/SelectInput";
-
-export { CheckboxInput } from "../../../ui/CheckboxInput";
-export type { CheckboxInputProps } from "../../../ui/CheckboxInput";
-
-export { DateInput } from "../../../ui/DateInput";
-export type { DateInputProps } from "../../../ui/DateInput";
-
 export { UI_Form_Field } from "../../../ui/form/FormField";
 export type { FormFieldProps } from "../../../ui/form/FormField";
 
@@ -58,14 +35,8 @@ export type { AttachmentViewerProps } from "./Display/AttachmentViewer";
 export { Card } from "@/ui/Card";
 export type { CardProps } from "@/ui/Card";
 
-export { Badge } from "@/ui/Badge";
-export type { BadgeProps } from "@/ui/Badge";
-
 export { Tag } from "@/ui/Tag";
 export type { TagProps } from "@/ui/Tag";
-
-export { StatusIndicator } from "@/ui/StatusIndicator";
-export type { StatusIndicatorProps } from "@/ui/StatusIndicator";
 
 export { ViewHistoryList } from "./Display/ViewHistoryList";
 export type { ViewHistoryListProps } from "./Display/ViewHistoryList";
@@ -88,26 +59,5 @@ export type { ExecutionRecordListProps } from "./Display/ExecutionRecordList";
 export { GroupList } from "./Display/GroupList";
 
 export { GroupMemberList } from "./Display/GroupMemberList";
-
-export { UserGroupBadge } from "./Display/UserGroupBadge";
-
-export { Pagination } from "./Navigation/Pagination";
-export type { PaginationProps } from "./Navigation/Pagination";
-
-export { Sidebar } from "./Navigation/Sidebar";
-export type { SidebarProps, SidebarItem } from "./Navigation/Sidebar";
-
-// Feedback components
-export { Loading } from "./Feedback/Loading";
-export type { LoadingProps } from "./Feedback/Loading";
-
-export { ErrorMessage } from "./Feedback/ErrorMessage";
-export type { ErrorMessageProps } from "./Feedback/ErrorMessage";
-
-export { Modal } from "./Feedback/Modal";
-export type { ModalProps } from "./Feedback/Modal";
-
-export { ConfirmDialog } from "./Feedback/ConfirmDialog";
-export type { ConfirmDialogProps } from "./Feedback/ConfirmDialog";
 
 export * from "./ProtectedRoute";
