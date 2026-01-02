@@ -9,9 +9,6 @@ export type { SidebarLayoutProps } from "./Layout/SidebarLayout";
 export { PageHeader } from "../../../ui/PageHeader";
 export type { PageHeaderProps } from "../../../ui/PageHeader";
 
-export { Breadcrumb } from "../../../ui/Breadcrumb";
-export type { BreadcrumbProps } from "../../../ui/Breadcrumb";
-
 // Form components - UI components moved to src/ui
 export { TextInput } from "../../../ui/TextInput";
 export type { TextInputProps } from "../../../ui/TextInput";
@@ -56,8 +53,6 @@ export type {
 
 export { AttachmentViewer } from "./Display/AttachmentViewer";
 export type { AttachmentViewerProps } from "./Display/AttachmentViewer";
-export { DataTable } from "./Display/DataTable";
-export type { DataTableProps } from "./Display/DataTable";
 
 // Display components - UI components moved to src/ui
 export { Card } from "@/ui/Card";
@@ -96,10 +91,6 @@ export { GroupMemberList } from "./Display/GroupMemberList";
 
 export { UserGroupBadge } from "./Display/UserGroupBadge";
 
-// Navigation components
-export { Tabs } from "./Navigation/Tabs";
-export type { TabsProps } from "./Navigation/Tabs";
-
 export { Pagination } from "./Navigation/Pagination";
 export type { PaginationProps } from "./Navigation/Pagination";
 
@@ -112,9 +103,6 @@ export type { LoadingProps } from "./Feedback/Loading";
 
 export { ErrorMessage } from "./Feedback/ErrorMessage";
 export type { ErrorMessageProps } from "./Feedback/ErrorMessage";
-
-export { Toast, ToastProvider, useToast } from "./Feedback/Toast";
-export type { ToastProps, ToastProviderProps } from "./Feedback/Toast";
 
 export { Modal } from "./Feedback/Modal";
 export type { ModalProps } from "./Feedback/Modal";

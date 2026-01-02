@@ -1,5 +1,4 @@
 import type { OAuthCommandService } from "../../application";
-import type { GitProvider } from "../../types";
 import { V1ApiClient } from "@/shared/api/client";
 
 /**
@@ -14,8 +13,7 @@ export class HttpOAuthCommandService
   constructor() {
     super("");
   }
-
-  async disconnect(provider: GitProvider): Promise<void> {
-    await this.delete(`/auth/oauth/connections/${provider}`);
+  initiateOAuthFlow(provider: string, redirectUri: string): Promise<string> {
+    throw new Error("Method not implemented.");
   }
 }

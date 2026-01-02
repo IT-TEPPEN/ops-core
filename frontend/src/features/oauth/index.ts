@@ -1,9 +1,6 @@
 // OAuth feature public API
 // Following ADR 0021 - Pattern 1 (Simplified structure)
 
-// Types
-export type { GitProvider, GitRepository } from "./types";
-
 // Services
 export type {
   OAuthQueryService,
