@@ -1,7 +1,6 @@
 import type {
   RepositoryQueryService,
   RepositoryViewData,
-  FileNodeViewData,
   FileCommitViewData,
   PagedResponse,
 } from "../../application";
@@ -9,8 +8,6 @@ import { V1ApiClient } from "@/shared/api/client";
 import type {
   ApiListRepositoriesResponse,
   ApiRepositoryResponse,
-  ApiListFilesResponse,
-  ApiFileContentResponse,
   ApiFileHistoryResponse,
 } from "../types";
 
@@ -58,11 +55,6 @@ export class HttpRepositoryQueryService
   async getById(repoId: string): Promise<RepositoryViewData> {
     const response = await this.get<ApiRepositoryResponse>(`/${repoId}`);
     return this.toRepositoryViewData(response);
-  }
-
-  async listFiles(repoId: string): Promise<FileNodeViewData[]> {
-    const response = await this.get<ApiListFilesResponse>(`/${repoId}/files`);
-    return response.files;
   }
 
   async getFileHistory(

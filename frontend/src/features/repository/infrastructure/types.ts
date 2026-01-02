@@ -21,17 +21,6 @@ export interface ApiFileNodeResponse {
   type: "file" | "dir";
 }
 
-export interface ApiListFilesResponse {
-  files: ApiFileNodeResponse[];
-}
-
-export interface ApiFileContentResponse {
-  repoId: string;
-  filePath: string;
-  content: string;
-  commit_hash?: string;
-}
-
 export interface ApiFileCommitInfo {
   commit_hash: string;
   message: string;

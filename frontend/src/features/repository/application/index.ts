@@ -7,7 +7,6 @@ export type {
 
 export type {
   RepositoryViewData,
-  FileNodeViewData,
   FileCommitViewData,
   PagedResponse,
 } from "./dto";
