@@ -1,6 +1,5 @@
 import { useReducer, useEffect, ReactNode, useMemo } from "react";
 import { AuthContext } from "./AuthContextDefinition";
-import { AuthApi } from "@/shared/api/authApi";
 
 interface User {
   id: string;
@@ -42,7 +41,10 @@ type AuthAction =
   | { type: "SET_USER"; payload: User | null }
   | { type: "SET_IDENTITIES"; payload: Identity[] }
   | { type: "SET_LOADING"; payload: boolean }
-  | { type: "LOGIN"; payload: { token: string; refreshToken: string; user: User } }
+  | {
+      type: "LOGIN";
+      payload: { token: string; refreshToken: string; user: User };
+    }
   | { type: "LOGOUT" };
 
 // Reducer
@@ -136,7 +138,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
     localStorage.setItem(TOKEN_KEY, newToken);
     localStorage.setItem(REFRESH_TOKEN_KEY, newRefreshToken);
     localStorage.setItem(USER_KEY, JSON.stringify(newUser));
-    dispatch({ type: "LOGIN", payload: { token: newToken, refreshToken: newRefreshToken, user: newUser } });
+    dispatch({
+      type: "LOGIN",
+      payload: {
+        token: newToken,
+        refreshToken: newRefreshToken,
+        user: newUser,
+      },
+    });
   };
 
   const logout = () => {

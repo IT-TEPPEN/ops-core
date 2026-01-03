@@ -1,0 +1,1 @@
+export { SessionLocalStorageRepository } from "./SessionLocalStorageRepository";

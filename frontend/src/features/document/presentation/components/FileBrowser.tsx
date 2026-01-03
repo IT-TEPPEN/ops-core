@@ -1,5 +1,6 @@
 import { useOAuthQueryService } from "@/features/oauth";
 import { Content } from "@/features/oauth/application/dto";
+import { LoadingSpinner } from "@/ui";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useSearchParams } from "react-router-dom";
 
@@ -45,7 +46,7 @@ export function FileBrowser({
   });
 
   if (query.isLoading) {
-    return <div className="text-sm text-gray-500">Loading files...</div>;
+    return <LoadingSpinner message="Loading..." />;
   }
 
   if (query.isError || !query.data) {

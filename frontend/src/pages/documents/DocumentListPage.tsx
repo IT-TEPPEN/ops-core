@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { useDocumentList } from "@/features/document/hooks/useDocumentList";
 import { DocumentFilterBar } from "@/features/document/components/DocumentFilterBar";
 import { DocumentTable } from "@/features/document/components/DocumentTable";
+import { LoadingSpinner } from "@/ui";
 
 export function DocumentListPage() {
   const {
@@ -53,7 +54,7 @@ export function DocumentListPage() {
         </div>
       )}
 
-      {isLoading && <p className="text-gray-500">Loading documents...</p>}
+      {isLoading && <LoadingSpinner message="Loading..." />}
 
       {!isLoading && !error && filteredDocuments.length === 0 && (
         <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg shadow">

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { User } from "../../../../shared/types/domain";
 import { useUserQueryService } from "../../presentation/contexts";
+import { LoadingSpinner } from "@/ui";
 
 interface GroupMemberSelectorProps {
   existingMemberIds: string[];
@@ -56,9 +57,7 @@ export const GroupMemberSelector: React.FC<GroupMemberSelectorProps> = ({
   };
 
   if (isLoading) {
-    return (
-      <div className="text-center text-gray-500 py-4">Loading users...</div>
-    );
+    return <LoadingSpinner message="Loading..." />;
   }
 
   if (availableUsers.length === 0) {

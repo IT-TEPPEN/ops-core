@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useGroupDetail } from "@/features/group/hooks/useGroupDetail";
 import { GroupInfoCard } from "@/features/group/components/GroupInfoCard";
 import { MembersPanel } from "@/features/group/components/MembersPanel";
+import { LoadingSpinner } from "@/ui";
 
 const GroupDetailPage: React.FC = () => {
   const { groupId } = useParams<{ groupId: string }>();
@@ -24,11 +25,7 @@ const GroupDetailPage: React.FC = () => {
   } = useGroupDetail(groupId);
 
   if (isLoading) {
-    return (
-      <div className="max-w-5xl mx-auto p-6 text-center text-gray-500">
-        Loading group details...
-      </div>
-    );
+    return <LoadingSpinner message="Loading..." />;
   }
 
   if (error && !group) {

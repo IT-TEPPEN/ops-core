@@ -1,7 +1,6 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../app/hooks/useAuth";
-import { AuthApi } from "@/shared/api/authApi";
 import { GoogleIcon, GitHubIcon, GitLabIcon, MicrosoftIcon } from "@/ui";
 
 type Provider = "google" | "github" | "gitlab" | "microsoft";
@@ -46,7 +45,6 @@ export default function LoginPage() {
   const { isAuthenticated, isLoading } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [rememberMe, setRememberMe] = useState(false);
-  const authApi = useMemo(() => new AuthApi(), []);
 
   const from =
     (location.state as { from?: { pathname: string } } | null)?.from
@@ -116,7 +114,10 @@ export default function LoginPage() {
               onChange={(e) => setRememberMe(e.target.checked)}
               className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
             />
-            <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
+            <label
+              htmlFor="remember-me"
+              className="ml-2 block text-sm text-gray-700"
+            >
               Remember me for 30 days (otherwise 7 days)
             </label>
           </div>

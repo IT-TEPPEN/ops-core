@@ -4,6 +4,7 @@ import { ThreePaneLayout, VariableForm } from "@/features/common/components";
 import { useExecutionRecord } from "@/features/execution/hooks/useExecutionRecord";
 import { useDocumentExecution } from "@/features/document/hooks/useDocumentExecution";
 import { MarkdownProcessor } from "@/features/markdown";
+import { LoadingSpinner } from "@/ui";
 
 function ExecutionRecordPage() {
   const { docId, recordId } = useParams<{
@@ -76,17 +77,8 @@ function ExecutionRecordPage() {
     );
   }
 
-  // Loading state
   if (isDocumentLoading) {
-    return (
-      <div
-        className="flex items-center justify-center h-screen"
-        role="status"
-        aria-live="polite"
-      >
-        <p className="text-gray-500">Loading document...</p>
-      </div>
-    );
+    return <LoadingSpinner message="Loading..." />;
   }
 
   // Error state

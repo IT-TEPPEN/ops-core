@@ -13,9 +13,12 @@ export function LoadingSpinner({ message, size = "md" }: LoadingSpinnerProps) {
   };
 
   return (
-    <div className="flex items-center justify-center py-4">
-      <SpinnerIcon className="text-blue-600 mr-3" size={sizeMap[size]} />
-      {message && <span>{message}</span>}
+    <div className="h-full w-full flex items-center justify-center gap-4">
+      <SpinnerIcon
+        className="text-blue-600 dark:text-blue-400"
+        size={sizeMap[size]}
+      />
+      {message && <p>{message}</p>}
     </div>
   );
 }

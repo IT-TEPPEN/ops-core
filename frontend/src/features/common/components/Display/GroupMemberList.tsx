@@ -1,4 +1,5 @@
 import { User } from "@/shared/types/domain";
+import { LoadingSpinner } from "@/ui";
 import React from "react";
 
 interface GroupMemberListProps {
@@ -16,9 +17,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
   isLoading = false,
 }) => {
   if (isLoading) {
-    return (
-      <div className="text-center text-gray-500 py-8">Loading members...</div>
-    );
+    return <LoadingSpinner message="Loading..." />;
   }
 
   if (members.length === 0) {

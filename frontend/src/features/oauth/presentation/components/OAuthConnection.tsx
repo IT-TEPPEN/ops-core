@@ -1,6 +1,6 @@
 import { useForm } from "react-hook-form";
-import { UI_Form_Field, UI_Form_Input } from "@/ui";
-import { SpinnerIcon, LightningIcon } from "@/ui";
+import { LoadingSpinner, UI_Form_Field, UI_Form_Input } from "@/ui";
+import { LightningIcon } from "@/ui";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
@@ -140,10 +140,7 @@ export function OAuthConnection() {
           className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
           {isAuthenticating ? (
-            <>
-              <SpinnerIcon size={20} />
-              Connecting...
-            </>
+            <LoadingSpinner message="Authenticating..." />
           ) : (
             <>
               <LightningIcon size={20} />

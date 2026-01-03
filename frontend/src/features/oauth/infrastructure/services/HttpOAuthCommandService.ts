@@ -1,5 +1,9 @@
 import type { OAuthCommandService } from "../../application";
 import { V1ApiClient } from "@/shared/api/client";
+import {
+  OAuthConnectRequest,
+  OAuthConnectionResponse,
+} from "../../application/services/OAuthCommandService";
 
 /**
  * HTTP implementation of OAuthCommandService.
@@ -13,7 +17,15 @@ export class HttpOAuthCommandService
   constructor() {
     super("");
   }
+
   initiateOAuthFlow(_provider: string, _redirectUri: string): Promise<string> {
     throw new Error("Method not implemented.");
+  }
+
+  connectOAuth(request: OAuthConnectRequest): Promise<OAuthConnectionResponse> {
+    return this.post<OAuthConnectionResponse, OAuthConnectRequest>(
+      "/oauth/connect",
+      request
+    );
   }
 }

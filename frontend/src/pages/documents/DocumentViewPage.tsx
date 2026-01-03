@@ -5,6 +5,7 @@ import { DocumentContentPane } from "@/features/document/components/DocumentCont
 import { ExecutionRecordPane } from "@/features/document/components/ExecutionRecordPane";
 import { useDocumentView } from "@/features/document/hooks/useDocumentView";
 import { Page } from "@/shared/types/Page";
+import { LoadingSpinner } from "@/ui";
 
 export const DocumentViewPage: Page<"docId"> = ({ path: { docId } }) => {
   const {
@@ -18,15 +19,7 @@ export const DocumentViewPage: Page<"docId"> = ({ path: { docId } }) => {
   } = useDocumentView(docId);
 
   if (isLoading) {
-    return (
-      <div
-        className="flex items-center justify-center h-screen"
-        role="status"
-        aria-live="polite"
-      >
-        <p className="text-gray-500">Loading document...</p>
-      </div>
-    );
+    return <LoadingSpinner message="Loading..." />;
   }
 
   if (error) {

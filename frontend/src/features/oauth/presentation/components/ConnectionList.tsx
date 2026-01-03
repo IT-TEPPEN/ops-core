@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import { useOAuthQueryService } from "../contexts";
+import { LoadingSpinner } from "@/ui";
 
 /**
  * コネクション一覧コンポーネント
@@ -17,7 +18,7 @@ export function ConnectionList() {
   });
 
   if (query.isLoading) {
-    return <div className="text-sm text-gray-500">Loading connections...</div>;
+    return <LoadingSpinner message="Loading..." />;
   }
 
   if (query.isError || !query.data) {

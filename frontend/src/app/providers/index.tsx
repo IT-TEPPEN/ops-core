@@ -1,17 +1,17 @@
 import React from "react";
 import { TanstackClientProvider } from "./TanstackClientProvider";
-import { AuthApiProvider } from "./AuthApiProvider";
 import { NotificationsProvider } from "@/features/notification";
 import { RepositoryQueryServiceProvider } from "@/features/repository";
 import {
   OAuthCommandServiceProvider,
   OAuthQueryServiceProvider,
 } from "@/features/oauth";
+import { AuthenticationServiceProvider } from "@/features/authentication/infrastructure/contexts";
 
 export function DiProviders(props: { children: React.ReactNode }) {
   return (
     <TanstackClientProvider>
-      <AuthApiProvider>
+      <AuthenticationServiceProvider>
         <OAuthQueryServiceProvider>
           <OAuthCommandServiceProvider>
             <RepositoryQueryServiceProvider>
@@ -19,7 +19,7 @@ export function DiProviders(props: { children: React.ReactNode }) {
             </RepositoryQueryServiceProvider>
           </OAuthCommandServiceProvider>
         </OAuthQueryServiceProvider>
-      </AuthApiProvider>
+      </AuthenticationServiceProvider>
     </TanstackClientProvider>
   );
 }

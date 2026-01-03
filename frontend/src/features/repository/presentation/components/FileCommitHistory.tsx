@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useRepositoryQueryService } from "../contexts/RepositoryQueryServiceContext";
 import type { FileCommitViewData } from "../../application/dto";
+import { LoadingSpinner } from "@/ui";
 
 interface FileCommitHistoryProps {
   repoId: string;
@@ -17,19 +18,17 @@ export function FileCommitHistory({
 }: FileCommitHistoryProps) {
   const queryService = useRepositoryQueryService();
 
-  const { data: commits, isLoading, error } = useQuery({
+  const {
+    data: commits,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ["repositories", repoId, "files", "history", filePath],
     queryFn: () => queryService.getFileHistory(repoId, filePath),
   });
 
   if (isLoading) {
-    return (
-      <div className="p-4">
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          Loading commit history...
-        </p>
-      </div>
-    );
+    return <LoadingSpinner message="Loading..." />;
   }
 
   if (error) {

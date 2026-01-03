@@ -18,6 +18,7 @@ import { substituteVariables } from "@/shared/utils/variableSubstitution";
 // import { useNotifications } from "@/features/notification";
 import { useOAuthQueryService } from "@/features/oauth";
 import type { VariableDefinition } from "@/shared/types/domain";
+import { LoadingSpinner } from "@/ui";
 
 function documentVariableToDefinition(
   docVar: DocumentVariable
@@ -260,11 +261,7 @@ export const DocumentPreviewPage: Page<
   // );
 
   if (query.isLoading) {
-    return (
-      <div className="text-center p-8">
-        <p className="text-gray-500">Loading content...</p>
-      </div>
-    );
+    return <LoadingSpinner message="Loading..." />;
   }
 
   if (query.error) {

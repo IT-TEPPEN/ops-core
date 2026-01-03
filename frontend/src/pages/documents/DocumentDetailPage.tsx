@@ -5,6 +5,7 @@ import { VariableInputPanel } from "@/features/document/components/VariableInput
 import { Page } from "@/shared/types/Page";
 import { useEffect, useState } from "react";
 import { MarkdownProcessor } from "@/features/markdown";
+import { LoadingSpinner } from "@/ui";
 
 export const DocumentDetailPage: Page<"docId"> = ({ path: { docId } }) => {
   const {
@@ -27,11 +28,7 @@ export const DocumentDetailPage: Page<"docId"> = ({ path: { docId } }) => {
   }, [processedContent]);
 
   if (isLoading) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-gray-500">Loading document...</p>
-      </div>
-    );
+    return <LoadingSpinner message="Loading..." />;
   }
 
   if (error) {

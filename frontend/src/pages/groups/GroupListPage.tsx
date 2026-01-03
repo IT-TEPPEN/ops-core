@@ -2,10 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { GroupForm, GroupList } from "@/features/common/components";
 import { Group } from "@/shared/types/domain";
-import {
-  useGroupQueryService,
-  useGroupCommandService,
-} from "@/features/group";
+import { useGroupQueryService, useGroupCommandService } from "@/features/group";
+import { LoadingSpinner } from "@/ui";
 
 /**
  * GroupListPage displays all groups and allows creating new ones
@@ -90,7 +88,7 @@ const GroupListPage: React.FC = () => {
       )}
 
       {isLoading ? (
-        <div className="text-center text-gray-500 py-8">Loading groups...</div>
+        <LoadingSpinner message="Loading..." />
       ) : (
         <GroupList groups={groups} />
       )}

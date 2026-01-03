@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { useVersionHistory } from "@/features/document/hooks/useVersionHistory";
 import { VersionTable } from "@/features/document/components/VersionTable";
 import { Page } from "@/shared/types/Page";
+import { LoadingSpinner } from "@/ui";
 
 export const DocumentVersionHistoryPage: Page<"docId"> = ({
   path: { docId },
@@ -19,11 +20,7 @@ export const DocumentVersionHistoryPage: Page<"docId"> = ({
   } = useVersionHistory(docId);
 
   if (isLoading) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-gray-500">Loading version history...</p>
-      </div>
-    );
+    return <LoadingSpinner message="Loading..." />;
   }
 
   if (error) {

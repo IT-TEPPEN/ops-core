@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls:*)",
+      "Bash(for file in components/RepositoryList.tsx components/AccessTokenForm.tsx components/FileList.tsx components/RepositoryRegistrationForm.tsx components/RepositorySelector.tsx components/RepositoryConfirmation.tsx)",
+      "Bash(do if [ -f \"$file\" ])",
+      "Bash(then cp \"$file\" \"presentation/$file\")",
+      "Bash(fi)",
+      "Bash(done)",
+      "Bash(npm run build:*)",
+      "Bash(tree:*)",
+      "Bash(find:*)",
+      "Bash(for dir in src/features/*/)",
+      "Bash(for dir in common group markdown notification oauth)",
+      "Bash(for dir in repository document execution group oauth notification markdown)",
+      "Bash(do echo)",
+      "WebFetch(domain:www.anthropic.com)",
+      "Bash(npm run lint:md:*)",
+      "Bash(cat:*)",
+      "Bash(go build:*)",
+      "Bash(swag init:*)",
+      "Bash(go test:*)",
+      "Bash(grep:*)"
+    ]
+  }
+}

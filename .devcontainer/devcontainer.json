@@ -15,8 +15,6 @@
         "dbaeumer.vscode-eslint", // Still useful for frontend
         "esbenp.prettier-vscode", // Still useful for frontend
         "ms-azuretools.vscode-docker",
-        "orta.vscode-jest", // If using Jest for frontend
-        "firsttris.vscode-jest-runner",
         "christian-kohler.path-intellisense",
         "formulahendry.auto-rename-tag",
         "pflannery.vscode-versionlens",
@@ -31,7 +29,8 @@
         // Tailwind CSS
         "bradlc.vscode-tailwindcss", // Add Tailwind CSS IntelliSense
         // toml support
-        "tamasfe.even-better-toml"
+        "tamasfe.even-better-toml",
+        "vitest.explorer"
       ],
       "settings": {
         "chat.tools.edits.autoApprove": {

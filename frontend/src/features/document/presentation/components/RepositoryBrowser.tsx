@@ -1,5 +1,6 @@
 import { useOAuthQueryService } from "@/features/oauth";
 import { Repository } from "@/features/oauth/application/dto";
+import { LoadingSpinner } from "@/ui";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
@@ -31,7 +32,7 @@ export function RepositoryBrowser({ connectionId }: RepositoryBrowserProps) {
   });
 
   if (query.isLoading) {
-    return <div className="text-sm text-gray-500">Loading repositories...</div>;
+    return <LoadingSpinner message="Loading..." />;
   }
 
   if (query.isError || !query.data) {
