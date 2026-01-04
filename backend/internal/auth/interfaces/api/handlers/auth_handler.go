@@ -95,6 +95,7 @@ type IdentityResponse struct {
 	Provider   string `json:"provider"`
 	Email      string `json:"email"`
 	Name       string `json:"name"`
+	Picture    string `json:"picture"`
 	LinkedAt   string `json:"linked_at"`
 	LastUsedAt string `json:"last_used_at"`
 }
@@ -292,6 +293,57 @@ func (h *AuthHandler) GetMe(c *gin.Context) {
 	})
 }
 
+// GetIdentity godoc
+// @Summary Get current user's active identity
+// @Description Returns the identity used for the current login session (most recently used)
+// @Tags auth
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} IdentityResponse
+// @Failure 401 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Router /auth/identity [get]
+func (h *AuthHandler) GetIdentity(c *gin.Context) {
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	identities, err := h.userIdentityRepo.FindByUserID(c.Request.Context(), userID.(string))
+	if err != nil {
+		h.logger.Error("Failed to get identities", "user_id", userID, "error", err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get identity"})
+		return
+	}
+
+	if len(identities) == 0 {
+		h.logger.Error("No identities found for user", "user_id", userID)
+		c.JSON(http.StatusNotFound, gin.H{"error": "No identity found"})
+		return
+	}
+
+	// Find the most recently used identity
+	var mostRecent *domain.UserIdentity
+	for _, identity := range identities {
+		if mostRecent == nil || identity.LastUsedAt.After(mostRecent.LastUsedAt) {
+			mostRecent = identity
+		}
+	}
+
+	response := IdentityResponse{
+		ID:         mostRecent.ID,
+		Provider:   mostRecent.Provider,
+		Email:      mostRecent.Email,
+		Name:       mostRecent.Name,
+		Picture:    mostRecent.PictureURL,
+		LinkedAt:   mostRecent.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		LastUsedAt: mostRecent.LastUsedAt.Format("2006-01-02T15:04:05Z07:00"),
+	}
+
+	c.JSON(http.StatusOK, response)
+}
+
 // GetIdentities godoc
 // @Summary Get user's linked identities
 // @Description Returns all provider identities linked to the current user
@@ -322,6 +374,7 @@ func (h *AuthHandler) GetIdentities(c *gin.Context) {
 			Provider:   identity.Provider,
 			Email:      identity.Email,
 			Name:       identity.Name,
+			Picture:    identity.PictureURL,
 			LinkedAt:   identity.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
 			LastUsedAt: identity.LastUsedAt.Format("2006-01-02T15:04:05Z07:00"),
 		}

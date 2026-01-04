@@ -123,6 +123,7 @@ func main() {
 			authProtected.POST("/logout", authHandler.Logout)
 
 			// Identity management
+			authProtected.GET("/identity", authHandler.GetIdentity)
 			authProtected.GET("/identities", authHandler.GetIdentities)
 			authProtected.DELETE("/identities/:id", authHandler.UnlinkIdentity)
 

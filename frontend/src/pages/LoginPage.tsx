@@ -1,7 +1,17 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import { useAuth } from "../app/hooks/useAuth";
-import { GoogleIcon, GitHubIcon, GitLabIcon, MicrosoftIcon } from "@/ui";
+import { useNavigate } from "react-router-dom";
+import {
+  GoogleIcon,
+  GitHubIcon,
+  GitLabIcon,
+  MicrosoftIcon,
+  LoadingSpinner,
+} from "@/ui";
+import {
+  useGetUserIdentityUsecase,
+  useStartLoginProcessUsecase,
+} from "@/features/authentication/presentation/contexts";
+import { useQuery } from "@tanstack/react-query";
 
 type Provider = "google" | "github" | "gitlab" | "microsoft";
 
@@ -41,53 +51,57 @@ const providerInfo: Record<Provider, ProviderInfo> = {
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const location = useLocation();
-  const { isAuthenticated, isLoading } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [rememberMe, setRememberMe] = useState(false);
+  const startLoginProcessUsecase = useStartLoginProcessUsecase();
+  const getUserIdentityUsecase = useGetUserIdentityUsecase();
+  const query = useQuery({
+    queryKey: ["UserIdentity"],
+    queryFn: async () => getUserIdentityUsecase.execute(),
+  });
 
-  const from =
-    (location.state as { from?: { pathname: string } } | null)?.from
-      ?.pathname || "/";
-
-  // Redirect if already authenticated
   useEffect(() => {
-    if (!isLoading && isAuthenticated) {
-      navigate(from, { replace: true });
+    if (query.data) {
+      navigate("/", { replace: true });
     }
-  }, [isAuthenticated, isLoading, navigate, from]);
+  }, [query.data, navigate]);
+
+  if (query.isLoading) {
+    return <LoadingSpinner message="loading..." />;
+  }
+
+  if (query.isError) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+          Error loading user identity: {`${query.error}`}
+        </div>
+      </div>
+    );
+  }
+
+  if (query.data) {
+    return null;
+  }
 
   const handleProviderLogin = async (provider: Provider) => {
     try {
       setError(null);
-      const data = await authApi.getProviderLoginUrl(provider);
-
-      // Store state, provider, and remember_me for CSRF protection and callback
-      sessionStorage.setItem("auth_state", data.state);
-      sessionStorage.setItem("auth_provider", provider);
-      sessionStorage.setItem("auth_remember_me", rememberMe.toString());
-
-      // Redirect to provider's authorization page
-      window.location.href = data.auth_url;
+      await startLoginProcessUsecase.execute({
+        provider,
+        rememberMe,
+        redirectToAuthenticationPage: (externalUrl: string) => {
+          window.location.href = externalUrl;
+        },
+      });
     } catch (error) {
       console.error(`Failed to initiate ${provider} login:`, error);
       setError(`Failed to initiate ${provider} login. Please try again.`);
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="h-full flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">

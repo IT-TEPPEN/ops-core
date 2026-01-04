@@ -1,4 +1,4 @@
-import { useReducer, useEffect, ReactNode, useMemo } from "react";
+import { useReducer, useEffect, ReactNode } from "react";
 import { AuthContext } from "./AuthContextDefinition";
 
 interface User {
@@ -6,15 +6,6 @@ interface User {
   email: string;
   name: string;
   picture: string;
-}
-
-interface Identity {
-  id: string;
-  provider: string;
-  email: string;
-  name: string;
-  linkedAt: string;
-  lastUsedAt: string;
 }
 
 const TOKEN_KEY = "auth_token";
@@ -27,10 +18,8 @@ interface AuthProviderProps {
 
 // State type
 interface AuthState {
-  user: User | null;
   token: string | null;
   refreshToken: string | null;
-  identities: Identity[];
   isLoading: boolean;
 }
 
@@ -39,13 +28,11 @@ type AuthAction =
   | { type: "SET_TOKEN"; payload: string | null }
   | { type: "SET_REFRESH_TOKEN"; payload: string | null }
   | { type: "SET_USER"; payload: User | null }
-  | { type: "SET_IDENTITIES"; payload: Identity[] }
   | { type: "SET_LOADING"; payload: boolean }
   | {
       type: "LOGIN";
       payload: { token: string; refreshToken: string; user: User };
-    }
-  | { type: "LOGOUT" };
+    };
 
 // Reducer
 function authReducer(state: AuthState, action: AuthAction): AuthState {
@@ -54,10 +41,6 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
       return { ...state, token: action.payload };
     case "SET_REFRESH_TOKEN":
       return { ...state, refreshToken: action.payload };
-    case "SET_USER":
-      return { ...state, user: action.payload };
-    case "SET_IDENTITIES":
-      return { ...state, identities: action.payload };
     case "SET_LOADING":
       return { ...state, isLoading: action.payload };
     case "LOGIN":
@@ -65,15 +48,6 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
         ...state,
         token: action.payload.token,
         refreshToken: action.payload.refreshToken,
-        user: action.payload.user,
-      };
-    case "LOGOUT":
-      return {
-        ...state,
-        token: null,
-        refreshToken: null,
-        user: null,
-        identities: [],
       };
     default:
       return state;
@@ -82,15 +56,10 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
 
 export function AuthProvider({ children }: AuthProviderProps) {
   const [state, dispatch] = useReducer(authReducer, {
-    user: null,
     token: null,
     refreshToken: null,
-    identities: [],
     isLoading: true,
   });
-
-  // Create AuthApi instance
-  const authApi = useMemo(() => new AuthApi(), []);
 
   // Initialize auth state from localStorage
   useEffect(() => {
@@ -115,25 +84,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     dispatch({ type: "SET_LOADING", payload: false });
   }, []);
 
-  // Fetch identities when authenticated
-  useEffect(() => {
-    if (state.token) {
-      refreshIdentities();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.token]);
-
-  const refreshIdentities = async () => {
-    if (!state.token) return;
-
-    try {
-      const data = await authApi.getIdentities();
-      dispatch({ type: "SET_IDENTITIES", payload: data.identities || [] });
-    } catch (error) {
-      console.error("Failed to fetch identities:", error);
-    }
-  };
-
   const login = (newToken: string, newUser: User, newRefreshToken: string) => {
     localStorage.setItem(TOKEN_KEY, newToken);
     localStorage.setItem(REFRESH_TOKEN_KEY, newRefreshToken);
@@ -148,56 +98,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
     });
   };
 
-  const logout = () => {
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(REFRESH_TOKEN_KEY);
-    localStorage.removeItem(USER_KEY);
-    // Also remove OAuth token if it exists
-    localStorage.removeItem("oauth_token");
-    dispatch({ type: "LOGOUT" });
-  };
-
-  const linkProvider = async (provider: string) => {
-    try {
-      const data = await authApi.getProviderLoginUrl(provider);
-
-      sessionStorage.setItem(`${provider}_auth_state`, data.state);
-      sessionStorage.setItem("link_mode", "true");
-
-      window.location.href = data.auth_url;
-    } catch (error) {
-      console.error(`Failed to initiate ${provider} login:`, error);
-      throw error;
-    }
-  };
-
-  const unlinkIdentity = async (identityId: string) => {
-    if (!state.token) return;
-
-    try {
-      await authApi.unlinkIdentity(identityId);
-      await refreshIdentities();
-    } catch (error) {
-      console.error("Failed to unlink identity:", error);
-      throw error;
-    }
-  };
-
-  const isAuthenticated = !!state.token && !!state.user;
+  const isAuthenticated = !!state.token;
 
   return (
     <AuthContext.Provider
       value={{
-        user: state.user,
-        token: state.token,
-        identities: state.identities,
         isAuthenticated,
         isLoading: state.isLoading,
         login,
-        logout,
-        linkProvider,
-        unlinkIdentity,
-        refreshIdentities,
       }}
     >
       {children}
