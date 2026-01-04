@@ -120,8 +120,10 @@ function KnowledgeMetaComponent(props: { meta: DocumentKnowledgeMeta }) {
 }
 export const DocumentPreviewPage: Page<
   never,
-  "connection_id" | "repository_full_name" | "path"
-> = ({ query: { connection_id, repository_full_name, path } }) => {
+  "connection_id" | "repository_id" | "repository_full_name" | "path"
+> = ({
+  query: { connection_id, repository_id, repository_full_name, path },
+}) => {
   const [Component, setComponent] = useState<React.ReactElement | null>(null);
   const [variableValues, setVariableValues] = useState<
     Record<string, string | number | boolean>
@@ -140,7 +142,7 @@ export const DocumentPreviewPage: Page<
       "connections",
       connection_id,
       "repositories",
-      repository_full_name,
+      repository_id,
       "files",
       path,
       "commits",
@@ -148,7 +150,8 @@ export const DocumentPreviewPage: Page<
     ],
     queryFn: () =>
       queryService.getFileContent(
-        connection_id!,
+        connection_id,
+        repository_id,
         repository_full_name,
         path,
         commit

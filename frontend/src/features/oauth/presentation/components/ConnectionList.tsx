@@ -43,6 +43,7 @@ export function ConnectionList() {
               setSearchParams((searchParams) => {
                 searchParams.set("selected_connection_id", connection.id);
                 searchParams.delete("selected_repository_full_name");
+                searchParams.delete("selected_repository_id");
                 searchParams.delete("prefix");
                 return searchParams;
               });

@@ -20,6 +20,7 @@ export interface OAuthQueryService {
    */
   listRepositoryContents(
     connectionId: string,
+    repositoryId: string,
     repositoryFullName: string,
     path?: string
   ): Promise<Content[]>;
@@ -29,6 +30,7 @@ export interface OAuthQueryService {
    */
   getFileContent(
     connectionId: string,
+    repositoryId: string,
     repositoryFullName: string,
     filePath: string,
     commitSha?: string

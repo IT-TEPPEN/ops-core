@@ -14,6 +14,7 @@ export function DocumentPublishPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const selectedConnectionId = searchParams.get("selected_connection_id");
+  const selectedRepositoryId = searchParams.get("selected_repository_id");
   const selectedRepositoryFullName = searchParams.get(
     "selected_repository_full_name"
   );
@@ -89,9 +90,12 @@ export function DocumentPublishPage() {
         </aside>
 
         <main className="flex-1 bg-gray-50 dark:bg-gray-900 overflow-hidden">
-          {selectedConnectionId && selectedRepositoryFullName ? (
+          {selectedConnectionId &&
+          selectedRepositoryId &&
+          selectedRepositoryFullName ? (
             <FileBrowser
               connectionId={selectedConnectionId}
+              repositoryId={selectedRepositoryId}
               repositoryFullName={selectedRepositoryFullName}
               onFileSelect={handleFileSelect}
             />

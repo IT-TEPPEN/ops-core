@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
+	"strings"
 	"time"
 
 	"opscore/backend/internal/oauth/domain"
@@ -280,7 +282,7 @@ type FileContent struct {
 }
 
 // GetRepositoryContents gets files and directories at a specific path
-func (s *GitProviderService) GetRepositoryContents(ctx context.Context, userID string, connectionID string, owner string, repo string, path string) ([]FileNode, error) {
+func (s *GitProviderService) GetRepositoryContents(ctx context.Context, userID string, connectionID string, repositoryID string, owner string, repo string, path string) ([]FileNode, error) {
 	// Get the OAuth connection
 	conn, err := s.oauthService.GetConnectionByID(ctx, userID, connectionID)
 	if err != nil {
@@ -301,14 +303,14 @@ func (s *GitProviderService) GetRepositoryContents(ctx context.Context, userID s
 		if conn.Provider() == domain.ProviderGitLabSelfHosted {
 			baseURL = fmt.Sprintf("https://%s", conn.ProviderHost())
 		}
-		return s.getGitLabRepositoryContents(ctx, token, baseURL, owner, repo, path)
+		return s.getGitLabRepositoryContents(ctx, token, baseURL, repositoryID, owner, repo, path)
 	default:
 		return nil, fmt.Errorf("unsupported provider: %s", conn.Provider())
 	}
 }
 
 // GetFileContent gets the content of a specific file
-func (s *GitProviderService) GetFileContent(ctx context.Context, userID string, connectionID string, owner string, repo string, filePath string) (*FileContent, error) {
+func (s *GitProviderService) GetFileContent(ctx context.Context, userID string, connectionID string, repositoryID string, owner string, repo string, filePath string) (*FileContent, error) {
 	// Get the OAuth connection
 	conn, err := s.oauthService.GetConnectionByID(ctx, userID, connectionID)
 	if err != nil {
@@ -329,7 +331,7 @@ func (s *GitProviderService) GetFileContent(ctx context.Context, userID string, 
 		if conn.Provider() == domain.ProviderGitLabSelfHosted {
 			baseURL = fmt.Sprintf("https://%s", conn.ProviderHost())
 		}
-		return s.getGitLabFileContent(ctx, token, baseURL, owner, repo, filePath)
+		return s.getGitLabFileContent(ctx, token, baseURL, repositoryID, owner, repo, filePath)
 	default:
 		return nil, fmt.Errorf("unsupported provider: %s", conn.Provider())
 	}
@@ -432,11 +434,18 @@ func (s *GitProviderService) getGitHubFileContent(ctx context.Context, token str
 }
 
 // getGitLabRepositoryContents gets contents from GitLab API
-func (s *GitProviderService) getGitLabRepositoryContents(ctx context.Context, token string, baseURL string, owner string, repo string, path string) ([]FileNode, error) {
-	projectPath := fmt.Sprintf("%s/%s", owner, repo)
-	url := fmt.Sprintf("%s/api/v4/projects/%s/repository/tree?path=%s", baseURL, projectPath, path)
+func (s *GitProviderService) getGitLabRepositoryContents(ctx context.Context, token string, baseURL string, repositoryID string, owner string, repo string, path string) ([]FileNode, error) {
+	projectRef := repositoryID
+	if projectRef == "" {
+		projectRef = url.PathEscape(fmt.Sprintf("%s/%s", owner, repo))
+	}
 
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	reqURL := fmt.Sprintf("%s/api/v4/projects/%s/repository/tree", baseURL, projectRef)
+	if path != "" {
+		reqURL = fmt.Sprintf("%s?path=%s", reqURL, url.QueryEscape(path))
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "GET", reqURL, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -482,11 +491,19 @@ func (s *GitProviderService) getGitLabRepositoryContents(ctx context.Context, to
 }
 
 // getGitLabFileContent gets file content from GitLab API
-func (s *GitProviderService) getGitLabFileContent(ctx context.Context, token string, baseURL string, owner string, repo string, filePath string) (*FileContent, error) {
-	projectPath := fmt.Sprintf("%s/%s", owner, repo)
-	url := fmt.Sprintf("%s/api/v4/projects/%s/repository/files/%s/raw", baseURL, projectPath, filePath)
+func (s *GitProviderService) getGitLabFileContent(ctx context.Context, token string, baseURL string, repositoryID string, owner string, repo string, filePath string) (*FileContent, error) {
+	projectRef := repositoryID
+	if projectRef == "" {
+		projectRef = url.PathEscape(fmt.Sprintf("%s/%s", owner, repo))
+	}
+	if strings.HasPrefix(filePath, "/") {
+		filePath = filePath[1:]
+	}
+	filePathEscaped := url.PathEscape(filePath)
+	reqURL := fmt.Sprintf("%s/api/v4/projects/%s/repository/files/%s/raw", baseURL, projectRef, filePathEscaped)
+	fmt.Println("GitLab File Content URL:", reqURL)
 
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", reqURL, nil)
 	if err != nil {
 		return nil, err
 	}

@@ -5,8 +5,8 @@ import (
 	"encoding/base64"
 	"fmt"
 
-	apperror "opscore/backend/internal/document/application/error"
 	"opscore/backend/internal/document/application/dto"
+	apperror "opscore/backend/internal/document/application/error"
 	"opscore/backend/internal/document/domain/entity"
 	"opscore/backend/internal/document/domain/repository"
 	"opscore/backend/internal/document/domain/value_object"
@@ -14,8 +14,8 @@ import (
 	gitentity "opscore/backend/internal/git_repository/domain/entity"
 	gitrepo "opscore/backend/internal/git_repository/domain/repository"
 	"opscore/backend/internal/git_repository/infrastructure/git"
-	oauthdomain "opscore/backend/internal/oauth/domain"
 	oauthservice "opscore/backend/internal/oauth/application/service"
+	oauthdomain "opscore/backend/internal/oauth/domain"
 )
 
 // DocumentUseCase defines the interface for document related use cases.
@@ -60,7 +60,7 @@ type documentUseCase struct {
 	gitRepo            gitrepo.Repository
 	gitManager         git.GitManager
 	fmParser           parser.FrontmatterParser
-	oauthService       OAuthService // Added for publish from OAuth connection
+	oauthService       OAuthService       // Added for publish from OAuth connection
 	gitProviderService GitProviderService // Added for publish from OAuth connection
 }
 
@@ -72,7 +72,7 @@ type OAuthService interface {
 
 // GitProviderService interface for getting file content from Git providers
 type GitProviderService interface {
-	GetFileContent(ctx context.Context, userID string, connectionID string, owner string, repo string, filePath string) (*oauthservice.FileContent, error)
+	GetFileContent(ctx context.Context, userID string, connectionID string, repositoryID string, owner string, repo string, filePath string) (*oauthservice.FileContent, error)
 }
 
 // NewDocumentUseCase creates a new instance of documentUseCase.
@@ -748,7 +748,7 @@ func (uc *documentUseCase) PublishDocument(ctx context.Context, userID string, r
 	}
 
 	// Fetch file content via GitProviderService
-	fileContent, err := uc.gitProviderService.GetFileContent(ctx, userID, req.ConnectionID, req.Owner, req.Repository, req.FilePath)
+	fileContent, err := uc.gitProviderService.GetFileContent(ctx, userID, req.ConnectionID, "", req.Owner, req.Repository, req.FilePath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get file content: %w", err)
 	}

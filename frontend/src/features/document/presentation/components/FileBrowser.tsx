@@ -6,6 +6,7 @@ import { Link, useSearchParams } from "react-router-dom";
 
 interface FileBrowserProps {
   connectionId: string;
+  repositoryId: string;
   repositoryFullName: string;
   onFileSelect: (file: { path: string; url: string }) => void;
 }
@@ -29,6 +30,7 @@ const formatFileSize = (bytes: number): string => {
  */
 export function FileBrowser({
   connectionId,
+  repositoryId,
   repositoryFullName,
   onFileSelect,
 }: FileBrowserProps) {
@@ -40,6 +42,7 @@ export function FileBrowser({
     queryFn: async () =>
       oauthQueryService.listRepositoryContents(
         connectionId,
+        repositoryId,
         repositoryFullName,
         prefix
       ),
@@ -191,7 +194,7 @@ export function FileBrowser({
 
                     {isClickable(node) && node.type === "file" && (
                       <Link
-                        to={`/documents/preview?connection_id=${connectionId}&repository_full_name=${encodeURIComponent(
+                        to={`/documents/preview?connection_id=${connectionId}&repository_id=${repositoryId}&repository_full_name=${encodeURIComponent(
                           repositoryFullName
                         )}&path=${encodeURIComponent(node.path)}`}
                         className="text-blue-500 hover:text-blue-700 font-medium"

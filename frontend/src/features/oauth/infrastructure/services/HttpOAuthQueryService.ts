@@ -81,13 +81,16 @@ export class HttpOAuthQueryService
 
   async listRepositoryContents(
     connectionId: string,
+    repositoryId: string,
     repositoryFullName: string,
     path = ""
   ): Promise<Content[]> {
     const response = await this.get<ListContentsResponse>(
       `/connections/${connectionId}/repositories/${encodeURIComponent(
         repositoryFullName
-      )}/contents${path ? `?path=${encodeURIComponent(path)}` : ""}`
+      )}/contents?repositoryId=${encodeURIComponent(repositoryId)}${
+        path ? `&path=${encodeURIComponent(path)}` : ""
+      }`
     );
 
     return response.files.map((file) => ({
@@ -101,6 +104,7 @@ export class HttpOAuthQueryService
 
   async getFileContent(
     connectionId: string,
+    repositoryId: string,
     repositoryFullName: string,
     filePath: string,
     commitSha?: string
@@ -108,8 +112,10 @@ export class HttpOAuthQueryService
     const response = await this.get<GetFileContentResponse>(
       `/connections/${connectionId}/repositories/${encodeURIComponent(
         repositoryFullName
-      )}/files/${encodeURIComponent(filePath)}${
-        commitSha ? `?commit_sha=${encodeURIComponent(commitSha)}` : ""
+      )}/files/${encodeURIComponent(
+        filePath
+      )}?repositoryId=${encodeURIComponent(repositoryId)}${
+        commitSha ? `&commit_sha=${encodeURIComponent(commitSha)}` : ""
       }`
     );
 

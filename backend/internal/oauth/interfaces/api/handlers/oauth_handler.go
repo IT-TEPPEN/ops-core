@@ -345,6 +345,7 @@ func (h *OAuthHandler) ListRepositoriesByConnection(c *gin.Context) {
 // @Param connectionId path string true "OAuth connection ID"
 // @Param owner path string true "Repository owner"
 // @Param repo path string true "Repository name"
+// @Param repositoryId query string true "Repository ID"
 // @Param path query string false "Directory path (empty for root)"
 // @Success 200 {object} map[string]interface{}
 // @Failure 400 {object} map[string]interface{} "Invalid request"
@@ -356,11 +357,12 @@ func (h *OAuthHandler) GetRepositoryContents(c *gin.Context) {
 	owner := c.Param("owner")
 	repo := c.Param("repo")
 	path := c.DefaultQuery("path", "")
+	repositoryID := c.Query("repositoryId")
 
-	if connectionID == "" || owner == "" || repo == "" {
+	if connectionID == "" || owner == "" || repo == "" || repositoryID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error":   "invalid_request",
-			"message": "Connection ID, owner, and repo are required",
+			"message": "Connection ID, repository ID, owner, and repo are required",
 		})
 		return
 	}
@@ -374,7 +376,7 @@ func (h *OAuthHandler) GetRepositoryContents(c *gin.Context) {
 		return
 	}
 
-	contents, err := h.gitProviderService.GetRepositoryContents(c.Request.Context(), userID.(string), connectionID, owner, repo, path)
+	contents, err := h.gitProviderService.GetRepositoryContents(c.Request.Context(), userID.(string), connectionID, repositoryID, owner, repo, path)
 	if err != nil {
 		h.logger.Error("Failed to get repository contents", "error", err, "connectionId", connectionID, "owner", owner, "repo", repo, "path", path)
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -399,6 +401,7 @@ func (h *OAuthHandler) GetRepositoryContents(c *gin.Context) {
 // @Param connectionId path string true "OAuth connection ID"
 // @Param owner path string true "Repository owner"
 // @Param repo path string true "Repository name"
+// @Param repositoryId query string true "Repository ID"
 // @Param filePath path string true "File path"
 // @Success 200 {object} map[string]interface{}
 // @Failure 400 {object} map[string]interface{} "Invalid request"
@@ -410,11 +413,12 @@ func (h *OAuthHandler) GetRepositoryFileContent(c *gin.Context) {
 	owner := c.Param("owner")
 	repo := c.Param("repo")
 	filePath := c.Param("filePath")
+	repositoryID := c.Query("repositoryId")
 
-	if connectionID == "" || owner == "" || repo == "" || filePath == "" {
+	if connectionID == "" || owner == "" || repo == "" || filePath == "" || repositoryID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error":   "invalid_request",
-			"message": "Connection ID, owner, repo, and file path are required",
+			"message": "Connection ID, repository ID, owner, repo, and file path are required",
 		})
 		return
 	}
@@ -428,7 +432,7 @@ func (h *OAuthHandler) GetRepositoryFileContent(c *gin.Context) {
 		return
 	}
 
-	content, err := h.gitProviderService.GetFileContent(c.Request.Context(), userID.(string), connectionID, owner, repo, filePath)
+	content, err := h.gitProviderService.GetFileContent(c.Request.Context(), userID.(string), connectionID, repositoryID, owner, repo, filePath)
 	if err != nil {
 		h.logger.Error("Failed to get file content", "error", err, "connectionId", connectionID, "owner", owner, "repo", repo, "filePath", filePath)
 		c.JSON(http.StatusInternalServerError, gin.H{

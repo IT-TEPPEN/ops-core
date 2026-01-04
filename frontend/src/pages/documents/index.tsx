@@ -43,6 +43,10 @@ export function DocumentRoutes() {
                   required: true,
                 },
                 {
+                  name: "repository_id",
+                  required: true,
+                },
+                {
                   name: "repository_full_name",
                   required: true,
                 },

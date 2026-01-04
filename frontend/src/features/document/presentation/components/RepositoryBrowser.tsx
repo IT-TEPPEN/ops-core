@@ -90,6 +90,10 @@ export function RepositoryBrowser({ connectionId }: RepositoryBrowserProps) {
                     "selected_repository_full_name",
                     repo.fullName
                   );
+                  searchParams.set(
+                    "selected_repository_id",
+                    repo.id.toString()
+                  );
                   searchParams.delete("prefix");
                   return searchParams;
                 });
