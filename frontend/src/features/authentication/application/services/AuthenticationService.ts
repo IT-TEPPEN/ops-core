@@ -16,7 +16,7 @@ export interface AuthenticationService {
 
   refreshToken(dto: refreshTokenDto): Promise<TokenDto>;
 
-  getIdentity(): Promise<IdentityDto>;
+  getIdentity(): Promise<IdentityDto | null>;
 
   listIdentities(): Promise<IdentitiesDto>;
 

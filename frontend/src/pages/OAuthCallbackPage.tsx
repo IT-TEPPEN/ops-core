@@ -1,6 +1,5 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { AuthApi, OAuthConnectRequest } from "@/shared/api/authApi";
 
 /**
  * OAuth2.0コールバックページ
@@ -13,7 +12,6 @@ function OAuthCallbackPage() {
     "loading"
   );
   const [message, setMessage] = useState<string>("");
-  const authApi = useMemo(() => new AuthApi(), []);
 
   useEffect(() => {
     const handleCallback = async () => {
@@ -46,10 +44,10 @@ function OAuthCallbackPage() {
         // stateを検証
         const savedState = sessionStorage.getItem("oauth_state");
         const savedProvider = sessionStorage.getItem("oauth_provider");
-        const savedGitlabUrl = sessionStorage.getItem("oauth_gitlab_url");
-        const savedGitlabClientSecret = sessionStorage.getItem(
-          "oauth_gitlab_client_secret"
-        );
+        // const savedGitlabUrl = sessionStorage.getItem("oauth_gitlab_url");
+        // const savedGitlabClientSecret = sessionStorage.getItem(
+        //   "oauth_gitlab_client_secret"
+        // );
 
         if (!savedState || savedState !== state) {
           throw new Error("Invalid state parameter - possible CSRF attack");
@@ -60,31 +58,31 @@ function OAuthCallbackPage() {
         }
 
         // リクエストボディを作成
-        const requestBody: OAuthConnectRequest = {
-          provider: savedProvider,
-          code,
-          state,
-        };
+        // const requestBody = {
+        //   provider: savedProvider,
+        //   code,
+        //   state,
+        // };
 
-        // セルフホストGitLabの場合はURL、Client ID、Client Secretも送信
-        if (savedProvider === "gitlab-self-hosted") {
-          if (savedGitlabUrl) {
-            requestBody.gitlabUrl = savedGitlabUrl;
-          }
-          if (savedGitlabClientSecret) {
-            requestBody.clientSecret = savedGitlabClientSecret;
-          }
-          // Client IDもsessionStorageから取得して送信
-          const savedGitlabClientId = sessionStorage.getItem(
-            "oauth_gitlab_client_id"
-          );
-          if (savedGitlabClientId) {
-            requestBody.clientId = savedGitlabClientId;
-          }
-        }
+        // // セルフホストGitLabの場合はURL、Client ID、Client Secretも送信
+        // if (savedProvider === "gitlab-self-hosted") {
+        //   if (savedGitlabUrl) {
+        //     requestBody.gitlabUrl = savedGitlabUrl;
+        //   }
+        //   if (savedGitlabClientSecret) {
+        //     requestBody.clientSecret = savedGitlabClientSecret;
+        //   }
+        //   // Client IDもsessionStorageから取得して送信
+        //   const savedGitlabClientId = sessionStorage.getItem(
+        //     "oauth_gitlab_client_id"
+        //   );
+        //   if (savedGitlabClientId) {
+        //     requestBody.clientId = savedGitlabClientId;
+        //   }
+        // }
 
-        // AuthApiを使用してOAuth接続を保存
-        await authApi.connectOAuth(requestBody);
+        // // AuthApiを使用してOAuth接続を保存
+        // await authApi.connectOAuth(requestBody);
 
         // 認証成功
         setStatus("success");
@@ -117,7 +115,7 @@ function OAuthCallbackPage() {
     };
 
     handleCallback();
-  }, [searchParams, navigate, authApi]);
+  }, [searchParams, navigate]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900">

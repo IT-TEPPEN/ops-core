@@ -14,7 +14,7 @@ export class StartLoginProcessUsecaseImpl implements StartLoginProcessUsecase {
   ) {}
 
   async execute(dto: StartLoginProcessDto): Promise<void> {
-    const { provider, rememberMe, redirectToAuthenticationPage } = dto;
+    const { provider, rememberMe, from, redirectToAuthenticationPage } = dto;
 
     const loginUrlResponse = await this.authenticationService.getLoginUrl({
       providerName: provider,
@@ -23,7 +23,8 @@ export class StartLoginProcessUsecaseImpl implements StartLoginProcessUsecase {
     const temporaryInfo = TemporaryInfoImpl.new(
       provider,
       loginUrlResponse.state,
-      rememberMe
+      rememberMe,
+      from
     );
 
     // Save temporary info to session storage

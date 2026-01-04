@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import {
+  useNavigate,
+  useLocation,
+  type Location as RouterLocation,
+} from "react-router-dom";
 import {
   GoogleIcon,
   GitHubIcon,
@@ -49,22 +53,27 @@ const providerInfo: Record<Provider, ProviderInfo> = {
   },
 };
 
-export default function LoginPage() {
+export function LoginPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const fromLocation = (location.state as { from?: RouterLocation })?.from;
+  const from = fromLocation
+    ? `${fromLocation.pathname}${fromLocation.search}${fromLocation.hash}`
+    : "/";
   const [error, setError] = useState<string | null>(null);
   const [rememberMe, setRememberMe] = useState(false);
   const startLoginProcessUsecase = useStartLoginProcessUsecase();
   const getUserIdentityUsecase = useGetUserIdentityUsecase();
   const query = useQuery({
     queryKey: ["UserIdentity"],
-    queryFn: async () => getUserIdentityUsecase.execute(),
+    queryFn: () => getUserIdentityUsecase.execute(),
   });
 
   useEffect(() => {
     if (query.data) {
-      navigate("/", { replace: true });
+      navigate(from, { replace: true });
     }
-  }, [query.data, navigate]);
+  }, [query.data, from, navigate]);
 
   if (query.isLoading) {
     return <LoadingSpinner message="loading..." />;
@@ -90,6 +99,7 @@ export default function LoginPage() {
       await startLoginProcessUsecase.execute({
         provider,
         rememberMe,
+        from,
         redirectToAuthenticationPage: (externalUrl: string) => {
           window.location.href = externalUrl;
         },
@@ -101,13 +111,13 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="h-full flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="h-full flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+          <h2 className="mt-6 text-center text-3xl font-extrabold">
             Sign in to OpsCore
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
+          <p className="mt-2 text-center text-sm">
             Manage your operations documentation and procedures
           </p>
         </div>
@@ -128,10 +138,7 @@ export default function LoginPage() {
               onChange={(e) => setRememberMe(e.target.checked)}
               className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
             />
-            <label
-              htmlFor="remember-me"
-              className="ml-2 block text-sm text-gray-700"
-            >
+            <label htmlFor="remember-me" className="ml-2 block text-sm">
               Remember me for 30 days (otherwise 7 days)
             </label>
           </div>

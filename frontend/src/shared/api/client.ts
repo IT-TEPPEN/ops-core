@@ -2,10 +2,15 @@
  * API communication utility
  */
 
-import axios, { AxiosInstance, AxiosResponse, AxiosError, InternalAxiosRequestConfig } from "axios";
+import axios, {
+  AxiosInstance,
+  AxiosResponse,
+  AxiosError,
+  InternalAxiosRequestConfig,
+} from "axios";
 import type { ApiError } from "../types/api";
 
-const TOKEN_KEY = "auth_token";
+const TOKEN_KEY = "access_token";
 const REFRESH_TOKEN_KEY = "refresh_token";
 const USER_KEY = "auth_user";
 
@@ -53,7 +58,9 @@ export class V1ApiClient {
     this.client.interceptors.response.use(
       (response) => response,
       async (error: AxiosError) => {
-        const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+        const originalRequest = error.config as InternalAxiosRequestConfig & {
+          _retry?: boolean;
+        };
 
         // If error is 401 and we haven't retried yet
         if (error.response?.status === 401 && !originalRequest._retry) {
@@ -74,19 +81,25 @@ export class V1ApiClient {
             const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
 
             if (!refreshToken) {
-              // No refresh token available, logout
+              isRefreshing = false;
+              refreshSubscribers = [];
               this.handleLogout();
               return Promise.reject(error);
             }
 
             // Attempt to refresh the token
             // Extract base URL without resource path (e.g., "/api/v1/auth" -> "/api/v1")
-            const baseUrl = this.client.defaults.baseURL?.replace(/\/api\/v1.*$/, '') || '';
-            const response = await axios.post(`${baseUrl}/api/v1/auth/refresh`, {
-              refresh_token: refreshToken,
-            });
+            const baseUrl =
+              this.client.defaults.baseURL?.replace(/\/api\/v1.*$/, "") || "";
+            const response = await axios.post(
+              `${baseUrl}/api/v1/auth/refresh`,
+              {
+                refresh_token: refreshToken,
+              }
+            );
 
-            const { token: newAccessToken, refresh_token: newRefreshToken } = response.data;
+            const { token: newAccessToken, refresh_token: newRefreshToken } =
+              response.data;
 
             // Update stored tokens
             localStorage.setItem(TOKEN_KEY, newAccessToken);
@@ -122,7 +135,10 @@ export class V1ApiClient {
     localStorage.removeItem(REFRESH_TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
 
-    // Redirect to login page
+    if (window.location.pathname === "/login") {
+      return;
+    }
+
     window.location.href = "/login";
   }
 

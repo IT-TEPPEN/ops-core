@@ -1,65 +1,58 @@
-import { useEffect, useMemo } from "react";
+import { useEffect } from "react";
+import { useNavigate, useSearchParams, useParams } from "react-router-dom";
 import {
-  useNavigate,
-  useSearchParams,
-  useLocation,
-  useParams,
-} from "react-router-dom";
-import { useAuth } from "../app/hooks/useAuth";
-import { AuthApi } from "@/shared/api/authApi";
+  useAuthenticationService,
+  useSessionRepository,
+} from "@/features/authentication/infrastructure/contexts";
+import { TokenImpl } from "@/features/authentication/domain/entity";
 
 export default function AuthCallbackPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const location = useLocation();
+  const authenticationService = useAuthenticationService();
+  const sessionRepository = useSessionRepository();
+
+  const code = searchParams.get("code");
+  const state = searchParams.get("state");
   const { provider } = useParams<{ provider: string }>();
-  const { login } = useAuth();
-  const authApi = useMemo(() => new AuthApi(), []);
 
   useEffect(() => {
     const handleCallback = async () => {
-      const code = searchParams.get("code");
-      const state = searchParams.get("state");
-
       if (!code || !state || !provider) {
         console.error("Missing code, state, or provider parameter");
         navigate("/login", { replace: true });
         return;
       }
 
-      // Verify state for CSRF protection
-      const storedState = sessionStorage.getItem("auth_state");
-      const storedProvider = sessionStorage.getItem("auth_provider");
+      const temporarySession = await sessionRepository.getTemporaryInfo();
       const rememberMe = sessionStorage.getItem("auth_remember_me") === "true";
 
-      if (state !== storedState || provider !== storedProvider) {
+      if (
+        state !== temporarySession?.state ||
+        provider !== temporarySession?.provider
+      ) {
         console.error("State or provider mismatch - potential CSRF attack");
         navigate("/login", { replace: true });
         return;
       }
 
       try {
-        // Exchange code for token (with remember_me preference)
-        const data = await authApi.handleProviderCallback(
+        const tokensDto = await authenticationService.validateCodeAndGetToken({
           provider,
           code,
           state,
-          rememberMe
+          rememberMe,
+        });
+
+        const tokens = TokenImpl.fromJwt(
+          tokensDto.accessToken,
+          tokensDto.refreshToken
         );
 
-        // Store token, refresh token, and user info
-        login(data.token, data.user, data.refresh_token);
+        await sessionRepository.saveToken(tokens);
+        await sessionRepository.removeTemporaryInfo();
 
-        // Clean up
-        sessionStorage.removeItem("auth_state");
-        sessionStorage.removeItem("auth_provider");
-        sessionStorage.removeItem("auth_remember_me");
-
-        // Get the originally requested page or default to home
-        const from =
-          (location.state as { from?: { pathname: string } } | null)?.from
-            ?.pathname || "/";
-        navigate(from, { replace: true });
+        navigate(temporarySession.from || "/", { replace: true });
       } catch (error) {
         console.error("Authentication error:", error);
         navigate("/login", { replace: true });
@@ -67,7 +60,14 @@ export default function AuthCallbackPage() {
     };
 
     handleCallback();
-  }, [searchParams, navigate, location, login, provider, authApi]);
+  }, [
+    navigate,
+    provider,
+    code,
+    state,
+    sessionRepository,
+    authenticationService,
+  ]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">

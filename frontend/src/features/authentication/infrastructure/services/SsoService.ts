@@ -10,6 +10,7 @@ import {
   UnlinkIdentityDto,
   ValidateCodeAndGetTokenDto,
 } from "../../application/dto";
+import { AxiosError } from "axios";
 
 interface LoginUrlResponse {
   auth_url: string;
@@ -85,18 +86,25 @@ export class SsoService extends V1ApiClient implements AuthenticationService {
     };
   }
 
-  async getIdentity(): Promise<IdentityDto> {
-    const response = await this.get<IdentityResponse>("/identity");
+  async getIdentity(): Promise<IdentityDto | null> {
+    try {
+      const response = await this.get<IdentityResponse>("/identity");
 
-    return {
-      id: response.id,
-      provider: response.provider,
-      email: response.email,
-      name: response.name,
-      pictureUrl: response.picture,
-      linkedAt: response.linked_at,
-      lastUsedAt: response.last_used_at,
-    };
+      return {
+        id: response.id,
+        provider: response.provider,
+        email: response.email,
+        name: response.name,
+        pictureUrl: response.picture,
+        linkedAt: response.linked_at,
+        lastUsedAt: response.last_used_at,
+      };
+    } catch (error) {
+      if (error instanceof AxiosError && error.response?.status === 401) {
+        return null;
+      }
+      throw error;
+    }
   }
 
   async listIdentities(): Promise<IdentitiesDto> {

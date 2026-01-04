@@ -1,5 +1,4 @@
 import { Navigate, useLocation } from "react-router-dom";
-import { useAuth } from "../../../app/hooks/useAuth";
 import { LoadingSpinner } from "@/ui";
 import { useGetUserIdentityUsecase } from "@/features/authentication/presentation/contexts";
 import { useQuery } from "@tanstack/react-query";
@@ -14,7 +13,6 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     queryKey: ["UserIdentity"],
     queryFn: async () => getUserIdentityUsecase.execute(),
   });
-  const { isAuthenticated } = useAuth();
   const location = useLocation();
 
   if (query.isLoading) {
@@ -32,7 +30,6 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   }
 
   if (!query.data) {
-    // Redirect to login page, saving the attempted location
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
