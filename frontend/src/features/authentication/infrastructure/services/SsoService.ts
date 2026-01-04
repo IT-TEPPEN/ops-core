@@ -5,7 +5,6 @@ import {
   IdentitiesDto,
   IdentityDto,
   LoginUriDto,
-  refreshTokenDto,
   TokenDto,
   UnlinkIdentityDto,
   ValidateCodeAndGetTokenDto,
@@ -64,20 +63,6 @@ export class SsoService extends V1ApiClient implements AuthenticationService {
     const response = await this.post<TokenResponse, AuthCallbackRequest>(
       `/${dto.provider}/callback`,
       { code: dto.code, state: dto.state, remember_me: dto.rememberMe }
-    );
-
-    return {
-      accessToken: response.token,
-      refreshToken: response.refresh_token,
-    };
-  }
-
-  async refreshToken(dto: refreshTokenDto): Promise<TokenDto> {
-    const response = await this.post<TokenResponse, { refresh_token: string }>(
-      `/refresh`,
-      {
-        refresh_token: dto.refreshToken,
-      }
     );
 
     return {

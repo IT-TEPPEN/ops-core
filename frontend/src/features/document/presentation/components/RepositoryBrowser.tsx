@@ -1,7 +1,6 @@
 import { useOAuthQueryService } from "@/features/oauth";
 import { Repository } from "@/features/oauth/application/dto";
-import { LoadingSpinner } from "@/ui";
-import { useQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 
@@ -26,24 +25,10 @@ export function RepositoryBrowser({ connectionId }: RepositoryBrowserProps) {
   );
   const [searchQuery, setSearchQuery] = useState("");
   const oauthQueryService = useOAuthQueryService();
-  const query = useQuery({
+  const { data: repositories } = useSuspenseQuery({
     queryKey: ["repositories", connectionId],
     queryFn: async () => oauthQueryService.listRepositories(connectionId),
   });
-
-  if (query.isLoading) {
-    return <LoadingSpinner message="Loading..." />;
-  }
-
-  if (query.isError || !query.data) {
-    return (
-      <div className="text-sm text-red-500">
-        Failed to load repositories. Please try again.
-      </div>
-    );
-  }
-
-  const repositories = query.data;
 
   const filteredRepositories = repositories.filter(
     (repo) =>

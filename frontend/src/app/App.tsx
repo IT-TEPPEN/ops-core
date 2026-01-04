@@ -23,6 +23,14 @@ function App() {
         {/* Page Content Area */}
         <main className="h-[calc(100vh-4rem)] overflow-auto">
           <Routes>
+            <Route
+              path="/"
+              element={
+                <ProtectedRoute>
+                  <HomePage />
+                </ProtectedRoute>
+              }
+            />
             <Route path="/markdown-test" element={<MarkdownTestEditor />} />
             <Route path="/login" element={<LoginPage />} />
             <Route
@@ -38,14 +46,6 @@ function App() {
               }
             />
 
-            <Route
-              path="/"
-              element={
-                <ProtectedRoute>
-                  <HomePage />
-                </ProtectedRoute>
-              }
-            />
             {OAuthRoutes()}
             {DocumentRoutes()}
             {GroupRoutes()}

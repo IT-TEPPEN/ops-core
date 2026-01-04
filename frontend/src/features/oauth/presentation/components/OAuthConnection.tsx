@@ -53,7 +53,7 @@ export function OAuthConnection() {
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
+    <div className="bg-white dark:bg-gray-800 p-6 max-w-4xl mx-auto my-4 rounded-lg shadow">
       <h2 className="text-lg font-semibold mb-4">
         Step 1: Connect Your Git Account
       </h2>

@@ -1,7 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import { useOAuthQueryService } from "../contexts";
-import { LoadingSpinner } from "@/ui";
 
 /**
  * コネクション一覧コンポーネント
@@ -12,22 +11,12 @@ export function ConnectionList() {
   const selected_connection_id = searchParams.get("selected_connection_id");
 
   const oauthQueryService = useOAuthQueryService();
-  const query = useQuery({
+  const query = useSuspenseQuery({
     queryKey: ["connections"],
-    queryFn: async () => oauthQueryService.listConnections(),
+    queryFn: async () => {
+      return oauthQueryService.listConnections();
+    },
   });
-
-  if (query.isLoading) {
-    return <LoadingSpinner message="Loading..." />;
-  }
-
-  if (query.isError || !query.data) {
-    return (
-      <div className="text-sm text-red-500">
-        Failed to load connections. Please try again.
-      </div>
-    );
-  }
 
   const connections = query.data;
 

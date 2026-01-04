@@ -3,7 +3,6 @@ import {
   IdentitiesDto,
   IdentityDto,
   LoginUriDto,
-  refreshTokenDto,
   TokenDto,
   UnlinkIdentityDto,
   ValidateCodeAndGetTokenDto,
@@ -13,8 +12,6 @@ export interface AuthenticationService {
   getLoginUrl(dto: GetProviderLoginUrlDto): Promise<LoginUriDto>;
 
   validateCodeAndGetToken(dto: ValidateCodeAndGetTokenDto): Promise<TokenDto>;
-
-  refreshToken(dto: refreshTokenDto): Promise<TokenDto>;
 
   getIdentity(): Promise<IdentityDto | null>;
 

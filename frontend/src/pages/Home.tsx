@@ -11,16 +11,16 @@ export function HomePage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
-          <h2 className="text-xl font-bold mb-2">Repository Management</h2>
+          <h2 className="text-xl font-bold mb-2">Document Management</h2>
           <p className="mb-4 text-gray-600 dark:text-gray-300">
-            Register external Git repositories and select markdown files to
-            display as documentation.
+            Connect to external git repositories to import and manage your
+            markdown documents.
           </p>
           <Link
-            to="/repositories"
+            to="/documents"
             className="inline-block px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
           >
-            Manage Repositories
+            Manage Documents
           </Link>
         </div>
 

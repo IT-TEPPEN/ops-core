@@ -17,6 +17,7 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
 .markdown-content {
   @apply text-gray-900 dark:text-gray-100;
   line-height: 1.75;
