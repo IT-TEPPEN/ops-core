@@ -1622,13 +1622,11 @@ paths:
         "400":
           description: Invalid request
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/opscore_backend_internal_oauth_domain.OAuthTokenResponse'
         "500":
           description: Internal server error
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/opscore_backend_internal_oauth_domain.OAuthTokenResponse'
       summary: OAuth callback endpoint
       tags:
       - OAuth
@@ -1820,6 +1818,10 @@ paths:
         name: filePath
         required: true
         type: string
+      - description: Git reference (branch, tag, commit SHA)
+        in: query
+        name: ref
+        type: string
       produces:
       - application/json
       responses:
@@ -1846,6 +1848,63 @@ paths:
       security:
       - BearerAuth: []
       summary: Get file content
+      tags:
+      - OAuth
+  /auth/oauth/connections/{connectionId}/repositories/{owner}/{repo}/files/history:
+    get:
+      description: Get the commit history for a specific file via OAuth connection
+      parameters:
+      - description: OAuth connection ID
+        in: path
+        name: connectionId
+        required: true
+        type: string
+      - description: Repository owner
+        in: path
+        name: owner
+        required: true
+        type: string
+      - description: Repository name
+        in: path
+        name: repo
+        required: true
+        type: string
+      - description: Repository ID
+        in: query
+        name: repositoryId
+        required: true
+        type: string
+      - description: File path relative to repository root
+        in: query
+        name: path
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get file commit history
       tags:
       - OAuth
   /auth/oauth/connections/{provider}:

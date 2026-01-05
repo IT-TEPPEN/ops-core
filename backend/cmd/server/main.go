@@ -132,6 +132,7 @@ func main() {
 			authProtected.GET("/oauth/connections", oauthHandler.ListConnections)
 			authProtected.GET("/oauth/connections/:connectionId/repositories", oauthHandler.ListRepositoriesByConnection)
 			authProtected.GET("/oauth/connections/:connectionId/repositories/:owner/:repo/contents", oauthHandler.GetRepositoryContents)
+			authProtected.GET("/oauth/connections/:connectionId/repositories/:owner/:repo/file-histories/*filePath", oauthHandler.GetFileCommitHistory)
 			authProtected.GET("/oauth/connections/:connectionId/repositories/:owner/:repo/files/*filePath", oauthHandler.GetRepositoryFileContent)
 			authProtected.DELETE("/oauth/connections/:provider", oauthHandler.DisconnectProvider)
 		}

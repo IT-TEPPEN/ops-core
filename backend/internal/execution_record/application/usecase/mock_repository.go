@@ -12,13 +12,13 @@ import (
 
 // MockExecutionRecordRepository is a mock implementation of ExecutionRecordRepository for testing.
 type MockExecutionRecordRepository struct {
-	SaveFunc            func(ctx context.Context, record entity.ExecutionRecord) error
-	FindByIDFunc        func(ctx context.Context, id value_object.ExecutionRecordID) (entity.ExecutionRecord, error)
+	SaveFunc             func(ctx context.Context, record entity.ExecutionRecord) error
+	FindByIDFunc         func(ctx context.Context, id value_object.ExecutionRecordID) (entity.ExecutionRecord, error)
 	FindByExecutorIDFunc func(ctx context.Context, executorID string) ([]entity.ExecutionRecord, error)
 	FindByDocumentIDFunc func(ctx context.Context, documentID docvo.DocumentID) ([]entity.ExecutionRecord, error)
-	SearchFunc          func(ctx context.Context, criteria repository.SearchCriteria) ([]entity.ExecutionRecord, error)
-	UpdateFunc          func(ctx context.Context, record entity.ExecutionRecord) error
-	DeleteFunc          func(ctx context.Context, id value_object.ExecutionRecordID) error
+	SearchFunc           func(ctx context.Context, criteria repository.SearchCriteria) ([]entity.ExecutionRecord, error)
+	UpdateFunc           func(ctx context.Context, record entity.ExecutionRecord) error
+	DeleteFunc           func(ctx context.Context, id value_object.ExecutionRecordID) error
 }
 
 func (m *MockExecutionRecordRepository) Save(ctx context.Context, record entity.ExecutionRecord) error {
@@ -124,11 +124,11 @@ func (m *MockAttachmentRepository) Delete(ctx context.Context, id value_object.A
 
 // MockStorageManager is a mock implementation of StorageManager for testing.
 type MockStorageManager struct {
-	StoreFunc               func(ctx context.Context, path string, file io.Reader) (string, error)
-	RetrieveFunc            func(ctx context.Context, path string) (io.ReadCloser, error)
-	DeleteFunc              func(ctx context.Context, path string) error
+	StoreFunc                func(ctx context.Context, path string, file io.Reader) (string, error)
+	RetrieveFunc             func(ctx context.Context, path string) (io.ReadCloser, error)
+	DeleteFunc               func(ctx context.Context, path string) error
 	GeneratePresignedURLFunc func(ctx context.Context, path string, expirationMinutes int) (string, error)
-	TypeFunc                func() value_object.StorageType
+	TypeFunc                 func() value_object.StorageType
 }
 
 func (m *MockStorageManager) Store(ctx context.Context, path string, file io.Reader) (string, error) {

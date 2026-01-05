@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"regexp"
 
-	apperror "opscore/backend/internal/document/application/error"
 	"opscore/backend/internal/document/application/dto"
+	apperror "opscore/backend/internal/document/application/error"
 	"opscore/backend/internal/document/domain/repository"
 	"opscore/backend/internal/document/domain/value_object"
 )
@@ -118,7 +118,7 @@ func (uc *variableUseCase) ValidateVariableValues(ctx context.Context, documentI
 					if ok && strVal == "" {
 						empty = true
 					}
-				// For number and boolean, nil or missing is empty, 0/false is valid
+					// For number and boolean, nil or missing is empty, 0/false is valid
 				}
 			}
 			if empty {

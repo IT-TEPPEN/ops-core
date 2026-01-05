@@ -1,4 +1,4 @@
-import { Content, Connection, Repository, Document } from "../dto";
+import { Content, Connection, Repository, Document, Commit } from "../dto";
 
 /**
  * OAuth Query Service interface for read operations (GET).
@@ -35,4 +35,14 @@ export interface OAuthQueryService {
     filePath: string,
     commitSha?: string
   ): Promise<Document>;
+
+  /**
+   * Get commit history for a specific file.
+   */
+  getFileCommitHistory(
+    connectionId: string,
+    repositoryId: string,
+    repositoryFullName: string,
+    filePath: string
+  ): Promise<Commit[]>;
 }

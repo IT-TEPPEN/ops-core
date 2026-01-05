@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
 import AuthCallbackPage from "../pages/AuthCallbackPage";
 import { LoginPage } from "../pages/LoginPage";
 import AccountSettingsPage from "../pages/AccountSettingsPage";
@@ -13,15 +13,22 @@ import { OAuthRoutes } from "@/pages/oauth";
 import { GroupRoutes } from "@/pages/groups";
 
 function App() {
+  const location = useLocation();
+
+  // Check if current path is an auth callback page
+  const isAuthCallback = /^\/auth\/[^/]+\/callback$/.test(location.pathname);
+
   return (
     <DiProviders>
       <div className="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
-        <div className="h-[4rem]">
-          <Header />
-        </div>
+        {!isAuthCallback && (
+          <div className="h-[4rem]">
+            <Header />
+          </div>
+        )}
 
         {/* Page Content Area */}
-        <main className="h-[calc(100vh-4rem)] overflow-auto">
+        <main className={isAuthCallback ? "h-screen overflow-auto" : "h-[calc(100vh-4rem)] overflow-auto"}>
           <Routes>
             <Route
               path="/"

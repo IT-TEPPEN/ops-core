@@ -6,6 +6,7 @@ import {
   Connection,
   Repository,
   DocumentMeta,
+  Commit,
 } from "../../application/dto";
 import { V1ApiClient } from "@/shared/api/client";
 
@@ -45,6 +46,20 @@ interface GetFileContentResponse {
   path: string;
   sha: string;
   encoding: string;
+}
+
+interface FileCommitInfo {
+  hash: string;
+  message: string;
+  author: string;
+  authorEmail: string;
+  date: string;
+}
+
+interface GetFileCommitHistoryResponse {
+  file_path: string;
+  commits: FileCommitInfo[];
+  count: number;
 }
 
 /**
@@ -135,5 +150,28 @@ export class HttpOAuthQueryService
       meta: meta as DocumentMeta,
       commitHash: commitSha,
     };
+  }
+
+  async getFileCommitHistory(
+    connectionId: string,
+    repositoryId: string,
+    repositoryFullName: string,
+    filePath: string
+  ): Promise<Commit[]> {
+    const response = await this.get<GetFileCommitHistoryResponse>(
+      `/connections/${connectionId}/repositories/${encodeURIComponent(
+        repositoryFullName
+      )}/file-histories/${encodeURIComponent(
+        filePath
+      )}?repositoryId=${encodeURIComponent(repositoryId)}`
+    );
+
+    return response.commits.map((commit) => ({
+      hash: commit.hash,
+      message: commit.message,
+      author: commit.author,
+      authorEmail: commit.authorEmail,
+      date: new Date(commit.date),
+    }));
   }
 }

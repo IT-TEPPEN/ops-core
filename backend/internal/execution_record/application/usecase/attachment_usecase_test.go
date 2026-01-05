@@ -9,8 +9,8 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	docvo "opscore/backend/internal/document/domain/value_object"
-	apperror "opscore/backend/internal/execution_record/application/error"
 	"opscore/backend/internal/execution_record/application/dto"
+	apperror "opscore/backend/internal/execution_record/application/error"
 	"opscore/backend/internal/execution_record/domain/entity"
 	"opscore/backend/internal/execution_record/domain/value_object"
 )

@@ -1,16 +1,13 @@
 import { useSearchParams } from "react-router-dom";
-// import { useRepositoryQueryService } from "@/features/repository";
 import { useQuery } from "@tanstack/react-query";
 import type {
   DocumentKnowledgeMeta,
   DocumentProcedureMeta,
   DocumentVariable,
-  // DocumentVariable,
 } from "@/features/repository/types";
 import { Page } from "@/shared/types/Page";
 import { useEffect, useState, useCallback } from "react";
 import { MarkdownProcessor } from "@/features/markdown/processor";
-// import { FileCommitHistory } from "@/features/repository/presentation/components/FileCommitHistory";
 import { VariableForm } from "@/features/common/components";
 import { substituteVariables } from "@/shared/utils/variableSubstitution";
 // import { useDocumentRegistration } from "@/features/document/hooks/useDocumentRegistration";
@@ -19,6 +16,7 @@ import { substituteVariables } from "@/shared/utils/variableSubstitution";
 import { useOAuthQueryService } from "@/features/oauth";
 import type { VariableDefinition } from "@/shared/types/domain";
 import { LoadingSpinner } from "@/ui";
+import { FileCommitHistory } from "@/features/repository/presentation/components/FileCommitHistory";
 
 function documentVariableToDefinition(
   docVar: DocumentVariable
@@ -216,53 +214,6 @@ export const DocumentPreviewPage: Page<
     }
   }, [query.data, query.isLoading, query.error, variableValues]);
 
-  // const handleCommitSelect = (commitHash: string) => {
-  //   setSearchParams({ commit: commitHash });
-  // };
-
-  // const handleRegisterDocument = useCallback(
-  //   async (options: {
-  //     accessScope: "public" | "private";
-  //     isAutoUpdate: boolean;
-  //   }) => {
-  //     if (!query.data) return;
-
-  //     try {
-  //       const result = await registerDocument(
-  //         repoId,
-  //         filePath!,
-  //         options,
-  //         commit
-  //       );
-  //       notificationActions.push({
-  //         title: "Success",
-  //         message: "Document registered successfully",
-  //         type: "success",
-  //       });
-  //       setIsDialogOpen(false);
-  //       navigate(`/documents/${result.id}`);
-  //     } catch (error) {
-  //       notificationActions.push({
-  //         title: "Error",
-  //         message:
-  //           error instanceof Error
-  //             ? error.message
-  //             : "Failed to register document",
-  //         type: "error",
-  //       });
-  //     }
-  //   },
-  //   [
-  //     registerDocument,
-  //     navigate,
-  //     notificationActions,
-  //     query.data,
-  //     commit,
-  //     repoId,
-  //     filePath,
-  //   ]
-  // );
-
   if (query.isLoading) {
     return <LoadingSpinner message="Loading..." />;
   }
@@ -329,12 +280,12 @@ export const DocumentPreviewPage: Page<
           </div>
 
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4">
-            {/* <FileCommitHistory
-              repoId={repoId!}
-              filePath={filePath!}
-              currentCommit={query.data?.commitHash}
-              onCommitSelect={handleCommitSelect}
-            /> */}
+            <FileCommitHistory
+              connectionId={connection_id}
+              repositoryId={repository_id}
+              repositoryFullName={repository_full_name}
+              filePath={path}
+            />
           </div>
         </div>
 

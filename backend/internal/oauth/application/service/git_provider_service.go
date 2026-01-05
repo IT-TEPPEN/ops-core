@@ -282,7 +282,7 @@ type FileContent struct {
 }
 
 // GetRepositoryContents gets files and directories at a specific path
-func (s *GitProviderService) GetRepositoryContents(ctx context.Context, userID string, connectionID string, repositoryID string, owner string, repo string, path string) ([]FileNode, error) {
+func (s *GitProviderService) GetRepositoryContents(ctx context.Context, userID string, connectionID string, repositoryID string, owner string, repo string, path string, commitSha string) ([]FileNode, error) {
 	// Get the OAuth connection
 	conn, err := s.oauthService.GetConnectionByID(ctx, userID, connectionID)
 	if err != nil {
@@ -297,7 +297,7 @@ func (s *GitProviderService) GetRepositoryContents(ctx context.Context, userID s
 
 	switch conn.Provider() {
 	case domain.ProviderGitHub:
-		return s.getGitHubRepositoryContents(ctx, token, owner, repo, path)
+		return s.getGitHubRepositoryContents(ctx, token, owner, repo, path, commitSha)
 	case domain.ProviderGitLab, domain.ProviderGitLabSelfHosted:
 		baseURL := "https://gitlab.com"
 		if conn.Provider() == domain.ProviderGitLabSelfHosted {
@@ -310,7 +310,7 @@ func (s *GitProviderService) GetRepositoryContents(ctx context.Context, userID s
 }
 
 // GetFileContent gets the content of a specific file
-func (s *GitProviderService) GetFileContent(ctx context.Context, userID string, connectionID string, repositoryID string, owner string, repo string, filePath string, ref string) (*FileContent, error) {
+func (s *GitProviderService) GetFileContent(ctx context.Context, userID string, connectionID string, repositoryID string, owner string, repo string, filePath string, commitSha string) (*FileContent, error) {
 	// Get the OAuth connection
 	conn, err := s.oauthService.GetConnectionByID(ctx, userID, connectionID)
 	if err != nil {
@@ -325,23 +325,26 @@ func (s *GitProviderService) GetFileContent(ctx context.Context, userID string, 
 
 	switch conn.Provider() {
 	case domain.ProviderGitHub:
-		return s.getGitHubFileContent(ctx, token, owner, repo, filePath, ref)
+		return s.getGitHubFileContent(ctx, token, owner, repo, filePath, commitSha)
 	case domain.ProviderGitLab, domain.ProviderGitLabSelfHosted:
 		baseURL := "https://gitlab.com"
 		if conn.Provider() == domain.ProviderGitLabSelfHosted {
 			baseURL = fmt.Sprintf("https://%s", conn.ProviderHost())
 		}
-		return s.getGitLabFileContent(ctx, token, baseURL, repositoryID, owner, repo, filePath, ref)
+		return s.getGitLabFileContent(ctx, token, baseURL, repositoryID, owner, repo, filePath, commitSha)
 	default:
 		return nil, fmt.Errorf("unsupported provider: %s", conn.Provider())
 	}
 }
 
 // getGitHubRepositoryContents gets contents from GitHub API
-func (s *GitProviderService) getGitHubRepositoryContents(ctx context.Context, token string, owner string, repo string, path string) ([]FileNode, error) {
-	url := fmt.Sprintf("https://api.github.com/repos/%s/%s/contents/%s", owner, repo, path)
+func (s *GitProviderService) getGitHubRepositoryContents(ctx context.Context, token string, owner string, repo string, path string, commitSha string) ([]FileNode, error) {
+	requestUrl := fmt.Sprintf("https://api.github.com/repos/%s/%s/contents/%s", owner, repo, path)
+	if commitSha != "" {
+		requestUrl = fmt.Sprintf("%s?ref=%s", requestUrl, url.QueryEscape(commitSha))
+	}
 
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", requestUrl, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -391,10 +394,10 @@ func (s *GitProviderService) getGitHubRepositoryContents(ctx context.Context, to
 }
 
 // getGitHubFileContent gets file content from GitHub API
-func (s *GitProviderService) getGitHubFileContent(ctx context.Context, token string, owner string, repo string, filePath string, ref string) (*FileContent, error) {
+func (s *GitProviderService) getGitHubFileContent(ctx context.Context, token string, owner string, repo string, filePath string, commitSha string) (*FileContent, error) {
 	requestURL := fmt.Sprintf("https://api.github.com/repos/%s/%s/contents/%s", owner, repo, filePath)
-	if ref != "" {
-		requestURL = fmt.Sprintf("%s?ref=%s", requestURL, url.QueryEscape(ref))
+	if commitSha != "" {
+		requestURL = fmt.Sprintf("%s?ref=%s", requestURL, url.QueryEscape(commitSha))
 	}
 
 	req, err := http.NewRequestWithContext(ctx, "GET", requestURL, nil)
@@ -538,4 +541,153 @@ func (s *GitProviderService) getGitLabFileContent(ctx context.Context, token str
 		SHA:      "",
 		Encoding: "utf-8",
 	}, nil
+}
+
+// FileCommitInfo represents commit information for a file
+type FileCommitInfo struct {
+	Hash        string    `json:"hash"`
+	Message     string    `json:"message"`
+	Author      string    `json:"author"`
+	AuthorEmail string    `json:"authorEmail"`
+	Date        time.Time `json:"date"`
+}
+
+// GetFileCommitHistory gets the commit history for a specific file
+func (s *GitProviderService) GetFileCommitHistory(ctx context.Context, userID string, connectionID string, repositoryID string, owner string, repo string, filePath string) ([]FileCommitInfo, error) {
+	// Get the OAuth connection
+	conn, err := s.oauthService.GetConnectionByID(ctx, userID, connectionID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get connection: %w", err)
+	}
+
+	// Get access token
+	token, err := s.oauthService.GetAccessTokenByConnectionID(ctx, userID, connectionID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get access token: %w", err)
+	}
+
+	switch conn.Provider() {
+	case domain.ProviderGitHub:
+		return s.getGitHubFileCommitHistory(ctx, token, owner, repo, filePath)
+	case domain.ProviderGitLab, domain.ProviderGitLabSelfHosted:
+		baseURL := "https://gitlab.com"
+		if conn.Provider() == domain.ProviderGitLabSelfHosted {
+			baseURL = fmt.Sprintf("https://%s", conn.ProviderHost())
+		}
+		return s.getGitLabFileCommitHistory(ctx, token, baseURL, repositoryID, owner, repo, filePath)
+	default:
+		return nil, fmt.Errorf("unsupported provider: %s", conn.Provider())
+	}
+}
+
+// getGitHubFileCommitHistory gets file commit history from GitHub API
+func (s *GitProviderService) getGitHubFileCommitHistory(ctx context.Context, token string, owner string, repo string, filePath string) ([]FileCommitInfo, error) {
+	requestURL := fmt.Sprintf("https://api.github.com/repos/%s/%s/commits?path=%s", owner, repo, url.QueryEscape(filePath))
+
+	req, err := http.NewRequestWithContext(ctx, "GET", requestURL, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("Accept", "application/vnd.github+json")
+
+	resp, err := s.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("GitHub API error: %d - %s", resp.StatusCode, string(body))
+	}
+
+	var githubCommits []struct {
+		SHA    string `json:"sha"`
+		Commit struct {
+			Message string `json:"message"`
+			Author  struct {
+				Name  string    `json:"name"`
+				Email string    `json:"email"`
+				Date  time.Time `json:"date"`
+			} `json:"author"`
+		} `json:"commit"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&githubCommits); err != nil {
+		return nil, err
+	}
+
+	commits := make([]FileCommitInfo, len(githubCommits))
+	for i, commit := range githubCommits {
+		commits[i] = FileCommitInfo{
+			Hash:        commit.SHA,
+			Message:     commit.Commit.Message,
+			Author:      commit.Commit.Author.Name,
+			AuthorEmail: commit.Commit.Author.Email,
+			Date:        commit.Commit.Author.Date,
+		}
+	}
+
+	return commits, nil
+}
+
+// getGitLabFileCommitHistory gets file commit history from GitLab API
+func (s *GitProviderService) getGitLabFileCommitHistory(ctx context.Context, token string, baseURL string, repositoryID string, owner string, repo string, filePath string) ([]FileCommitInfo, error) {
+	projectRef := repositoryID
+	if projectRef == "" {
+		projectRef = url.PathEscape(fmt.Sprintf("%s/%s", owner, repo))
+	}
+
+	if strings.HasPrefix(filePath, "/") {
+		filePath = filePath[1:]
+	}
+
+	reqURL := fmt.Sprintf("%s/api/v4/projects/%s/repository/commits?path=%s", baseURL, projectRef, url.QueryEscape(filePath))
+
+	req, err := http.NewRequestWithContext(ctx, "GET", reqURL, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Authorization", "Bearer "+token)
+
+	resp, err := s.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("GitLab API error: %d - %s", resp.StatusCode, string(body))
+	}
+
+	var gitlabCommits []struct {
+		ID            string    `json:"id"`
+		ShortID       string    `json:"short_id"`
+		Title         string    `json:"title"`
+		Message       string    `json:"message"`
+		AuthorName    string    `json:"author_name"`
+		AuthorEmail   string    `json:"author_email"`
+		CommittedDate time.Time `json:"committed_date"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&gitlabCommits); err != nil {
+		return nil, err
+	}
+
+	commits := make([]FileCommitInfo, len(gitlabCommits))
+	for i, commit := range gitlabCommits {
+		commits[i] = FileCommitInfo{
+			Hash:        commit.ID,
+			Message:     commit.Message,
+			Author:      commit.AuthorName,
+			AuthorEmail: commit.AuthorEmail,
+			Date:        commit.CommittedDate,
+		}
+	}
+
+	return commits, nil
 }

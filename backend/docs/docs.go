@@ -819,15 +819,13 @@ const docTemplate = `{
                     "400": {
                         "description": "Invalid request",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/opscore_backend_internal_oauth_domain.OAuthTokenResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/opscore_backend_internal_oauth_domain.OAuthTokenResponse"
                         }
                     }
                 }
@@ -1072,6 +1070,90 @@ const docTemplate = `{
                 }
             }
         },
+        "/auth/oauth/connections/{connectionId}/repositories/{owner}/{repo}/files/history": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get the commit history for a specific file via OAuth connection",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "OAuth"
+                ],
+                "summary": "Get file commit history",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "OAuth connection ID",
+                        "name": "connectionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Repository owner",
+                        "name": "owner",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Repository name",
+                        "name": "repo",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Repository ID",
+                        "name": "repositoryId",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "File path relative to repository root",
+                        "name": "path",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
         "/auth/oauth/connections/{connectionId}/repositories/{owner}/{repo}/files/{filePath}": {
             "get": {
                 "security": [
@@ -1122,6 +1204,12 @@ const docTemplate = `{
                         "name": "filePath",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Git reference (branch, tag, commit SHA)",
+                        "name": "ref",
+                        "in": "query"
                     }
                 ],
                 "responses": {
