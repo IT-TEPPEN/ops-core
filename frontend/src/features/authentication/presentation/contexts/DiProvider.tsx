@@ -3,6 +3,7 @@ import {
   SessionRepositoryProvider,
 } from "../../infrastructure/contexts";
 import { GetUserIdentityProvider } from "./GetUserIdentityProvider";
+import { SignOutProvider } from "./SignOutProvider";
 import { StartLoginProcessProvider } from "./StartLoginProcessProvider";
 
 export function AuthenticationDiProvider({
@@ -17,7 +18,9 @@ export function AuthenticationDiProvider({
         <AuthenticationServiceProvider>
           {/* Usecase Layer Providers */}
           <GetUserIdentityProvider>
-            <StartLoginProcessProvider>{children}</StartLoginProcessProvider>
+            <SignOutProvider>
+              <StartLoginProcessProvider>{children}</StartLoginProcessProvider>
+            </SignOutProvider>
           </GetUserIdentityProvider>
         </AuthenticationServiceProvider>
       </SessionRepositoryProvider>

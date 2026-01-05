@@ -27,6 +27,11 @@ export class SessionLocalStorageRepository implements SessionRepository {
     return TokenImpl.fromJwt(accessToken, refreshToken);
   }
 
+  async removeToken(): Promise<void> {
+    localStorage.removeItem(this.ACCESS_TOKEN_KEY);
+    localStorage.removeItem(this.REFRESH_TOKEN_KEY);
+  }
+
   async saveTemporaryInfo(info: TemporaryInfo): Promise<void> {
     localStorage.setItem(this.TEMPORARY_INFO_KEY, info.toJSONString());
   }
