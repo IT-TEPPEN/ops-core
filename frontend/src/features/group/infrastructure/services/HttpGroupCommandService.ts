@@ -25,7 +25,7 @@ export class HttpGroupCommandService
   }
 
   async update(groupId: string, request: UpdateGroupRequest): Promise<Group> {
-    return await this.put<Group>(`/${groupId}`, request);
+    return await this.put<Group, UpdateGroupRequest>(`/${groupId}`, request);
   }
 
   async deleteGroup(groupId: string): Promise<void> {

@@ -1,13 +1,27 @@
-export type {
-  DocumentQueryService,
-  DocumentCommandService,
-  CreateDocumentRequest,
-  UpdateDocumentRequest,
-} from "./services";
+export type { DocumentQueryService, DocumentCommandService } from "./services";
 
 export type {
+  // ViewData types
   DocumentViewData,
+  DocumentVersionViewData,
   DocumentListItem,
   VersionHistoryItem,
-  PagedResponse,
+  VariableDefinitionViewData,
+  VariableValue,
+  ValidationError,
+  ValidationResult,
+  // Query DTOs
+  ListDocumentsDto,
+  GetDocumentByIdDto,
+  GetDocumentVersionHistoryDto,
+  GetDocumentVersionDto,
+  GetDocumentVariablesDto,
+  // Command DTOs
+  CreateDocumentDto,
+  UpdateDocumentDto,
+  UpdateDocumentMetadataDto,
+  PublishDocumentVersionDto,
+  RollbackDocumentVersionDto,
+  PublishDocumentFromOAuthDto,
+  ValidateVariablesDto,
 } from "./dto";

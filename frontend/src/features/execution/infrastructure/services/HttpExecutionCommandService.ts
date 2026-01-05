@@ -47,10 +47,10 @@ export class HttpExecutionCommandService
     recordId: string,
     title: string
   ): Promise<ExecutionRecordViewData> {
-    const response = await this.put<ApiExecutionRecordResponse>(
-      `/${recordId}`,
-      { title }
-    );
+    const response = await this.put<
+      ApiExecutionRecordResponse,
+      { title: string }
+    >(`/${recordId}`, { title });
     return this.toExecutionRecordViewData(response);
   }
 
@@ -58,10 +58,10 @@ export class HttpExecutionCommandService
     recordId: string,
     notes: string
   ): Promise<ExecutionRecordViewData> {
-    const response = await this.put<ApiExecutionRecordResponse>(
-      `/${recordId}`,
-      { notes }
-    );
+    const response = await this.put<
+      ApiExecutionRecordResponse,
+      { notes: string }
+    >(`/${recordId}`, { notes });
     return this.toExecutionRecordViewData(response);
   }
 
@@ -90,10 +90,10 @@ export class HttpExecutionCommandService
       notes: request.notes,
     };
 
-    const response = await this.put<ApiExecutionRecordResponse>(
-      `/${recordId}/steps/${request.stepNumber}`,
-      apiRequest
-    );
+    const response = await this.put<
+      ApiExecutionRecordResponse,
+      ApiUpdateStepNotesRequest
+    >(`/${recordId}/steps/${request.stepNumber}`, apiRequest);
     return this.toExecutionRecordViewData(response);
   }
 

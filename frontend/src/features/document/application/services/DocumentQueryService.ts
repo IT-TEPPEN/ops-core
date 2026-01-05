@@ -1,8 +1,14 @@
 import type {
   DocumentViewData,
+  DocumentVersionViewData,
   DocumentListItem,
   VersionHistoryItem,
-  PagedResponse,
+  VariableDefinitionViewData,
+  ListDocumentsDto,
+  GetDocumentByIdDto,
+  GetDocumentVersionHistoryDto,
+  GetDocumentVersionDto,
+  GetDocumentVariablesDto,
 } from "../dto";
 
 /**
@@ -11,22 +17,27 @@ import type {
  */
 export interface DocumentQueryService {
   /**
-   * List all documents with pagination.
+   * List all documents with optional filtering.
    */
-  list(): Promise<PagedResponse<DocumentListItem>>;
+  list(dto?: ListDocumentsDto): Promise<DocumentListItem[]>;
 
   /**
    * Get document details by ID.
    */
-  getById(docId: string): Promise<DocumentViewData>;
+  getById(dto: GetDocumentByIdDto): Promise<DocumentViewData>;
 
   /**
    * Get version history for a document.
    */
-  getVersionHistory(docId: string): Promise<VersionHistoryItem[]>;
+  getVersionHistory(dto: GetDocumentVersionHistoryDto): Promise<VersionHistoryItem[]>;
 
   /**
-   * Get specific version of a document.
+   * Get specific version of a document by version number.
    */
-  getVersion(docId: string, versionId: string): Promise<DocumentViewData>;
+  getVersion(dto: GetDocumentVersionDto): Promise<DocumentVersionViewData>;
+
+  /**
+   * Get variable definitions from current version of a document.
+   */
+  getVariables(dto: GetDocumentVariablesDto): Promise<VariableDefinitionViewData[]>;
 }

@@ -69,7 +69,7 @@ export class GroupApi extends V1ApiClient {
    * Update group
    */
   async updateGroup(groupId: string, req: UpdateGroupRequest): Promise<Group> {
-    return this.put<Group>(`/${groupId}`, req);
+    return this.put<Group, UpdateGroupRequest>(`/${groupId}`, req);
   }
 
   /**

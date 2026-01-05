@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useDocumentCommandService } from "../contexts";
-import type { CreateDocumentRequest } from "../../application";
+import type { CreateDocumentDto } from "../../application";
 
 export interface DocumentRegistrationOptions {
   accessScope: "public" | "private";
@@ -23,6 +23,9 @@ export function useDocumentRegistration() {
 
   const registerDocument = async (
     repositoryId: string,
+    owner: string,
+    repository: string,
+    providerRepositoryId: string,
     filePath: string,
     options: DocumentRegistrationOptions,
     commitHash?: string
@@ -33,14 +36,15 @@ export function useDocumentRegistration() {
     console.log(commitHash);
 
     try {
-      const request: CreateDocumentRequest = {
+      const request: CreateDocumentDto = {
         repositoryId,
+        owner,
+        repository,
+        providerRepositoryId,
         filePath,
-        title: filePath.split("/").pop() || "Untitled",
-        content: "", // Will be populated from repository
-        docType: "procedure",
-        tags: [],
+        commitHash,
         accessScope: options.accessScope,
+        isAutoUpdate: options.isAutoUpdate,
       };
 
       const response = await commandService.create(request);

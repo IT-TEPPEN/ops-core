@@ -96,7 +96,7 @@ export function useVersionHistory(docId: string | undefined) {
     dispatch({ type: "FETCH_START" });
 
     try {
-      const versions = await queryService.getVersionHistory(docId);
+      const versions = await queryService.getVersionHistory({ docId });
       // Sort versions by version number descending (newest first)
       const sortedVersions = [...versions].sort(
         (a, b) => b.versionNumber - a.versionNumber
@@ -150,7 +150,7 @@ export function useVersionHistory(docId: string | undefined) {
     dispatch({ type: "ACTION_START" });
 
     try {
-      await commandService.publish(docId);
+      await commandService.publishVersion({ docId, versionNumber });
 
       dispatch({
         type: "ACTION_SUCCESS",

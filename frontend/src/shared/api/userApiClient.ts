@@ -61,7 +61,7 @@ export class UserApi extends V1ApiClient {
    * Update user
    */
   async updateUser(userId: string, req: UpdateUserRequest): Promise<User> {
-    return this.put<User>(`/${userId}`, req);
+    return this.put<User, UpdateUserRequest>(`/${userId}`, req);
   }
 
   /**

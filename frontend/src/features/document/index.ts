@@ -2,14 +2,32 @@
 
 // Application layer (DTOs and Service interfaces)
 export type {
+  // Service interfaces
   DocumentQueryService,
   DocumentCommandService,
-  CreateDocumentRequest,
-  UpdateDocumentRequest,
+  // ViewData types
   DocumentViewData,
+  DocumentVersionViewData,
   DocumentListItem,
   VersionHistoryItem,
-  PagedResponse,
+  VariableDefinitionViewData,
+  VariableValue,
+  ValidationError,
+  ValidationResult,
+  // Query DTOs
+  ListDocumentsDto,
+  GetDocumentByIdDto,
+  GetDocumentVersionHistoryDto,
+  GetDocumentVersionDto,
+  GetDocumentVariablesDto,
+  // Command DTOs
+  CreateDocumentDto,
+  UpdateDocumentDto,
+  UpdateDocumentMetadataDto,
+  PublishDocumentVersionDto,
+  RollbackDocumentVersionDto,
+  PublishDocumentFromOAuthDto,
+  ValidateVariablesDto,
 } from "./application";
 
 // Infrastructure layer (Service implementations)

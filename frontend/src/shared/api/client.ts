@@ -160,11 +160,27 @@ export class V1ApiClient {
     return response.data;
   }
 
-  protected async put<ResponseData>(
+  protected async put<ResponseData, RequestBody>(
     endpoint: string,
-    body: unknown
+    body: RequestBody
   ): Promise<ResponseData> {
-    const response = await this.client.put<ResponseData>(endpoint, body);
+    const response = await this.client.put<
+      ResponseData,
+      AxiosResponse<ResponseData>,
+      RequestBody
+    >(endpoint, body);
+    return response.data;
+  }
+
+  protected async patch<ResponseData, RequestBody>(
+    endpoint: string,
+    body: RequestBody
+  ): Promise<ResponseData> {
+    const response = await this.client.patch<
+      ResponseData,
+      AxiosResponse<ResponseData>,
+      RequestBody
+    >(endpoint, body);
     return response.data;
   }
 

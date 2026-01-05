@@ -99,7 +99,7 @@ export function useDocumentView(docId: string | undefined) {
       dispatch({ type: "FETCH_START" });
 
       try {
-        const document = await queryService.getById(docId);
+        const document = await queryService.getById({ docId });
         // TODO: Parse variables from document metadata or frontmatter
         const variables: VariableDefinition[] = [];
         dispatch({ type: "FETCH_SUCCESS", payload: document, variables });
@@ -121,9 +121,9 @@ export function useDocumentView(docId: string | undefined) {
 
   // Process content when document or variables change
   useEffect(() => {
-    if (state.document?.content) {
+    if (state.document?.currentVersion?.content) {
       const substituted = substituteVariables(
-        state.document.content,
+        state.document.currentVersion.content,
         state.variableValues
       );
       dispatch({ type: "PROCESS_CONTENT", content: substituted });

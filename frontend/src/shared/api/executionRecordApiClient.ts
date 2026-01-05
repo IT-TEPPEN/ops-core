@@ -66,7 +66,9 @@ export class ExecutionRecordApi extends V1ApiClient {
     id: string,
     title: string
   ): Promise<ExecutionRecord> {
-    return this.put<ExecutionRecord>(`/${id}/title`, { title });
+    return this.put<ExecutionRecord, { title: string }>(`/${id}/title`, {
+      title,
+    });
   }
 
   /**
@@ -76,7 +78,9 @@ export class ExecutionRecordApi extends V1ApiClient {
     id: string,
     notes: string
   ): Promise<ExecutionRecord> {
-    return this.put<ExecutionRecord>(`/${id}/notes`, { notes });
+    return this.put<ExecutionRecord, { notes: string }>(`/${id}/notes`, {
+      notes,
+    });
   }
 
   /**
@@ -101,9 +105,10 @@ export class ExecutionRecordApi extends V1ApiClient {
     stepNumber: number,
     notes: string
   ): Promise<ExecutionRecord> {
-    return this.put<ExecutionRecord>(`/${id}/steps/${stepNumber}/notes`, {
-      notes,
-    });
+    return this.put<ExecutionRecord, { notes: string }>(
+      `/${id}/steps/${stepNumber}/notes`,
+      { notes }
+    );
   }
 
   /**
@@ -130,9 +135,10 @@ export class ExecutionRecordApi extends V1ApiClient {
     id: string,
     accessScope: "public" | "private"
   ): Promise<ExecutionRecord> {
-    return this.put<ExecutionRecord>(`/${id}/access-scope`, {
-      access_scope: accessScope,
-    });
+    return this.put<ExecutionRecord, { access_scope: "public" | "private" }>(
+      `/${id}/access-scope`,
+      { access_scope: accessScope }
+    );
   }
 
   /**

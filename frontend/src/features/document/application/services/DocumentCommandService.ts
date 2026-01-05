@@ -1,51 +1,52 @@
-import type { DocumentViewData } from "../dto";
+import type {
+  DocumentViewData,
+  ValidationResult,
+  CreateDocumentDto,
+  UpdateDocumentDto,
+  UpdateDocumentMetadataDto,
+  PublishDocumentVersionDto,
+  RollbackDocumentVersionDto,
+  PublishDocumentFromOAuthDto,
+  ValidateVariablesDto,
+} from "../dto";
 
 /**
- * Request for creating a new document.
- */
-export interface CreateDocumentRequest {
-  repositoryId: string;
-  filePath: string;
-  title: string;
-  content: string;
-  docType: string;
-  tags: string[];
-  accessScope: "public" | "private";
-}
-
-/**
- * Request for updating a document.
- */
-export interface UpdateDocumentRequest {
-  title?: string;
-  content?: string;
-  docType?: string;
-  tags?: string[];
-  accessScope?: "public" | "private";
-}
-
-/**
- * Document Command Service interface for write operations (POST/PUT/DELETE).
+ * Document Command Service interface for write operations (POST/PUT/DELETE/PATCH).
  * Following ADR 0019 - Query/Command separation pattern.
  */
 export interface DocumentCommandService {
   /**
-   * Create a new document.
+   * Create a new document from existing repository file.
    */
-  create(request: CreateDocumentRequest): Promise<DocumentViewData>;
+  create(dto: CreateDocumentDto): Promise<DocumentViewData>;
 
   /**
-   * Update an existing document.
+   * Update an existing document (creates new version from repository file).
    */
-  update(docId: string, request: UpdateDocumentRequest): Promise<DocumentViewData>;
+  update(dto: UpdateDocumentDto): Promise<DocumentViewData>;
 
   /**
-   * Delete a document.
+   * Update document metadata (access scope, auto-update setting).
    */
-  deleteDocument(docId: string): Promise<void>;
+  updateMetadata(dto: UpdateDocumentMetadataDto): Promise<DocumentViewData>;
 
   /**
-   * Publish a document.
+   * Publish a specific version of a document.
    */
-  publish(docId: string): Promise<DocumentViewData>;
+  publishVersion(dto: PublishDocumentVersionDto): Promise<DocumentViewData>;
+
+  /**
+   * Rollback document to a previous version.
+   */
+  rollbackVersion(dto: RollbackDocumentVersionDto): Promise<DocumentViewData>;
+
+  /**
+   * Publish a document from an OAuth connection (fetches from Git provider).
+   */
+  publishFromOAuth(dto: PublishDocumentFromOAuthDto): Promise<DocumentViewData>;
+
+  /**
+   * Validate variable values against document's variable definitions.
+   */
+  validateVariables(dto: ValidateVariablesDto): Promise<ValidationResult>;
 }

@@ -71,10 +71,10 @@ export function useDocumentList() {
     dispatch({ type: "FETCH_START" });
 
     try {
-      const response = await queryService.list();
+      const documents = await queryService.list();
       dispatch({
         type: "FETCH_SUCCESS",
-        documents: response.data,
+        documents,
       });
     } catch (err) {
       dispatch({
