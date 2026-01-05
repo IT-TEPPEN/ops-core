@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"strings"
 
 	"opscore/backend/internal/document/application/dto"
 	apperror "opscore/backend/internal/document/application/error"
@@ -11,6 +12,7 @@ import (
 	"opscore/backend/internal/document/domain/repository"
 	"opscore/backend/internal/document/domain/value_object"
 	"opscore/backend/internal/document/infrastructure/parser"
+	"opscore/backend/internal/document/infrastructure/storage"
 	gitentity "opscore/backend/internal/git_repository/domain/entity"
 	gitrepo "opscore/backend/internal/git_repository/domain/repository"
 	"opscore/backend/internal/git_repository/infrastructure/git"
@@ -33,10 +35,7 @@ type DocumentUseCase interface {
 	GetDocumentVersion(ctx context.Context, documentID string, versionNumber int) (*dto.DocumentVersionResponse, error)
 
 	// ListDocuments retrieves all documents.
-	ListDocuments(ctx context.Context) ([]dto.DocumentListItemResponse, error)
-
-	// ListDocumentsByRepository retrieves all documents for a given repository.
-	ListDocumentsByRepository(ctx context.Context, repositoryID string) ([]dto.DocumentListItemResponse, error)
+	ListDocuments(ctx context.Context, filter dto.DocumentListFilter) ([]dto.DocumentListItemResponse, error)
 
 	// GetDocumentVersions retrieves all versions for a document.
 	GetDocumentVersions(ctx context.Context, documentID string) (*dto.VersionHistoryResponse, error)
@@ -62,6 +61,7 @@ type documentUseCase struct {
 	fmParser           parser.FrontmatterParser
 	oauthService       OAuthService       // Added for publish from OAuth connection
 	gitProviderService GitProviderService // Added for publish from OAuth connection
+	storage            storage.DocumentStorage
 }
 
 // OAuthService interface for getting OAuth connections
@@ -72,7 +72,7 @@ type OAuthService interface {
 
 // GitProviderService interface for getting file content from Git providers
 type GitProviderService interface {
-	GetFileContent(ctx context.Context, userID string, connectionID string, repositoryID string, owner string, repo string, filePath string) (*oauthservice.FileContent, error)
+	GetFileContent(ctx context.Context, userID string, connectionID string, repositoryID string, owner string, repo string, filePath string, ref string) (*oauthservice.FileContent, error)
 }
 
 // NewDocumentUseCase creates a new instance of documentUseCase.
@@ -83,6 +83,7 @@ func NewDocumentUseCase(
 	fmParser parser.FrontmatterParser,
 	oauthService OAuthService,
 	gitProviderService GitProviderService,
+	storage storage.DocumentStorage,
 ) DocumentUseCase {
 	return &documentUseCase{
 		repo:               repo,
@@ -91,6 +92,7 @@ func NewDocumentUseCase(
 		fmParser:           fmParser,
 		oauthService:       oauthService,
 		gitProviderService: gitProviderService,
+		storage:            storage,
 	}
 }
 
@@ -117,6 +119,23 @@ func (uc *documentUseCase) CreateDocument(ctx context.Context, req *dto.CreateDo
 	if err != nil {
 		return nil, apperror.NewValidationFailedError([]apperror.FieldError{
 			{Field: "file_path", Message: err.Error()},
+		})
+	}
+
+	// Validate repository origin
+	origin, err := value_object.NewRepositoryOrigin(req.ProviderRepositoryID, req.Owner, req.Repository)
+	if err != nil {
+		field := "repository_origin"
+		switch {
+		case strings.Contains(err.Error(), "provider repository"):
+			field = "provider_repository_id"
+		case strings.Contains(err.Error(), "owner"):
+			field = "owner"
+		case strings.Contains(err.Error(), "name"):
+			field = "repository"
+		}
+		return nil, apperror.NewValidationFailedError([]apperror.FieldError{
+			{Field: field, Message: err.Error()},
 		})
 	}
 
@@ -217,8 +236,8 @@ func (uc *documentUseCase) CreateDocument(ctx context.Context, req *dto.CreateDo
 	// Generate new document ID
 	documentID := value_object.GenerateDocumentID()
 
-	// Create the document entity
-	doc, err := entity.NewDocument(documentID, repositoryID, frontmatterData.Owner, accessScope)
+	// Create the document entity with origin metadata
+	doc, err := entity.NewDocument(documentID, repositoryID, &origin, accessScope)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create document: %w", err)
 	}
@@ -239,6 +258,8 @@ func (uc *documentUseCase) CreateDocument(ctx context.Context, req *dto.CreateDo
 	if err != nil {
 		return nil, fmt.Errorf("failed to save document: %w", err)
 	}
+
+	uc.persistContent(ctx, doc)
 
 	// Return the response
 	response := dto.ToDocumentResponse(doc)
@@ -378,6 +399,8 @@ func (uc *documentUseCase) UpdateDocument(ctx context.Context, documentID string
 		return nil, fmt.Errorf("failed to update document: %w", err)
 	}
 
+	uc.persistContent(ctx, doc)
+
 	// Return the response
 	response := dto.ToDocumentResponse(doc)
 	return &response, nil
@@ -439,36 +462,57 @@ func (uc *documentUseCase) GetDocumentVersion(ctx context.Context, documentID st
 	return &response, nil
 }
 
-// ListDocuments retrieves all documents.
-func (uc *documentUseCase) ListDocuments(ctx context.Context) ([]dto.DocumentListItemResponse, error) {
-	// Find all published documents
-	docs, err := uc.repo.FindPublished(ctx)
+// ListDocuments retrieves published documents with optional filters.
+func (uc *documentUseCase) ListDocuments(ctx context.Context, filter dto.DocumentListFilter) ([]dto.DocumentListItemResponse, error) {
+	filters := make([]repository.Filter, 0, 4)
+
+	if filter.RepositoryID != "" {
+		repoID, vErr := value_object.NewRepositoryID(filter.RepositoryID)
+		if vErr != nil {
+			return nil, apperror.NewValidationFailedError([]apperror.FieldError{{Field: "repository_id", Message: vErr.Error()}})
+		}
+		filters = append(filters, repository.NewRepositoryIDFilter(repoID.String()))
+	}
+	if filter.ProviderRepositoryID != "" {
+		filters = append(filters, repository.NewProviderRepositoryIDFilter(filter.ProviderRepositoryID))
+	}
+	if filter.Owner != "" {
+		filters = append(filters, repository.NewOwnerFilter(filter.Owner))
+	}
+	if filter.Repository != "" {
+		filters = append(filters, repository.NewRepositoryNameFilter(filter.Repository))
+	}
+
+	docs, err := uc.repo.FindPublished(ctx, filters...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to find documents: %w", err)
 	}
 
-	// Return the response
-	return dto.ToDocumentListResponse(docs), nil
-}
-
-// ListDocumentsByRepository retrieves all documents for a given repository.
-func (uc *documentUseCase) ListDocumentsByRepository(ctx context.Context, repositoryID string) ([]dto.DocumentListItemResponse, error) {
-	// Validate repository ID
-	repoID, err := value_object.NewRepositoryID(repositoryID)
-	if err != nil {
-		return nil, apperror.NewValidationFailedError([]apperror.FieldError{
-			{Field: "repository_id", Message: err.Error()},
-		})
+	// Fallback in-memory filtering to ensure correctness even if repository ignores optional filters.
+	filtered := make([]entity.Document, 0, len(docs))
+	for _, d := range docs {
+		if filter.RepositoryID != "" && d.RepositoryID().String() != filter.RepositoryID {
+			continue
+		}
+		if filter.ProviderRepositoryID != "" {
+			if d.Origin() == nil || d.Origin().ProviderRepositoryID().String() != filter.ProviderRepositoryID {
+				continue
+			}
+		}
+		if filter.Owner != "" {
+			if d.Origin() == nil || d.Origin().Owner() != filter.Owner {
+				continue
+			}
+		}
+		if filter.Repository != "" {
+			if d.Origin() == nil || d.Origin().Repository() != filter.Repository {
+				continue
+			}
+		}
+		filtered = append(filtered, d)
 	}
 
-	// Find all documents for the repository
-	docs, err := uc.repo.FindByRepositoryID(ctx, repoID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to find documents: %w", err)
-	}
-
-	// Return the response
-	return dto.ToDocumentListResponse(docs), nil
+	return dto.ToDocumentListResponse(filtered), nil
 }
 
 // GetDocumentVersions retrieves all versions for a document.
@@ -568,6 +612,8 @@ func (uc *documentUseCase) PublishDocumentVersion(ctx context.Context, documentI
 	if err != nil {
 		return nil, fmt.Errorf("failed to update document: %w", err)
 	}
+
+	uc.persistContent(ctx, doc)
 
 	// Return the response
 	response := dto.ToDocumentResponse(doc)
@@ -748,7 +794,7 @@ func (uc *documentUseCase) PublishDocument(ctx context.Context, userID string, r
 	}
 
 	// Fetch file content via GitProviderService
-	fileContent, err := uc.gitProviderService.GetFileContent(ctx, userID, req.ConnectionID, "", req.Owner, req.Repository, req.FilePath)
+	fileContent, err := uc.gitProviderService.GetFileContent(ctx, userID, req.ConnectionID, req.ProviderRepositoryID, req.Owner, req.Repository, req.FilePath, req.Ref)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get file content: %w", err)
 	}
@@ -842,8 +888,13 @@ func (uc *documentUseCase) PublishDocument(ctx context.Context, userID string, r
 		return nil, fmt.Errorf("failed to create repository ID: %w", err)
 	}
 
-	// Create the document entity
-	doc, err := entity.NewDocument(documentID, repositoryID, frontmatterData.Owner, accessScope)
+	origin, err := value_object.NewRepositoryOrigin(req.ProviderRepositoryID, req.Owner, req.Repository)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create repository origin: %w", err)
+	}
+
+	// Create the document entity with origin metadata
+	doc, err := entity.NewDocument(documentID, repositoryID, &origin, accessScope)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create document: %w", err)
 	}
@@ -865,7 +916,21 @@ func (uc *documentUseCase) PublishDocument(ctx context.Context, userID string, r
 		return nil, fmt.Errorf("failed to save document: %w", err)
 	}
 
+	uc.persistContent(ctx, doc)
+
 	// Return the response
 	response := dto.ToDocumentResponse(doc)
 	return &response, nil
+}
+
+// persistContent writes the current version content to storage if configured.
+func (uc *documentUseCase) persistContent(ctx context.Context, doc entity.Document) {
+	if uc.storage == nil {
+		return
+	}
+	current := doc.CurrentVersion()
+	if current == nil {
+		return
+	}
+	_ = uc.storage.SaveContent(ctx, doc.ID().String(), current.VersionNumber().Int(), current.Content())
 }

@@ -8,22 +8,31 @@ import (
 // ToDocumentResponse converts a domain Document to a DTO DocumentResponse
 func ToDocumentResponse(doc entity.Document) DocumentResponse {
 	var currentVersion *DocumentVersionResponse
+	var providerRepoID, owner, repository string
+
+	if doc.Origin() != nil {
+		providerRepoID = doc.Origin().ProviderRepositoryID().String()
+		owner = doc.Origin().Owner()
+		repository = doc.Origin().Repository()
+	}
 	if doc.CurrentVersion() != nil {
 		cv := ToDocumentVersionResponse(doc.CurrentVersion())
 		currentVersion = &cv
 	}
 
 	return DocumentResponse{
-		ID:             doc.ID().String(),
-		RepositoryID:   doc.RepositoryID().String(),
-		Owner:          doc.Owner(),
-		IsPublished:    doc.IsPublished(),
-		IsAutoUpdate:   doc.IsAutoUpdate(),
-		AccessScope:    doc.AccessScope().String(),
-		CurrentVersion: currentVersion,
-		VersionCount:   len(doc.Versions()),
-		CreatedAt:      doc.CreatedAt(),
-		UpdatedAt:      doc.UpdatedAt(),
+		ID:                   doc.ID().String(),
+		RepositoryID:         doc.RepositoryID().String(),
+		ProviderRepositoryID: providerRepoID,
+		Owner:                owner,
+		Repository:           repository,
+		IsPublished:          doc.IsPublished(),
+		IsAutoUpdate:         doc.IsAutoUpdate(),
+		AccessScope:          doc.AccessScope().String(),
+		CurrentVersion:       currentVersion,
+		VersionCount:         len(doc.Versions()),
+		CreatedAt:            doc.CreatedAt(),
+		UpdatedAt:            doc.UpdatedAt(),
 	}
 }
 
@@ -67,6 +76,7 @@ func ToDocumentVersionResponse(ver entity.DocumentVersion) DocumentVersionRespon
 func ToDocumentListItemResponse(doc entity.Document) DocumentListItemResponse {
 	var title, docType string
 	var tags []string
+	var providerRepoID, owner, repository string
 
 	if doc.CurrentVersion() != nil {
 		title = doc.CurrentVersion().Title()
@@ -77,17 +87,25 @@ func ToDocumentListItemResponse(doc entity.Document) DocumentListItemResponse {
 		}
 	}
 
+	if doc.Origin() != nil {
+		providerRepoID = doc.Origin().ProviderRepositoryID().String()
+		owner = doc.Origin().Owner()
+		repository = doc.Origin().Repository()
+	}
+
 	return DocumentListItemResponse{
-		ID:           doc.ID().String(),
-		RepositoryID: doc.RepositoryID().String(),
-		Title:        title,
-		Owner:        doc.Owner(),
-		DocType:      docType,
-		Tags:         tags,
-		IsPublished:  doc.IsPublished(),
-		VersionCount: len(doc.Versions()),
-		CreatedAt:    doc.CreatedAt(),
-		UpdatedAt:    doc.UpdatedAt(),
+		ID:                   doc.ID().String(),
+		RepositoryID:         doc.RepositoryID().String(),
+		ProviderRepositoryID: providerRepoID,
+		Owner:                owner,
+		Repository:           repository,
+		Title:                title,
+		DocType:              docType,
+		Tags:                 tags,
+		IsPublished:          doc.IsPublished(),
+		VersionCount:         len(doc.Versions()),
+		CreatedAt:            doc.CreatedAt(),
+		UpdatedAt:            doc.UpdatedAt(),
 	}
 }
 

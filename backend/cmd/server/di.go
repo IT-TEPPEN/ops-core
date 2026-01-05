@@ -3,6 +3,7 @@ package main
 import (
 	"log/slog"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -15,6 +16,8 @@ import (
 
 	docusecase "opscore/backend/internal/document/application/usecase"
 	"opscore/backend/internal/document/infrastructure/parser"
+	docpersistence "opscore/backend/internal/document/infrastructure/persistence"
+	docstorage "opscore/backend/internal/document/infrastructure/storage"
 	dochandlers "opscore/backend/internal/document/interfaces/api/handlers"
 
 	execusecase "opscore/backend/internal/execution_record/application/usecase"
@@ -217,9 +220,18 @@ func InitializeAPI(db *pgxpool.Pool) (*repohandlers.RepositoryHandler,
 	// Create and return repository handler
 	repositoryHandler := repohandlers.NewRepositoryHandler(repositoryUseCase, repoLogger)
 
-	// Create document repository (in-memory for now, until persistence is implemented)
-	// TODO: Replace with actual persistence implementation when DB migration is complete
-	documentRepository := NewInMemoryDocumentRepository()
+	// Create document repository (PostgreSQL)
+	documentRepository := docpersistence.NewPostgresDocumentRepository(db)
+
+	// Document storage for persisted markdown (filesystem)
+	docStoragePath := os.Getenv("DOCUMENT_STORAGE_PATH")
+	if docStoragePath == "" {
+		docStoragePath = filepath.Join(".", "data", "documents")
+	}
+	docStorage, err := docstorage.NewLocalDocumentStorage(docStoragePath)
+	if err != nil {
+		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, err
+	}
 
 	// Create frontmatter parser
 	frontmatterParser := parser.NewFrontmatterParser()
@@ -228,7 +240,7 @@ func InitializeAPI(db *pgxpool.Pool) (*repohandlers.RepositoryHandler,
 	gitProviderService := oauthservice.NewGitProviderService(oauthService)
 
 	// Create document use case with OAuth and GitProvider services
-	documentUseCase := docusecase.NewDocumentUseCase(documentRepository, repositoryRepository, gitManager, frontmatterParser, oauthService, gitProviderService)
+	documentUseCase := docusecase.NewDocumentUseCase(documentRepository, repositoryRepository, gitManager, frontmatterParser, oauthService, gitProviderService, docStorage)
 
 	// Create variable use case
 	variableUseCase := docusecase.NewVariableUseCase(documentRepository)

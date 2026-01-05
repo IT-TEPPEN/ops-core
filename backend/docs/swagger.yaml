@@ -103,12 +103,24 @@ definitions:
       is_auto_update:
         example: true
         type: boolean
+      owner:
+        example: myorg
+        type: string
+      provider_repository_id:
+        example: "123456789"
+        type: string
+      repository:
+        example: myrepo
+        type: string
       repository_id:
         example: a1b2c3d4-e5f6-7890-1234-567890abcdef
         type: string
     required:
     - access_scope
     - file_path
+    - owner
+    - provider_repository_id
+    - repository
     - repository_id
     type: object
   opscore_backend_internal_document_interfaces_api_schema.DocumentListItemResponse:
@@ -126,7 +138,13 @@ definitions:
         example: true
         type: boolean
       owner:
-        example: database-team
+        example: myorg
+        type: string
+      provider_repository_id:
+        example: "123456789"
+        type: string
+      repository:
+        example: myrepo
         type: string
       repository_id:
         example: a1b2c3d4-e5f6-7890-1234-567890abcdef
@@ -168,7 +186,13 @@ definitions:
         example: true
         type: boolean
       owner:
-        example: database-team
+        example: myorg
+        type: string
+      provider_repository_id:
+        example: "123456789"
+        type: string
+      repository:
+        example: myrepo
         type: string
       repository_id:
         example: a1b2c3d4-e5f6-7890-1234-567890abcdef
@@ -275,6 +299,12 @@ definitions:
       owner:
         example: myorg
         type: string
+      provider_repository_id:
+        example: "123456789"
+        type: string
+      ref:
+        example: main
+        type: string
       repository:
         example: myrepo
         type: string
@@ -283,6 +313,7 @@ definitions:
     - connection_id
     - file_path
     - owner
+    - provider_repository_id
     - repository
     type: object
   opscore_backend_internal_document_interfaces_api_schema.UpdateDocumentMetadataRequest:
@@ -293,9 +324,6 @@ definitions:
       is_auto_update:
         example: false
         type: boolean
-      owner:
-        example: new-team
-        type: string
     type: object
   opscore_backend_internal_document_interfaces_api_schema.UpdateDocumentRequest:
     properties:
@@ -1726,6 +1754,11 @@ paths:
         name: repo
         required: true
         type: string
+      - description: Repository ID
+        in: query
+        name: repositoryId
+        required: true
+        type: string
       - description: Directory path (empty for root)
         in: query
         name: path
@@ -1775,6 +1808,11 @@ paths:
       - description: Repository name
         in: path
         name: repo
+        required: true
+        type: string
+      - description: Repository ID
+        in: query
+        name: repositoryId
         required: true
         type: string
       - description: File path
@@ -1885,6 +1923,18 @@ paths:
         in: query
         name: repository_id
         type: string
+      - description: Filter by provider repository ID
+        in: query
+        name: provider_repository_id
+        type: string
+      - description: Filter by repository owner
+        in: query
+        name: owner
+        type: string
+      - description: Filter by repository name
+        in: query
+        name: repository
+        type: string
       produces:
       - application/json
       responses:
@@ -1902,7 +1952,8 @@ paths:
     post:
       consumes:
       - application/json
-      description: Create a new document with an initial version
+      description: Create a new document with an initial version. Requires repository_id
+        plus provider_repository_id/owner/repository to identify the source repo.
       parameters:
       - description: Document information
         in: body
@@ -2265,7 +2316,8 @@ paths:
       consumes:
       - application/json
       description: Publish a document by fetching it from a Git repository via OAuth
-        connection
+        connection. Requires provider_repository_id + owner/repository to identify
+        the source repository.
       parameters:
       - description: Document publish information
         in: body

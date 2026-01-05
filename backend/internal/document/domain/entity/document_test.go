@@ -10,12 +10,13 @@ func TestNewDocument(t *testing.T) {
 	validID := value_object.GenerateDocumentID()
 	validRepoID, _ := value_object.NewRepositoryID("a1b2c3d4-e5f6-4789-abcd-ef0123456789")
 	validScope, _ := value_object.NewAccessScope("public")
+	validOrigin, _ := value_object.NewRepositoryOrigin("12345", "org", "repo")
 
 	tests := []struct {
 		name         string
 		id           value_object.DocumentID
 		repositoryID value_object.RepositoryID
-		owner        string
+		origin       *value_object.RepositoryOrigin
 		accessScope  value_object.AccessScope
 		wantErr      bool
 	}{
@@ -23,7 +24,14 @@ func TestNewDocument(t *testing.T) {
 			name:         "valid document",
 			id:           validID,
 			repositoryID: validRepoID,
-			owner:        "admin",
+			accessScope:  validScope,
+			wantErr:      false,
+		},
+		{
+			name:         "valid document with origin only",
+			id:           validID,
+			repositoryID: value_object.RepositoryID(""),
+			origin:       &validOrigin,
 			accessScope:  validScope,
 			wantErr:      false,
 		},
@@ -31,15 +39,15 @@ func TestNewDocument(t *testing.T) {
 			name:         "empty document ID",
 			id:           value_object.DocumentID(""),
 			repositoryID: validRepoID,
-			owner:        "admin",
+			origin:       nil,
 			accessScope:  validScope,
 			wantErr:      true,
 		},
 		{
-			name:         "empty owner",
+			name:         "missing repository origin and id",
 			id:           validID,
-			repositoryID: validRepoID,
-			owner:        "",
+			repositoryID: value_object.RepositoryID(""),
+			origin:       nil,
 			accessScope:  validScope,
 			wantErr:      true,
 		},
@@ -50,7 +58,7 @@ func TestNewDocument(t *testing.T) {
 			got, err := NewDocument(
 				tt.id,
 				tt.repositoryID,
-				tt.owner,
+				tt.origin,
 				tt.accessScope,
 			)
 			if (err != nil) != tt.wantErr {
@@ -78,7 +86,7 @@ func TestNewDocument(t *testing.T) {
 
 func TestDocument_Publish(t *testing.T) {
 	doc := createTestDocument(t)
-	
+
 	path, _ := value_object.NewFilePath("docs/test.md")
 	hash, _ := value_object.NewCommitHash("abc1234567")
 	source, _ := value_object.NewDocumentSource(path, hash)
@@ -142,7 +150,7 @@ func TestDocument_Unpublish(t *testing.T) {
 	hash, _ := value_object.NewCommitHash("abc1234567")
 	source, _ := value_object.NewDocumentSource(path, hash)
 	docType, _ := value_object.NewDocumentType("procedure")
-	
+
 	err = doc.Publish(source, "Title", docType, []value_object.Tag{}, []value_object.VariableDefinition{}, "content")
 	if err != nil {
 		t.Fatalf("Publish() error = %v", err)
@@ -206,7 +214,7 @@ func TestDocument_RollbackToVersion(t *testing.T) {
 	hash1, _ := value_object.NewCommitHash("abc1234567")
 	source1, _ := value_object.NewDocumentSource(path, hash1)
 	docType, _ := value_object.NewDocumentType("procedure")
-	
+
 	err = doc.Publish(source1, "Title v1", docType, []value_object.Tag{}, []value_object.VariableDefinition{}, "content v1")
 	if err != nil {
 		t.Fatalf("Publish() error = %v", err)
@@ -246,7 +254,7 @@ func createTestDocument(t *testing.T) Document {
 	doc, err := NewDocument(
 		id,
 		repoID,
-		"admin",
+		nil,
 		accessScope,
 	)
 

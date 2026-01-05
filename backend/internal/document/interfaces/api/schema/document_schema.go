@@ -3,24 +3,29 @@ package schema
 import "time"
 
 // CreateDocumentRequest represents the API request for creating a document
-// Frontmatter fields (Title, DocType, Owner, Tags, Variables, Content) are automatically extracted from the file
+// Frontmatter fields (Title, DocType, Tags, Variables, Content) are automatically extracted from the file
 type CreateDocumentRequest struct {
-	RepositoryID string `json:"repository_id" binding:"required" example:"a1b2c3d4-e5f6-7890-1234-567890abcdef"`
-	FilePath     string `json:"file_path" binding:"required" example:"docs/backup-procedure.md"`
-	CommitHash   string `json:"commit_hash" example:"abc1234567890"` // Optional: if empty, use latest commit
-	AccessScope  string `json:"access_scope" binding:"required" example:"public"`
-	IsAutoUpdate bool   `json:"is_auto_update" example:"true"`
+	RepositoryID         string `json:"repository_id" binding:"required" example:"a1b2c3d4-e5f6-7890-1234-567890abcdef"`
+	ProviderRepositoryID string `json:"provider_repository_id" binding:"required" example:"123456789"`
+	Owner                string `json:"owner" binding:"required" example:"myorg"`
+	Repository           string `json:"repository" binding:"required" example:"myrepo"`
+	FilePath             string `json:"file_path" binding:"required" example:"docs/backup-procedure.md"`
+	CommitHash           string `json:"commit_hash" example:"abc1234567890"` // Optional: if empty, use latest commit
+	AccessScope          string `json:"access_scope" binding:"required" example:"public"`
+	IsAutoUpdate         bool   `json:"is_auto_update" example:"true"`
 }
 
 // PublishDocumentRequest represents the API request for publishing a document from an OAuth connection
 // This endpoint auto-creates repository records based on the file URL
 type PublishDocumentRequest struct {
-	ConnectionID string `json:"connection_id" binding:"required" example:"conn_a1b2c3d4"`
-	Owner        string `json:"owner" binding:"required" example:"myorg"`
-	Repository   string `json:"repository" binding:"required" example:"myrepo"`
-	FilePath     string `json:"file_path" binding:"required" example:"docs/backup-procedure.md"`
-	AccessScope  string `json:"access_scope" binding:"required" example:"public"`
-	IsAutoUpdate bool   `json:"is_auto_update" example:"true"`
+	ConnectionID         string `json:"connection_id" binding:"required" example:"conn_a1b2c3d4"`
+	ProviderRepositoryID string `json:"provider_repository_id" binding:"required" example:"123456789"`
+	Owner                string `json:"owner" binding:"required" example:"myorg"`
+	Repository           string `json:"repository" binding:"required" example:"myrepo"`
+	FilePath             string `json:"file_path" binding:"required" example:"docs/backup-procedure.md"`
+	Ref                  string `json:"ref" example:"main"`
+	AccessScope          string `json:"access_scope" binding:"required" example:"public"`
+	IsAutoUpdate         bool   `json:"is_auto_update" example:"true"`
 }
 
 // UpdateDocumentRequest represents the API request for updating a document
@@ -32,7 +37,6 @@ type UpdateDocumentRequest struct {
 
 // UpdateDocumentMetadataRequest represents the API request for updating document metadata
 type UpdateDocumentMetadataRequest struct {
-	Owner        *string `json:"owner" example:"new-team"`
 	AccessScope  *string `json:"access_scope" example:"private"`
 	IsAutoUpdate *bool   `json:"is_auto_update" example:"false"`
 }
@@ -59,16 +63,18 @@ type VariableDefinitionResponse struct {
 
 // DocumentResponse represents the API response for a document
 type DocumentResponse struct {
-	ID              string                   `json:"id" example:"a1b2c3d4-e5f6-7890-1234-567890abcdef"`
-	RepositoryID    string                   `json:"repository_id" example:"a1b2c3d4-e5f6-7890-1234-567890abcdef"`
-	Owner           string                   `json:"owner" example:"database-team"`
-	IsPublished     bool                     `json:"is_published" example:"true"`
-	IsAutoUpdate    bool                     `json:"is_auto_update" example:"true"`
-	AccessScope     string                   `json:"access_scope" example:"public"`
-	CurrentVersion  *DocumentVersionResponse `json:"current_version"`
-	VersionCount    int                      `json:"version_count" example:"3"`
-	CreatedAt       time.Time                `json:"created_at" example:"2025-04-22T10:00:00Z"`
-	UpdatedAt       time.Time                `json:"updated_at" example:"2025-04-22T12:00:00Z"`
+	ID                   string                   `json:"id" example:"a1b2c3d4-e5f6-7890-1234-567890abcdef"`
+	RepositoryID         string                   `json:"repository_id" example:"a1b2c3d4-e5f6-7890-1234-567890abcdef"`
+	ProviderRepositoryID string                   `json:"provider_repository_id" example:"123456789"`
+	Owner                string                   `json:"owner" example:"myorg"`
+	Repository           string                   `json:"repository" example:"myrepo"`
+	IsPublished          bool                     `json:"is_published" example:"true"`
+	IsAutoUpdate         bool                     `json:"is_auto_update" example:"true"`
+	AccessScope          string                   `json:"access_scope" example:"public"`
+	CurrentVersion       *DocumentVersionResponse `json:"current_version"`
+	VersionCount         int                      `json:"version_count" example:"3"`
+	CreatedAt            time.Time                `json:"created_at" example:"2025-04-22T10:00:00Z"`
+	UpdatedAt            time.Time                `json:"updated_at" example:"2025-04-22T12:00:00Z"`
 }
 
 // DocumentVersionResponse represents the API response for a document version
@@ -90,16 +96,18 @@ type DocumentVersionResponse struct {
 
 // DocumentListItemResponse represents a document item in a list response
 type DocumentListItemResponse struct {
-	ID           string    `json:"id" example:"a1b2c3d4-e5f6-7890-1234-567890abcdef"`
-	RepositoryID string    `json:"repository_id" example:"a1b2c3d4-e5f6-7890-1234-567890abcdef"`
-	Title        string    `json:"title" example:"Database Backup Procedure"`
-	Owner        string    `json:"owner" example:"database-team"`
-	DocType      string    `json:"doc_type" example:"procedure"`
-	Tags         []string  `json:"tags" example:"[\"database\",\"backup\"]"`
-	IsPublished  bool      `json:"is_published" example:"true"`
-	VersionCount int       `json:"version_count" example:"3"`
-	CreatedAt    time.Time `json:"created_at" example:"2025-04-22T10:00:00Z"`
-	UpdatedAt    time.Time `json:"updated_at" example:"2025-04-22T12:00:00Z"`
+	ID                   string    `json:"id" example:"a1b2c3d4-e5f6-7890-1234-567890abcdef"`
+	RepositoryID         string    `json:"repository_id" example:"a1b2c3d4-e5f6-7890-1234-567890abcdef"`
+	ProviderRepositoryID string    `json:"provider_repository_id" example:"123456789"`
+	Owner                string    `json:"owner" example:"myorg"`
+	Repository           string    `json:"repository" example:"myrepo"`
+	Title                string    `json:"title" example:"Database Backup Procedure"`
+	DocType              string    `json:"doc_type" example:"procedure"`
+	Tags                 []string  `json:"tags" example:"[\"database\",\"backup\"]"`
+	IsPublished          bool      `json:"is_published" example:"true"`
+	VersionCount         int       `json:"version_count" example:"3"`
+	CreatedAt            time.Time `json:"created_at" example:"2025-04-22T10:00:00Z"`
+	UpdatedAt            time.Time `json:"updated_at" example:"2025-04-22T12:00:00Z"`
 }
 
 // ListDocumentsResponse represents the API response for listing documents

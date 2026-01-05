@@ -5,8 +5,8 @@ import (
 	"strconv"
 
 	"opscore/backend/internal/document/application/usecase"
-	intererror "opscore/backend/internal/document/interfaces/error"
 	"opscore/backend/internal/document/interfaces/api/schema"
+	intererror "opscore/backend/internal/document/interfaces/error"
 
 	"github.com/gin-gonic/gin"
 )
@@ -35,7 +35,7 @@ func NewDocumentHandler(uc usecase.DocumentUseCase, logger Logger) *DocumentHand
 
 // CreateDocument godoc
 // @Summary Create a new document
-// @Description Create a new document with an initial version
+// @Description Create a new document with an initial version. Requires repository_id plus provider_repository_id/owner/repository to identify the source repo.
 // @Tags documents
 // @Accept json
 // @Produce json
@@ -162,32 +162,26 @@ func (h *DocumentHandler) UpdateDocument(c *gin.Context) {
 // @Tags documents
 // @Produce json
 // @Param repository_id query string false "Filter by repository ID"
+// @Param provider_repository_id query string false "Filter by provider repository ID"
+// @Param owner query string false "Filter by repository owner"
+// @Param repository query string false "Filter by repository name"
 // @Success 200 {object} schema.ListDocumentsResponse "Successfully retrieved documents"
 // @Failure 500 {object} schema.ErrorResponse "Internal server error"
 // @Router /documents [get]
 func (h *DocumentHandler) ListDocuments(c *gin.Context) {
 	requestID := c.GetString("request_id")
 	repositoryID := c.Query("repository_id")
+	providerRepoID := c.Query("provider_repository_id")
+	owner := c.Query("owner")
+	repository := c.Query("repository")
 
-	h.logger.Info("Listing documents", "request_id", requestID, "repository_id", repositoryID)
+	h.logger.Info("Listing documents", "request_id", requestID, "repository_id", repositoryID, "provider_repository_id", providerRepoID, "owner", owner, "repository", repository)
 
+	filter := schema.ToDocumentListFilterDTO(repositoryID, providerRepoID, owner, repository)
+	dtoResp, err := h.docUseCase.ListDocuments(c.Request.Context(), filter)
 	var docs []schema.DocumentListItemResponse
-	var err error
-
-	if repositoryID != "" {
-		dtoResp, e := h.docUseCase.ListDocumentsByRepository(c.Request.Context(), repositoryID)
-		if e != nil {
-			err = e
-		} else {
-			docs = schema.FromDocumentListDTO(dtoResp)
-		}
-	} else {
-		dtoResp, e := h.docUseCase.ListDocuments(c.Request.Context())
-		if e != nil {
-			err = e
-		} else {
-			docs = schema.FromDocumentListDTO(dtoResp)
-		}
+	if err == nil {
+		docs = schema.FromDocumentListDTO(dtoResp)
 	}
 
 	if err != nil {
@@ -424,7 +418,7 @@ func (h *DocumentHandler) UpdateDocumentMetadata(c *gin.Context) {
 
 // PublishDocument godoc
 // @Summary Publish a document from an OAuth connection
-// @Description Publish a document by fetching it from a Git repository via OAuth connection
+// @Description Publish a document by fetching it from a Git repository via OAuth connection. Requires provider_repository_id + owner/repository to identify the source repository.
 // @Tags documents
 // @Accept json
 // @Produce json

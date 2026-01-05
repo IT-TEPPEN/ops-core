@@ -5,22 +5,27 @@ import "time"
 // CreateDocumentRequest represents the use case request for creating a document
 // Frontmatter fields (Title, DocType, Owner, Tags, Variables, Content) are extracted from the file
 type CreateDocumentRequest struct {
-	RepositoryID string
-	FilePath     string
-	CommitHash   string   // Optional: if empty, use latest commit
-	AccessScope  string   // "public" or "private"
-	IsAutoUpdate bool
+	RepositoryID         string
+	ProviderRepositoryID string
+	Owner                string
+	Repository           string
+	FilePath             string
+	CommitHash           string // Optional: if empty, use latest commit
+	AccessScope          string // "public" or "private"
+	IsAutoUpdate         bool
 }
 
 // PublishDocumentRequest represents the use case request for publishing a document via OAuth connection
 // Repository information is auto-extracted and created if needed
 type PublishDocumentRequest struct {
-	ConnectionID string
-	Owner        string
-	Repository   string
-	FilePath     string
-	AccessScope  string // "public" or "private"
-	IsAutoUpdate bool
+	ConnectionID         string
+	ProviderRepositoryID string
+	Owner                string
+	Repository           string
+	FilePath             string
+	Ref                  string // Optional: branch/tag/commit; falls back to default branch
+	AccessScope          string // "public" or "private"
+	IsAutoUpdate         bool
 }
 
 // UpdateDocumentRequest represents the use case request for updating a document
@@ -32,10 +37,9 @@ type UpdateDocumentRequest struct {
 
 // UpdateDocumentMetadataRequest represents the use case request for updating document metadata
 type UpdateDocumentMetadataRequest struct {
-	Title       *string
-	Owner       *string
-	Tags        []string
-	AccessScope *string
+	Title        *string
+	Tags         []string
+	AccessScope  *string
 	IsAutoUpdate *bool
 }
 
@@ -51,16 +55,18 @@ type VariableDefinitionDTO struct {
 
 // DocumentResponse represents the use case response for a document
 type DocumentResponse struct {
-	ID              string
-	RepositoryID    string
-	Owner           string
-	IsPublished     bool
-	IsAutoUpdate    bool
-	AccessScope     string
-	CurrentVersion  *DocumentVersionResponse
-	VersionCount    int
-	CreatedAt       time.Time
-	UpdatedAt       time.Time
+	ID                   string
+	RepositoryID         string
+	ProviderRepositoryID string
+	Owner                string
+	Repository           string
+	IsPublished          bool
+	IsAutoUpdate         bool
+	AccessScope          string
+	CurrentVersion       *DocumentVersionResponse
+	VersionCount         int
+	CreatedAt            time.Time
+	UpdatedAt            time.Time
 }
 
 // DocumentVersionResponse represents the use case response for a document version
@@ -82,16 +88,26 @@ type DocumentVersionResponse struct {
 
 // DocumentListItemResponse represents a document item in a list response
 type DocumentListItemResponse struct {
-	ID           string
-	RepositoryID string
-	Title        string
-	Owner        string
-	DocType      string
-	Tags         []string
-	IsPublished  bool
-	VersionCount int
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
+	ID                   string
+	RepositoryID         string
+	ProviderRepositoryID string
+	Owner                string
+	Repository           string
+	Title                string
+	DocType              string
+	Tags                 []string
+	IsPublished          bool
+	VersionCount         int
+	CreatedAt            time.Time
+	UpdatedAt            time.Time
+}
+
+// DocumentListFilter represents optional filters for listing documents.
+type DocumentListFilter struct {
+	RepositoryID         string
+	ProviderRepositoryID string
+	Owner                string
+	Repository           string
 }
 
 // VersionHistoryResponse represents the version history for a document

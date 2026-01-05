@@ -7,23 +7,28 @@ import (
 // ToCreateDocumentDTO converts API schema to application DTO
 func ToCreateDocumentDTO(req CreateDocumentRequest) dto.CreateDocumentRequest {
 	return dto.CreateDocumentRequest{
-		RepositoryID: req.RepositoryID,
-		FilePath:     req.FilePath,
-		CommitHash:   req.CommitHash,
-		AccessScope:  req.AccessScope,
-		IsAutoUpdate: req.IsAutoUpdate,
+		RepositoryID:         req.RepositoryID,
+		ProviderRepositoryID: req.ProviderRepositoryID,
+		Owner:                req.Owner,
+		Repository:           req.Repository,
+		FilePath:             req.FilePath,
+		CommitHash:           req.CommitHash,
+		AccessScope:          req.AccessScope,
+		IsAutoUpdate:         req.IsAutoUpdate,
 	}
 }
 
 // ToPublishDocumentDTO converts API schema to application DTO
 func ToPublishDocumentDTO(req PublishDocumentRequest) dto.PublishDocumentRequest {
 	return dto.PublishDocumentRequest{
-		ConnectionID: req.ConnectionID,
-		Owner:        req.Owner,
-		Repository:   req.Repository,
-		FilePath:     req.FilePath,
-		AccessScope:  req.AccessScope,
-		IsAutoUpdate: req.IsAutoUpdate,
+		ConnectionID:         req.ConnectionID,
+		ProviderRepositoryID: req.ProviderRepositoryID,
+		Owner:                req.Owner,
+		Repository:           req.Repository,
+		FilePath:             req.FilePath,
+		Ref:                  req.Ref,
+		AccessScope:          req.AccessScope,
+		IsAutoUpdate:         req.IsAutoUpdate,
 	}
 }
 
@@ -38,7 +43,6 @@ func ToUpdateDocumentDTO(req UpdateDocumentRequest) dto.UpdateDocumentRequest {
 // ToUpdateDocumentMetadataDTO converts API schema to application DTO
 func ToUpdateDocumentMetadataDTO(req UpdateDocumentMetadataRequest) dto.UpdateDocumentMetadataRequest {
 	return dto.UpdateDocumentMetadataRequest{
-		Owner:        req.Owner,
 		AccessScope:  req.AccessScope,
 		IsAutoUpdate: req.IsAutoUpdate,
 	}
@@ -53,16 +57,18 @@ func FromDocumentDTO(dtoResp dto.DocumentResponse) DocumentResponse {
 	}
 
 	return DocumentResponse{
-		ID:             dtoResp.ID,
-		RepositoryID:   dtoResp.RepositoryID,
-		Owner:          dtoResp.Owner,
-		IsPublished:    dtoResp.IsPublished,
-		IsAutoUpdate:   dtoResp.IsAutoUpdate,
-		AccessScope:    dtoResp.AccessScope,
-		CurrentVersion: currentVersion,
-		VersionCount:   dtoResp.VersionCount,
-		CreatedAt:      dtoResp.CreatedAt,
-		UpdatedAt:      dtoResp.UpdatedAt,
+		ID:                   dtoResp.ID,
+		RepositoryID:         dtoResp.RepositoryID,
+		ProviderRepositoryID: dtoResp.ProviderRepositoryID,
+		Owner:                dtoResp.Owner,
+		Repository:           dtoResp.Repository,
+		IsPublished:          dtoResp.IsPublished,
+		IsAutoUpdate:         dtoResp.IsAutoUpdate,
+		AccessScope:          dtoResp.AccessScope,
+		CurrentVersion:       currentVersion,
+		VersionCount:         dtoResp.VersionCount,
+		CreatedAt:            dtoResp.CreatedAt,
+		UpdatedAt:            dtoResp.UpdatedAt,
 	}
 }
 
@@ -100,16 +106,18 @@ func FromDocumentVersionDTO(dtoResp dto.DocumentVersionResponse) DocumentVersion
 // FromDocumentListItemDTO converts application DTO to API schema
 func FromDocumentListItemDTO(dtoResp dto.DocumentListItemResponse) DocumentListItemResponse {
 	return DocumentListItemResponse{
-		ID:           dtoResp.ID,
-		RepositoryID: dtoResp.RepositoryID,
-		Title:        dtoResp.Title,
-		Owner:        dtoResp.Owner,
-		DocType:      dtoResp.DocType,
-		Tags:         dtoResp.Tags,
-		IsPublished:  dtoResp.IsPublished,
-		VersionCount: dtoResp.VersionCount,
-		CreatedAt:    dtoResp.CreatedAt,
-		UpdatedAt:    dtoResp.UpdatedAt,
+		ID:                   dtoResp.ID,
+		RepositoryID:         dtoResp.RepositoryID,
+		ProviderRepositoryID: dtoResp.ProviderRepositoryID,
+		Owner:                dtoResp.Owner,
+		Repository:           dtoResp.Repository,
+		Title:                dtoResp.Title,
+		DocType:              dtoResp.DocType,
+		Tags:                 dtoResp.Tags,
+		IsPublished:          dtoResp.IsPublished,
+		VersionCount:         dtoResp.VersionCount,
+		CreatedAt:            dtoResp.CreatedAt,
+		UpdatedAt:            dtoResp.UpdatedAt,
 	}
 }
 
@@ -120,6 +128,16 @@ func FromDocumentListDTO(dtoResp []dto.DocumentListItemResponse) []DocumentListI
 		result[i] = FromDocumentListItemDTO(d)
 	}
 	return result
+}
+
+// ToDocumentListFilterDTO builds a list filter DTO from query parameters.
+func ToDocumentListFilterDTO(repositoryID, providerRepoID, owner, repository string) dto.DocumentListFilter {
+	return dto.DocumentListFilter{
+		RepositoryID:         repositoryID,
+		ProviderRepositoryID: providerRepoID,
+		Owner:                owner,
+		Repository:           repository,
+	}
 }
 
 // FromVersionHistoryDTO converts application DTO to API schema

@@ -11,7 +11,7 @@ import (
 type document struct {
 	id             value_object.DocumentID
 	repositoryID   value_object.RepositoryID
-	owner          string
+	origin         *value_object.RepositoryOrigin
 	isPublished    bool
 	isAutoUpdate   bool
 	accessScope    value_object.AccessScope
@@ -25,7 +25,7 @@ type document struct {
 type Document interface {
 	ID() value_object.DocumentID
 	RepositoryID() value_object.RepositoryID
-	Owner() string
+	Origin() *value_object.RepositoryOrigin
 	IsPublished() bool
 	IsAutoUpdate() bool
 	AccessScope() value_object.AccessScope
@@ -55,17 +55,14 @@ type Document interface {
 func NewDocument(
 	id value_object.DocumentID,
 	repositoryID value_object.RepositoryID,
-	owner string,
+	origin *value_object.RepositoryOrigin,
 	accessScope value_object.AccessScope,
 ) (Document, error) {
 	if id.IsEmpty() {
 		return nil, errors.New("document ID cannot be empty")
 	}
-	if repositoryID.IsEmpty() {
-		return nil, errors.New("repository ID cannot be empty")
-	}
-	if owner == "" {
-		return nil, errors.New("owner cannot be empty")
+	if repositoryID.IsEmpty() && origin == nil {
+		return nil, errors.New("repository origin is required")
 	}
 	if !accessScope.IsValid() {
 		return nil, errors.New("invalid access scope")
@@ -75,7 +72,7 @@ func NewDocument(
 	return &document{
 		id:           id,
 		repositoryID: repositoryID,
-		owner:        owner,
+		origin:       origin,
 		isPublished:  false,
 		isAutoUpdate: false,
 		accessScope:  accessScope,
@@ -89,7 +86,7 @@ func NewDocument(
 func ReconstructDocument(
 	id value_object.DocumentID,
 	repositoryID value_object.RepositoryID,
-	owner string,
+	origin *value_object.RepositoryOrigin,
 	isPublished bool,
 	isAutoUpdate bool,
 	accessScope value_object.AccessScope,
@@ -101,7 +98,7 @@ func ReconstructDocument(
 	return &document{
 		id:             id,
 		repositoryID:   repositoryID,
-		owner:          owner,
+		origin:         origin,
 		isPublished:    isPublished,
 		isAutoUpdate:   isAutoUpdate,
 		accessScope:    accessScope,
@@ -121,8 +118,9 @@ func (d *document) RepositoryID() value_object.RepositoryID {
 	return d.repositoryID
 }
 
-func (d *document) Owner() string {
-	return d.owner
+// Origin returns repository origin information if available.
+func (d *document) Origin() *value_object.RepositoryOrigin {
+	return d.origin
 }
 
 func (d *document) IsPublished() bool {

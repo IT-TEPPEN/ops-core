@@ -1028,6 +1028,13 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "description": "Repository ID",
+                        "name": "repositoryId",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
                         "description": "Directory path (empty for root)",
                         "name": "path",
                         "in": "query"
@@ -1100,6 +1107,13 @@ const docTemplate = `{
                         "description": "Repository name",
                         "name": "repo",
                         "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Repository ID",
+                        "name": "repositoryId",
+                        "in": "query",
                         "required": true
                     },
                     {
@@ -1347,6 +1361,24 @@ const docTemplate = `{
                         "description": "Filter by repository ID",
                         "name": "repository_id",
                         "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by provider repository ID",
+                        "name": "provider_repository_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by repository owner",
+                        "name": "owner",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by repository name",
+                        "name": "repository",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -1365,7 +1397,7 @@ const docTemplate = `{
                 }
             },
             "post": {
-                "description": "Create a new document with an initial version",
+                "description": "Create a new document with an initial version. Requires repository_id plus provider_repository_id/owner/repository to identify the source repo.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1416,7 +1448,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Publish a document by fetching it from a Git repository via OAuth connection",
+                "description": "Publish a document by fetching it from a Git repository via OAuth connection. Requires provider_repository_id + owner/repository to identify the source repository.",
                 "consumes": [
                     "application/json"
                 ],
@@ -4169,6 +4201,9 @@ const docTemplate = `{
             "required": [
                 "access_scope",
                 "file_path",
+                "owner",
+                "provider_repository_id",
+                "repository",
                 "repository_id"
             ],
             "properties": {
@@ -4188,6 +4223,18 @@ const docTemplate = `{
                 "is_auto_update": {
                     "type": "boolean",
                     "example": true
+                },
+                "owner": {
+                    "type": "string",
+                    "example": "myorg"
+                },
+                "provider_repository_id": {
+                    "type": "string",
+                    "example": "123456789"
+                },
+                "repository": {
+                    "type": "string",
+                    "example": "myrepo"
                 },
                 "repository_id": {
                     "type": "string",
@@ -4216,7 +4263,15 @@ const docTemplate = `{
                 },
                 "owner": {
                     "type": "string",
-                    "example": "database-team"
+                    "example": "myorg"
+                },
+                "provider_repository_id": {
+                    "type": "string",
+                    "example": "123456789"
+                },
+                "repository": {
+                    "type": "string",
+                    "example": "myrepo"
                 },
                 "repository_id": {
                     "type": "string",
@@ -4274,7 +4329,15 @@ const docTemplate = `{
                 },
                 "owner": {
                     "type": "string",
-                    "example": "database-team"
+                    "example": "myorg"
+                },
+                "provider_repository_id": {
+                    "type": "string",
+                    "example": "123456789"
+                },
+                "repository": {
+                    "type": "string",
+                    "example": "myrepo"
                 },
                 "repository_id": {
                     "type": "string",
@@ -4404,6 +4467,7 @@ const docTemplate = `{
                 "connection_id",
                 "file_path",
                 "owner",
+                "provider_repository_id",
                 "repository"
             ],
             "properties": {
@@ -4427,6 +4491,14 @@ const docTemplate = `{
                     "type": "string",
                     "example": "myorg"
                 },
+                "provider_repository_id": {
+                    "type": "string",
+                    "example": "123456789"
+                },
+                "ref": {
+                    "type": "string",
+                    "example": "main"
+                },
                 "repository": {
                     "type": "string",
                     "example": "myrepo"
@@ -4443,10 +4515,6 @@ const docTemplate = `{
                 "is_auto_update": {
                     "type": "boolean",
                     "example": false
-                },
-                "owner": {
-                    "type": "string",
-                    "example": "new-team"
                 }
             }
         },

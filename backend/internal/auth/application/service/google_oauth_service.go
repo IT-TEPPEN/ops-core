@@ -41,6 +41,7 @@ func (s *GoogleOAuthService) GetAuthURL(state string) string {
 
 // ExchangeToken exchanges authorization code for tokens (implements domain.OIDCProvider)
 func (s *GoogleOAuthService) ExchangeToken(ctx context.Context, code string) (*oauth2.Token, error) {
+	fmt.Printf("Code: %s", code)
 	token, err := s.config.Exchange(ctx, code)
 	if err != nil {
 		return nil, fmt.Errorf("failed to exchange code for token: %w", err)

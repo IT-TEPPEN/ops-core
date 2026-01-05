@@ -18,7 +18,6 @@ func TestFrontmatterParser_Parse(t *testing.T) {
 			name: "valid procedure document with variables",
 			markdown: `---
 title: Database Backup Procedure
-owner: database-team
 type: procedure
 tags:
   - database
@@ -45,9 +44,6 @@ This is the content of the document.
 				if data.Title != "Database Backup Procedure" {
 					t.Errorf("expected title 'Database Backup Procedure', got '%s'", data.Title)
 				}
-				if data.Owner != "database-team" {
-					t.Errorf("expected owner 'database-team', got '%s'", data.Owner)
-				}
 				if data.Type != "procedure" {
 					t.Errorf("expected type 'procedure', got '%s'", data.Type)
 				}
@@ -69,7 +65,6 @@ This is the content of the document.
 			name: "valid knowledge document without variables",
 			markdown: `---
 title: System Architecture
-owner: engineering
 type: knowledge
 tags:
   - architecture
@@ -103,7 +98,6 @@ Architecture overview...
 			name: "missing closing delimiter",
 			markdown: `---
 title: Test
-owner: team
 type: procedure
 
 # Content without closing delimiter
@@ -114,7 +108,6 @@ type: procedure
 		{
 			name: "missing required field - title",
 			markdown: `---
-owner: team
 type: procedure
 tags: []
 ---
@@ -123,19 +116,6 @@ tags: []
 `,
 			wantErr:     true,
 			errContains: "title is required",
-		},
-		{
-			name: "missing required field - owner",
-			markdown: `---
-title: Test Document
-type: procedure
-tags: []
----
-
-# Content
-`,
-			wantErr:     true,
-			errContains: "owner is required",
 		},
 		{
 			name: "missing required field - type",

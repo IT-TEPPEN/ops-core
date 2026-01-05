@@ -9,13 +9,12 @@ import (
 
 // FrontmatterData represents the parsed frontmatter metadata from a Markdown document.
 type FrontmatterData struct {
-	Title       string                   `yaml:"title"`
-	Owner       string                   `yaml:"owner"`
-	Type        string                   `yaml:"type"`
-	Tags        []string                 `yaml:"tags"`
-	Variables   []VariableDefinitionYAML `yaml:"variables,omitempty"`
-	Content     string                   // The markdown content without frontmatter
-	RawFrontmatter string                // The raw YAML frontmatter string
+	Title          string                   `yaml:"title"`
+	Type           string                   `yaml:"type"`
+	Tags           []string                 `yaml:"tags"`
+	Variables      []VariableDefinitionYAML `yaml:"variables,omitempty"`
+	Content        string                   // The markdown content without frontmatter
+	RawFrontmatter string                   // The raw YAML frontmatter string
 }
 
 // VariableDefinitionYAML represents a variable definition in YAML frontmatter.
@@ -98,10 +97,6 @@ func (p *frontmatterParser) validate(data *FrontmatterData) error {
 
 	if strings.TrimSpace(data.Title) == "" {
 		errors = append(errors, "title is required")
-	}
-
-	if strings.TrimSpace(data.Owner) == "" {
-		errors = append(errors, "owner is required")
 	}
 
 	if strings.TrimSpace(data.Type) == "" {

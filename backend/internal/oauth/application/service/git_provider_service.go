@@ -310,7 +310,7 @@ func (s *GitProviderService) GetRepositoryContents(ctx context.Context, userID s
 }
 
 // GetFileContent gets the content of a specific file
-func (s *GitProviderService) GetFileContent(ctx context.Context, userID string, connectionID string, repositoryID string, owner string, repo string, filePath string) (*FileContent, error) {
+func (s *GitProviderService) GetFileContent(ctx context.Context, userID string, connectionID string, repositoryID string, owner string, repo string, filePath string, ref string) (*FileContent, error) {
 	// Get the OAuth connection
 	conn, err := s.oauthService.GetConnectionByID(ctx, userID, connectionID)
 	if err != nil {
@@ -325,13 +325,13 @@ func (s *GitProviderService) GetFileContent(ctx context.Context, userID string, 
 
 	switch conn.Provider() {
 	case domain.ProviderGitHub:
-		return s.getGitHubFileContent(ctx, token, owner, repo, filePath)
+		return s.getGitHubFileContent(ctx, token, owner, repo, filePath, ref)
 	case domain.ProviderGitLab, domain.ProviderGitLabSelfHosted:
 		baseURL := "https://gitlab.com"
 		if conn.Provider() == domain.ProviderGitLabSelfHosted {
 			baseURL = fmt.Sprintf("https://%s", conn.ProviderHost())
 		}
-		return s.getGitLabFileContent(ctx, token, baseURL, repositoryID, owner, repo, filePath)
+		return s.getGitLabFileContent(ctx, token, baseURL, repositoryID, owner, repo, filePath, ref)
 	default:
 		return nil, fmt.Errorf("unsupported provider: %s", conn.Provider())
 	}
@@ -391,10 +391,13 @@ func (s *GitProviderService) getGitHubRepositoryContents(ctx context.Context, to
 }
 
 // getGitHubFileContent gets file content from GitHub API
-func (s *GitProviderService) getGitHubFileContent(ctx context.Context, token string, owner string, repo string, filePath string) (*FileContent, error) {
-	url := fmt.Sprintf("https://api.github.com/repos/%s/%s/contents/%s", owner, repo, filePath)
+func (s *GitProviderService) getGitHubFileContent(ctx context.Context, token string, owner string, repo string, filePath string, ref string) (*FileContent, error) {
+	requestURL := fmt.Sprintf("https://api.github.com/repos/%s/%s/contents/%s", owner, repo, filePath)
+	if ref != "" {
+		requestURL = fmt.Sprintf("%s?ref=%s", requestURL, url.QueryEscape(ref))
+	}
 
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", requestURL, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -491,7 +494,7 @@ func (s *GitProviderService) getGitLabRepositoryContents(ctx context.Context, to
 }
 
 // getGitLabFileContent gets file content from GitLab API
-func (s *GitProviderService) getGitLabFileContent(ctx context.Context, token string, baseURL string, repositoryID string, owner string, repo string, filePath string) (*FileContent, error) {
+func (s *GitProviderService) getGitLabFileContent(ctx context.Context, token string, baseURL string, repositoryID string, owner string, repo string, filePath string, ref string) (*FileContent, error) {
 	projectRef := repositoryID
 	if projectRef == "" {
 		projectRef = url.PathEscape(fmt.Sprintf("%s/%s", owner, repo))
@@ -501,6 +504,9 @@ func (s *GitProviderService) getGitLabFileContent(ctx context.Context, token str
 	}
 	filePathEscaped := url.PathEscape(filePath)
 	reqURL := fmt.Sprintf("%s/api/v4/projects/%s/repository/files/%s/raw", baseURL, projectRef, filePathEscaped)
+	if ref != "" {
+		reqURL = fmt.Sprintf("%s?ref=%s", reqURL, url.QueryEscape(ref))
+	}
 	fmt.Println("GitLab File Content URL:", reqURL)
 
 	req, err := http.NewRequestWithContext(ctx, "GET", reqURL, nil)
