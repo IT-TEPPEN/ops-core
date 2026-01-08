@@ -25,5 +25,4 @@ CREATE INDEX idx_managed_files_repository_id ON managed_files(repository_id);
 
 -- Comments
 COMMENT ON TABLE repositories IS 'Git repositories registered in OpScore';
-COMMENT ON COLUMN repositories.access_token_encrypted IS 'AES-256-GCM encrypted access token (for backward compatibility, prefer OAuth connections)';
 COMMENT ON TABLE managed_files IS 'Files managed by OpScore in repositories';

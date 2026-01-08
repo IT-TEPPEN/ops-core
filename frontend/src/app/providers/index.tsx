@@ -7,12 +7,18 @@ import {
   OAuthQueryServiceProvider,
 } from "@/features/oauth";
 import { AuthenticationDiProvider } from "@/features/authentication/presentation/contexts";
+import {
+  DocumentCommandServiceProvider,
+  DocumentQueryServiceProvider,
+} from "@/features/document";
 
 const Providers: ((props: { children: React.ReactNode }) => JSX.Element)[] = [
   TanstackClientProvider,
   AuthenticationDiProvider,
   OAuthQueryServiceProvider,
   OAuthCommandServiceProvider,
+  DocumentQueryServiceProvider,
+  DocumentCommandServiceProvider,
   RepositoryQueryServiceProvider,
   NotificationsProvider,
 ];

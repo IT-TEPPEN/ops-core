@@ -2,11 +2,7 @@ import { LoadingSpinner } from "@/ui";
 import { useState } from "react";
 
 interface PublishDialogProps {
-  isOpen: boolean;
-  file: {
-    path: string;
-    url: string;
-  } | null;
+  filePath: string;
   onClose: () => void;
   onConfirm: (options: { accessScope: "public" | "private" }) => void;
 }
@@ -35,8 +31,7 @@ const radioOptions = [
  * - 公開の確認/キャンセル
  */
 export function PublishDialog({
-  isOpen,
-  file,
+  filePath,
   onClose,
   onConfirm,
 }: PublishDialogProps) {
@@ -45,7 +40,7 @@ export function PublishDialog({
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  if (!isOpen || !file) return null;
+  if (!filePath) return null;
 
   const handleConfirm = async () => {
     setIsSubmitting(true);
@@ -77,10 +72,7 @@ export function PublishDialog({
               File
             </div>
             <div className="text-sm text-gray-900 dark:text-gray-100 break-all">
-              {file.path}
-            </div>
-            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate">
-              {file.url}
+              {filePath}
             </div>
           </div>
 

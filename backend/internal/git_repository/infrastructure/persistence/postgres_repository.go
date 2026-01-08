@@ -39,12 +39,11 @@ func (r *PostgresRepository) Save(ctx context.Context, repo entity.Repository) e
 	}
 
 	query := `
-		INSERT INTO repositories (id, name, url, access_token_encrypted, created_at, updated_at)
+		INSERT INTO repositories (id, name, url, created_at, updated_at)
 		VALUES ($1, $2, $3, $4, $5, $6)
 		ON CONFLICT (id) DO UPDATE SET
 			name = EXCLUDED.name,
 			url = EXCLUDED.url,
-			access_token_encrypted = EXCLUDED.access_token_encrypted,
 			updated_at = EXCLUDED.updated_at;
 	`
 	_, err = r.db.Exec(ctx, query, repo.ID(), repo.Name(), repo.URL(), encryptedToken, repo.CreatedAt(), repo.UpdatedAt())
@@ -63,7 +62,7 @@ func (r *PostgresRepository) Save(ctx context.Context, repo entity.Repository) e
 // FindByURL retrieves a repository by its URL from the PostgreSQL database.
 func (r *PostgresRepository) FindByURL(ctx context.Context, url string) (entity.Repository, error) {
 	query := `
-		SELECT id, name, url, access_token_encrypted, created_at, updated_at
+		SELECT id, name, url, created_at, updated_at
 		FROM repositories
 		WHERE url = $1;
 	`
@@ -102,7 +101,7 @@ func (r *PostgresRepository) FindByURL(ctx context.Context, url string) (entity.
 // FindByID retrieves a repository by its ID from the PostgreSQL database.
 func (r *PostgresRepository) FindByID(ctx context.Context, id string) (entity.Repository, error) {
 	query := `
-		SELECT id, name, url, access_token_encrypted, created_at, updated_at
+		SELECT id, name, url, created_at, updated_at
 		FROM repositories
 		WHERE id = $1;
 	`
@@ -143,7 +142,7 @@ func (r *PostgresRepository) FindByID(ctx context.Context, id string) (entity.Re
 // FindAll retrieves all repositories from the PostgreSQL database.
 func (r *PostgresRepository) FindAll(ctx context.Context) ([]entity.Repository, error) {
 	query := `
-		SELECT id, name, url, access_token_encrypted, created_at, updated_at
+		SELECT id, name, url, created_at, updated_at
 		FROM repositories
 		ORDER BY created_at DESC;
 	`
@@ -275,31 +274,4 @@ func (r *PostgresRepository) GetManagedFiles(ctx context.Context, repoID string)
 
 	// If no rows were found, filePaths will be an empty slice, which is correct.
 	return filePaths, nil
-}
-
-// UpdateAccessToken updates the access token for a repository.
-func (r *PostgresRepository) UpdateAccessToken(ctx context.Context, repoID string, accessToken string) error {
-	// Encrypt the access token before updating
-	encryptedToken, err := r.encryptor.Encrypt(accessToken)
-	if err != nil {
-		return fmt.Errorf("failed to encrypt access token: %w", err)
-	}
-
-	query := `
-		UPDATE repositories
-		SET access_token_encrypted = $1, updated_at = $2
-		WHERE id = $3;
-	`
-	now := time.Now()
-	res, err := r.db.Exec(ctx, query, encryptedToken, now, repoID)
-	if err != nil {
-		return fmt.Errorf("failed to update repository access token: %w", err)
-	}
-
-	// Check if repository exists
-	if res.RowsAffected() == 0 {
-		return fmt.Errorf("repository with ID %s not found", repoID)
-	}
-
-	return nil
 }

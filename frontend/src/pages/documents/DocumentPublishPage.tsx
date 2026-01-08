@@ -1,4 +1,4 @@
-import { Suspense, useState } from "react";
+import { Suspense } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ErrorBoundary } from "react-error-boundary";
 import {
@@ -6,32 +6,58 @@ import {
   RepositoryBrowser,
   FileBrowser,
   PublishDialog,
+  useDocumentCommandService,
 } from "@/features/document";
 import { ConnectionList } from "@/features/oauth";
 import { LoadingSpinner, UI_Icon_Document } from "@/ui";
 
 export function DocumentPublishPage() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const documentService = useDocumentCommandService();
+  const [searchParams, setSearchParams] = useSearchParams();
   const selectedConnectionId = searchParams.get("selected_connection_id");
   const selectedRepositoryId = searchParams.get("selected_repository_id");
   const selectedRepositoryFullName = searchParams.get(
     "selected_repository_full_name"
   );
+  const selectedFile = searchParams.get("selected_file");
 
-  const [selectedFile, setSelectedFile] = useState<{
-    path: string;
-    url: string;
-  } | null>(null);
-  const [isPublishDialogOpen, setIsPublishDialogOpen] = useState(false);
+  const isSelectedFile = !!selectedFile;
 
-  const handleFileSelect = (file: { path: string; url: string }) => {
-    setSelectedFile(file);
-    setIsPublishDialogOpen(true);
+  const onClose = () => {
+    setSearchParams((searchParams) => {
+      searchParams.delete("selected_file");
+      return searchParams;
+    });
   };
 
-  const handlePublish = () => {
-    navigate("/documents");
+  const handlePublish = (options: { accessScope: "public" | "private" }) => {
+    if (
+      !selectedFile ||
+      !selectedConnectionId ||
+      !selectedRepositoryId ||
+      !selectedRepositoryFullName
+    )
+      return;
+
+    const parts = selectedRepositoryFullName.split("/");
+    const repository = parts.pop()!;
+    const owner = parts.join("/");
+
+    documentService
+      .publishFromOAuth({
+        filePath: selectedFile,
+        connectionId: selectedConnectionId,
+        providerRepositoryId: selectedRepositoryId,
+        repository,
+        owner,
+        accessScope: options.accessScope,
+        ref: "main",
+        isAutoUpdate: true,
+      })
+      .then(() => {
+        navigate("/documents");
+      });
   };
 
   return (
@@ -97,7 +123,6 @@ export function DocumentPublishPage() {
               connectionId={selectedConnectionId}
               repositoryId={selectedRepositoryId}
               repositoryFullName={selectedRepositoryFullName}
-              onFileSelect={handleFileSelect}
             />
           ) : (
             <div className="flex items-center justify-center h-full">
@@ -117,12 +142,13 @@ export function DocumentPublishPage() {
         </main>
       </div>
 
-      <PublishDialog
-        isOpen={isPublishDialogOpen}
-        file={selectedFile}
-        onClose={() => setIsPublishDialogOpen(false)}
-        onConfirm={handlePublish}
-      />
+      {isSelectedFile && (
+        <PublishDialog
+          filePath={selectedFile}
+          onClose={onClose}
+          onConfirm={handlePublish}
+        />
+      )}
     </div>
   );
 }

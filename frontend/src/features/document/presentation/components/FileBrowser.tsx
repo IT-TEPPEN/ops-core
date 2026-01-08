@@ -8,7 +8,6 @@ interface FileBrowserProps {
   connectionId: string;
   repositoryId: string;
   repositoryFullName: string;
-  onFileSelect: (file: { path: string; url: string }) => void;
 }
 
 const formatFileSize = (bytes: number): string => {
@@ -32,7 +31,6 @@ export function FileBrowser({
   connectionId,
   repositoryId,
   repositoryFullName,
-  onFileSelect,
 }: FileBrowserProps) {
   const [searchParams, setSearchParams] = useSearchParams();
   const prefix = searchParams.get("prefix") || "";
@@ -69,9 +67,10 @@ export function FileBrowser({
         return searchParams;
       });
     } else if (node.name.endsWith(".md") || node.name.endsWith(".markdown")) {
-      // Only allow selection of Markdown files
-      const fileUrl = `https://github.com/${repositoryFullName}/blob/main/${node.path}`;
-      onFileSelect({ path: node.path, url: fileUrl });
+      setSearchParams((searchParams) => {
+        searchParams.set("selected_file", node.path);
+        return searchParams;
+      });
     }
   };
 
