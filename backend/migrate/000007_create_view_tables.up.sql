@@ -1,4 +1,4 @@
--- Filepath: backend/internal/git_repository/infrastructure/persistence/migrations/000005_create_view_tables.up.sql
+-- Filepath: backend/migrate/000007_create_view_tables.up.sql
 -- Create view_history and view_statistics tables
 
 -- view_history table

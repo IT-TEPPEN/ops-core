@@ -1,18 +1,13 @@
 -- Filepath: backend/internal/git_repository/infrastructure/persistence/migrations/000001_create_auth_tables.up.sql
 -- Create authentication and authorization related tables
 
--- Users table (OpScore internal user management)
+-- Users table (OpScore internal user management - authentication only)
 CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    primary_email VARCHAR(255) UNIQUE NOT NULL,
-    display_name VARCHAR(255) NOT NULL,
-    picture_url TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     last_login_at TIMESTAMPTZ
 );
-
-CREATE INDEX idx_users_primary_email ON users(primary_email);
 
 -- Refresh tokens table (JWT refresh token management)
 CREATE TABLE refresh_tokens (
@@ -53,51 +48,38 @@ CREATE INDEX idx_user_identities_user_id ON user_identities(user_id);
 CREATE INDEX idx_user_identities_provider ON user_identities(provider);
 CREATE INDEX idx_user_identities_email ON user_identities(email);
 
--- Groups table
-CREATE TABLE groups (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name VARCHAR(255) NOT NULL UNIQUE,
-    description TEXT,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE INDEX idx_groups_name ON groups(name);
-
--- User-Groups junction table (many-to-many)
-CREATE TABLE user_groups (
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    group_id UUID NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
-    joined_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (user_id, group_id)
-);
-
-CREATE INDEX idx_user_groups_user_id ON user_groups(user_id);
-CREATE INDEX idx_user_groups_group_id ON user_groups(group_id);
-
--- OAuth connections table (Git provider tokens for repository access)
-CREATE TABLE oauth_connections (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    provider VARCHAR(50) NOT NULL,
-    provider_host VARCHAR(255) NOT NULL DEFAULT '',
-    provider_metadata JSONB NOT NULL,
-    access_token_encrypted TEXT NOT NULL,
+-- User profiles table (user customizable profile information)
+CREATE TABLE user_profiles (
+    user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    display_name VARCHAR(255),
+    picture_url TEXT,
+    bio TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    UNIQUE(user_id, provider, provider_host)
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_oauth_connections_user_id ON oauth_connections(user_id);
-CREATE INDEX idx_oauth_connections_provider ON oauth_connections(provider);
-CREATE INDEX idx_oauth_connections_provider_host ON oauth_connections(provider_host);
+-- Primary user identity table (default identity selection)
+CREATE TABLE primary_user_identity (
+    user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    identity_id UUID NOT NULL REFERENCES user_identities(id) ON DELETE RESTRICT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_primary_user_identity_identity_id ON primary_user_identity(identity_id);
 
 -- Comments for documentation
-COMMENT ON TABLE users IS 'OpScore internal user accounts';
+COMMENT ON TABLE users IS 'OpScore internal user accounts (authentication only)';
 COMMENT ON TABLE refresh_tokens IS 'JWT refresh tokens for session management';
 COMMENT ON COLUMN refresh_tokens.token_hash IS 'SHA-256 hash of the refresh token';
 COMMENT ON COLUMN refresh_tokens.jti IS 'JWT ID (unique identifier for the refresh token)';
 COMMENT ON COLUMN refresh_tokens.remember_me IS 'Whether this token has extended expiration (30 days vs 7 days)';
+COMMENT ON TABLE user_identities IS 'External provider authentication links (GitHub, GitLab, etc.)';
+COMMENT ON TABLE user_profiles IS 'User customizable profile information (overrides identity data)';
+COMMENT ON COLUMN user_profiles.display_name IS 'Custom display name (NULL = use primary identity name)';
+COMMENT ON COLUMN user_profiles.picture_url IS 'Custom avatar URL (NULL = use primary identity picture)';
+COMMENT ON TABLE primary_user_identity IS 'Default identity selection for each user';
+COMMENT ON COLUMN primary_user_identity.identity_id IS 'The identity to use as default for display and notification';
 COMMENT ON TABLE user_identities IS 'Links between OpScore users and external authentication providers (Google, etc.)';
 COMMENT ON TABLE groups IS 'User groups for access control';
 COMMENT ON TABLE oauth_connections IS 'OAuth tokens for accessing Git repositories (GitHub, GitLab)';

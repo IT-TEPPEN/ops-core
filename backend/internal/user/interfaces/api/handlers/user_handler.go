@@ -4,8 +4,8 @@ import (
 	"net/http"
 
 	"opscore/backend/internal/user/application/usecase"
-	intererror "opscore/backend/internal/user/interfaces/error"
 	"opscore/backend/internal/user/interfaces/api/schema"
+	intererror "opscore/backend/internal/user/interfaces/error"
 
 	"github.com/gin-gonic/gin"
 )
@@ -33,6 +33,7 @@ func NewUserHandler(uc usecase.UserUseCase, logger Logger) *UserHandler {
 }
 
 // CreateUser godoc
+/*
 // @Summary Create a new user
 // @Description Add a new user to the system
 // @Tags users
@@ -44,6 +45,7 @@ func NewUserHandler(uc usecase.UserUseCase, logger Logger) *UserHandler {
 // @Failure 409 {object} schema.ErrorResponse "User with this email already exists"
 // @Failure 500 {object} schema.ErrorResponse "Internal server error"
 // @Router /users [post]
+*/
 func (h *UserHandler) CreateUser(c *gin.Context) {
 	var req schema.CreateUserRequest
 	requestID := c.GetString("request_id")
@@ -72,6 +74,7 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 }
 
 // GetUser godoc
+/*
 // @Summary Get user details
 // @Description Retrieves detailed information about a specific user by ID
 // @Tags users
@@ -82,6 +85,7 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 // @Failure 404 {object} schema.ErrorResponse "User not found"
 // @Failure 500 {object} schema.ErrorResponse "Internal server error"
 // @Router /users/{userId} [get]
+*/
 func (h *UserHandler) GetUser(c *gin.Context) {
 	userID := c.Param("userId")
 	requestID := c.GetString("request_id")
@@ -108,6 +112,7 @@ func (h *UserHandler) GetUser(c *gin.Context) {
 }
 
 // ListUsers godoc
+/*
 // @Summary List all users
 // @Description Retrieves a list of all users in the system
 // @Tags users
@@ -115,6 +120,7 @@ func (h *UserHandler) GetUser(c *gin.Context) {
 // @Success 200 {object} schema.ListUsersResponse "Successfully retrieved users"
 // @Failure 500 {object} schema.ErrorResponse "Internal server error"
 // @Router /users [get]
+*/
 func (h *UserHandler) ListUsers(c *gin.Context) {
 	requestID := c.GetString("request_id")
 
@@ -134,6 +140,7 @@ func (h *UserHandler) ListUsers(c *gin.Context) {
 }
 
 // UpdateUser godoc
+/*
 // @Summary Update user details
 // @Description Updates the profile information of a specific user
 // @Tags users
@@ -147,6 +154,7 @@ func (h *UserHandler) ListUsers(c *gin.Context) {
 // @Failure 409 {object} schema.ErrorResponse "Email already in use"
 // @Failure 500 {object} schema.ErrorResponse "Internal server error"
 // @Router /users/{userId} [put]
+*/
 func (h *UserHandler) UpdateUser(c *gin.Context) {
 	userID := c.Param("userId")
 	requestID := c.GetString("request_id")
@@ -182,6 +190,7 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 }
 
 // DeleteUser godoc
+/*
 // @Summary Delete a user
 // @Description Removes a user from the system
 // @Tags users
@@ -192,6 +201,7 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 // @Failure 404 {object} schema.ErrorResponse "User not found"
 // @Failure 500 {object} schema.ErrorResponse "Internal server error"
 // @Router /users/{userId} [delete]
+*/
 func (h *UserHandler) DeleteUser(c *gin.Context) {
 	userID := c.Param("userId")
 	requestID := c.GetString("request_id")
@@ -220,6 +230,7 @@ func (h *UserHandler) DeleteUser(c *gin.Context) {
 }
 
 // ChangeUserRole godoc
+/*
 // @Summary Change user role
 // @Description Changes the role of a specific user
 // @Tags users
@@ -232,6 +243,7 @@ func (h *UserHandler) DeleteUser(c *gin.Context) {
 // @Failure 404 {object} schema.ErrorResponse "User not found"
 // @Failure 500 {object} schema.ErrorResponse "Internal server error"
 // @Router /users/{userId}/role [put]
+*/
 func (h *UserHandler) ChangeUserRole(c *gin.Context) {
 	userID := c.Param("userId")
 	requestID := c.GetString("request_id")
@@ -267,6 +279,7 @@ func (h *UserHandler) ChangeUserRole(c *gin.Context) {
 }
 
 // JoinGroup godoc
+/*
 // @Summary Add user to group
 // @Description Adds a user to a specific group
 // @Tags users
@@ -280,6 +293,7 @@ func (h *UserHandler) ChangeUserRole(c *gin.Context) {
 // @Failure 409 {object} schema.ErrorResponse "User is already a member of the group"
 // @Failure 500 {object} schema.ErrorResponse "Internal server error"
 // @Router /users/{userId}/groups [post]
+*/
 func (h *UserHandler) JoinGroup(c *gin.Context) {
 	userID := c.Param("userId")
 	requestID := c.GetString("request_id")
@@ -315,6 +329,7 @@ func (h *UserHandler) JoinGroup(c *gin.Context) {
 }
 
 // LeaveGroup godoc
+/*
 // @Summary Remove user from group
 // @Description Removes a user from a specific group
 // @Tags users
@@ -328,6 +343,7 @@ func (h *UserHandler) JoinGroup(c *gin.Context) {
 // @Failure 409 {object} schema.ErrorResponse "User is not a member of the group"
 // @Failure 500 {object} schema.ErrorResponse "Internal server error"
 // @Router /users/{userId}/groups [delete]
+*/
 func (h *UserHandler) LeaveGroup(c *gin.Context) {
 	userID := c.Param("userId")
 	requestID := c.GetString("request_id")

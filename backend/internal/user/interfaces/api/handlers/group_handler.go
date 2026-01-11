@@ -4,8 +4,8 @@ import (
 	"net/http"
 
 	"opscore/backend/internal/user/application/usecase"
-	intererror "opscore/backend/internal/user/interfaces/error"
 	"opscore/backend/internal/user/interfaces/api/schema"
+	intererror "opscore/backend/internal/user/interfaces/error"
 
 	"github.com/gin-gonic/gin"
 )
@@ -25,6 +25,7 @@ func NewGroupHandler(uc usecase.GroupUseCase, logger Logger) *GroupHandler {
 }
 
 // CreateGroup godoc
+/*
 // @Summary Create a new group
 // @Description Add a new group to the system
 // @Tags groups
@@ -35,6 +36,7 @@ func NewGroupHandler(uc usecase.GroupUseCase, logger Logger) *GroupHandler {
 // @Failure 400 {object} schema.ErrorResponse "Invalid request body"
 // @Failure 500 {object} schema.ErrorResponse "Internal server error"
 // @Router /groups [post]
+*/
 func (h *GroupHandler) CreateGroup(c *gin.Context) {
 	var req schema.CreateGroupRequest
 	requestID := c.GetString("request_id")
@@ -63,6 +65,7 @@ func (h *GroupHandler) CreateGroup(c *gin.Context) {
 }
 
 // GetGroup godoc
+/*
 // @Summary Get group details
 // @Description Retrieves detailed information about a specific group by ID
 // @Tags groups
@@ -73,6 +76,7 @@ func (h *GroupHandler) CreateGroup(c *gin.Context) {
 // @Failure 404 {object} schema.ErrorResponse "Group not found"
 // @Failure 500 {object} schema.ErrorResponse "Internal server error"
 // @Router /groups/{groupId} [get]
+*/
 func (h *GroupHandler) GetGroup(c *gin.Context) {
 	groupID := c.Param("groupId")
 	requestID := c.GetString("request_id")
@@ -99,6 +103,7 @@ func (h *GroupHandler) GetGroup(c *gin.Context) {
 }
 
 // ListGroups godoc
+/*
 // @Summary List all groups
 // @Description Retrieves a list of all groups in the system
 // @Tags groups
@@ -106,6 +111,7 @@ func (h *GroupHandler) GetGroup(c *gin.Context) {
 // @Success 200 {object} schema.ListGroupsResponse "Successfully retrieved groups"
 // @Failure 500 {object} schema.ErrorResponse "Internal server error"
 // @Router /groups [get]
+*/
 func (h *GroupHandler) ListGroups(c *gin.Context) {
 	requestID := c.GetString("request_id")
 
@@ -125,6 +131,7 @@ func (h *GroupHandler) ListGroups(c *gin.Context) {
 }
 
 // UpdateGroup godoc
+/*
 // @Summary Update group details
 // @Description Updates the information of a specific group
 // @Tags groups
@@ -137,6 +144,7 @@ func (h *GroupHandler) ListGroups(c *gin.Context) {
 // @Failure 404 {object} schema.ErrorResponse "Group not found"
 // @Failure 500 {object} schema.ErrorResponse "Internal server error"
 // @Router /groups/{groupId} [put]
+*/
 func (h *GroupHandler) UpdateGroup(c *gin.Context) {
 	groupID := c.Param("groupId")
 	requestID := c.GetString("request_id")
@@ -172,6 +180,7 @@ func (h *GroupHandler) UpdateGroup(c *gin.Context) {
 }
 
 // DeleteGroup godoc
+/*
 // @Summary Delete a group
 // @Description Removes a group from the system
 // @Tags groups
@@ -182,6 +191,7 @@ func (h *GroupHandler) UpdateGroup(c *gin.Context) {
 // @Failure 404 {object} schema.ErrorResponse "Group not found"
 // @Failure 500 {object} schema.ErrorResponse "Internal server error"
 // @Router /groups/{groupId} [delete]
+*/
 func (h *GroupHandler) DeleteGroup(c *gin.Context) {
 	groupID := c.Param("groupId")
 	requestID := c.GetString("request_id")
@@ -210,6 +220,7 @@ func (h *GroupHandler) DeleteGroup(c *gin.Context) {
 }
 
 // AddMember godoc
+/*
 // @Summary Add member to group
 // @Description Adds a user to a specific group
 // @Tags groups
@@ -223,6 +234,7 @@ func (h *GroupHandler) DeleteGroup(c *gin.Context) {
 // @Failure 409 {object} schema.ErrorResponse "User is already a member of the group"
 // @Failure 500 {object} schema.ErrorResponse "Internal server error"
 // @Router /groups/{groupId}/members [post]
+*/
 func (h *GroupHandler) AddMember(c *gin.Context) {
 	groupID := c.Param("groupId")
 	requestID := c.GetString("request_id")
@@ -258,6 +270,7 @@ func (h *GroupHandler) AddMember(c *gin.Context) {
 }
 
 // RemoveMember godoc
+/*
 // @Summary Remove member from group
 // @Description Removes a user from a specific group
 // @Tags groups
@@ -271,6 +284,7 @@ func (h *GroupHandler) AddMember(c *gin.Context) {
 // @Failure 409 {object} schema.ErrorResponse "User is not a member of the group"
 // @Failure 500 {object} schema.ErrorResponse "Internal server error"
 // @Router /groups/{groupId}/members [delete]
+*/
 func (h *GroupHandler) RemoveMember(c *gin.Context) {
 	groupID := c.Param("groupId")
 	requestID := c.GetString("request_id")
@@ -306,6 +320,7 @@ func (h *GroupHandler) RemoveMember(c *gin.Context) {
 }
 
 // GetUserGroups godoc
+/*
 // @Summary Get groups for a user
 // @Description Retrieves all groups that a specific user is a member of
 // @Tags groups
@@ -316,6 +331,7 @@ func (h *GroupHandler) RemoveMember(c *gin.Context) {
 // @Failure 404 {object} schema.ErrorResponse "User not found"
 // @Failure 500 {object} schema.ErrorResponse "Internal server error"
 // @Router /users/{userId}/groups [get]
+*/
 func (h *GroupHandler) GetUserGroups(c *gin.Context) {
 	userID := c.Param("userId")
 	requestID := c.GetString("request_id")

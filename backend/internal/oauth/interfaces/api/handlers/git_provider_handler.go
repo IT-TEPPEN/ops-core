@@ -24,6 +24,7 @@ func NewGitProviderHandler(gitProviderService *service.GitProviderService, logge
 }
 
 // ListUserRepositories lists repositories accessible to the user
+/*
 // @Summary List user repositories from Git provider
 // @Description List all repositories accessible to the authenticated user from a Git provider
 // @Tags GitProvider
@@ -35,6 +36,7 @@ func NewGitProviderHandler(gitProviderService *service.GitProviderService, logge
 // @Failure 401 {object} map[string]interface{} "Unauthorized"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /git-providers/{provider}/repositories [get]
+*/
 func (h *GitProviderHandler) ListUserRepositories(c *gin.Context) {
 	providerStr := c.Param("provider")
 

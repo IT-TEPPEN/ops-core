@@ -4,8 +4,8 @@ import (
 	"net/http"
 
 	"opscore/backend/internal/document/application/usecase"
-	intererror "opscore/backend/internal/document/interfaces/error"
 	"opscore/backend/internal/document/interfaces/api/schema"
+	intererror "opscore/backend/internal/document/interfaces/error"
 
 	"github.com/gin-gonic/gin"
 )
@@ -25,6 +25,7 @@ func NewVariableHandler(uc usecase.VariableUseCase, logger Logger) *VariableHand
 }
 
 // GetVariableDefinitions godoc
+/*
 // @Summary Get variable definitions for a document
 // @Description Retrieves all variable definitions from the current version of a document
 // @Tags variables
@@ -35,6 +36,7 @@ func NewVariableHandler(uc usecase.VariableUseCase, logger Logger) *VariableHand
 // @Failure 404 {object} schema.ErrorResponse "Document not found"
 // @Failure 500 {object} schema.ErrorResponse "Internal server error"
 // @Router /documents/{docId}/variables [get]
+*/
 func (h *VariableHandler) GetVariableDefinitions(c *gin.Context) {
 	docID := c.Param("docId")
 	requestID := c.GetString("request_id")
@@ -76,6 +78,7 @@ func (h *VariableHandler) GetVariableDefinitions(c *gin.Context) {
 }
 
 // ValidateVariableValues godoc
+/*
 // @Summary Validate variable values for a document
 // @Description Validates the provided variable values against the document's variable definitions.
 // @Description
@@ -95,6 +98,7 @@ func (h *VariableHandler) GetVariableDefinitions(c *gin.Context) {
 // @Failure 404 {object} schema.ErrorResponse "Document not found"
 // @Failure 500 {object} schema.ErrorResponse "Internal server error"
 // @Router /documents/{docId}/validate-variables [post]
+*/
 func (h *VariableHandler) ValidateVariableValues(c *gin.Context) {
 	docID := c.Param("docId")
 	requestID := c.GetString("request_id")
@@ -127,11 +131,11 @@ func (h *VariableHandler) ValidateVariableValues(c *gin.Context) {
 	if err != nil {
 		// Check if it's a validation error
 		httpErr := intererror.MapToHTTPError(err, requestID)
-		
+
 		// For validation errors, return a structured response with valid: false
 		if httpErr.StatusCode == http.StatusBadRequest && httpErr.Code == "VALIDATION_FAILED" {
 			h.logger.Info("Variable validation failed", "request_id", requestID, "doc_id", docID)
-			
+
 			// Extract field errors if available
 			validationErrors := []schema.ValidationErrorDTO{}
 			if httpErr.Details != nil {
@@ -152,7 +156,7 @@ func (h *VariableHandler) ValidateVariableValues(c *gin.Context) {
 					}
 				}
 			}
-			
+
 			c.JSON(http.StatusOK, schema.ValidateVariableValuesResponse{
 				Valid:  false,
 				Errors: validationErrors,

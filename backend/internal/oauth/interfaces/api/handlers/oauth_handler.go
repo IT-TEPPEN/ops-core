@@ -36,6 +36,7 @@ type OAuthConnectionResponse struct {
 }
 
 // HandleCallback handles OAuth callback request
+/*
 // @Summary OAuth callback endpoint
 // @Description Exchanges OAuth authorization code for access token
 // @Tags OAuth
@@ -46,6 +47,7 @@ type OAuthConnectionResponse struct {
 // @Failure 400 {object} domain.OAuthTokenResponse "Invalid request"
 // @Failure 500 {object} domain.OAuthTokenResponse "Internal server error"
 // @Router /auth/oauth/callback [post]
+*/
 func (h *OAuthHandler) HandleCallback(c *gin.Context) {
 	var req domain.OAuthCallbackRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -95,6 +97,7 @@ func (h *OAuthHandler) HandleCallback(c *gin.Context) {
 }
 
 // HandleCallbackWithSave handles OAuth callback and saves tokens to database
+/*
 // @Summary OAuth callback endpoint with token storage
 // @Description Exchanges OAuth authorization code for access token and saves to database
 // @Tags OAuth
@@ -107,6 +110,7 @@ func (h *OAuthHandler) HandleCallback(c *gin.Context) {
 // @Failure 401 {object} map[string]interface{} "Unauthorized"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /auth/oauth/connect [post]
+*/
 func (h *OAuthHandler) HandleCallbackWithSave(c *gin.Context) {
 	var req domain.OAuthCallbackRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -162,6 +166,7 @@ func (h *OAuthHandler) HandleCallbackWithSave(c *gin.Context) {
 }
 
 // ListConnections lists all OAuth connections for the current user
+/*
 // @Summary List OAuth connections
 // @Description List all OAuth connections for the authenticated user
 // @Tags OAuth
@@ -171,6 +176,7 @@ func (h *OAuthHandler) HandleCallbackWithSave(c *gin.Context) {
 // @Failure 401 {object} map[string]interface{} "Unauthorized"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /auth/oauth/connections [get]
+*/
 func (h *OAuthHandler) ListConnections(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {
@@ -209,6 +215,7 @@ func (h *OAuthHandler) ListConnections(c *gin.Context) {
 }
 
 // DisconnectProvider removes an OAuth connection
+/*
 // @Summary Disconnect OAuth provider
 // @Description Remove an OAuth connection for the authenticated user
 // @Tags OAuth
@@ -219,6 +226,7 @@ func (h *OAuthHandler) ListConnections(c *gin.Context) {
 // @Failure 401 {object} map[string]interface{} "Unauthorized"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /auth/oauth/connections/{provider} [delete]
+*/
 func (h *OAuthHandler) DisconnectProvider(c *gin.Context) {
 	providerStr := c.Param("provider")
 
@@ -290,6 +298,7 @@ func (h *OAuthHandler) GetAccessToken(c *gin.Context) {
 }
 
 // ListRepositoriesByConnection lists repositories for a specific OAuth connection
+/*
 // @Summary List repositories by OAuth connection
 // @Description List all repositories accessible via a specific OAuth connection
 // @Tags OAuth
@@ -301,6 +310,7 @@ func (h *OAuthHandler) GetAccessToken(c *gin.Context) {
 // @Failure 401 {object} map[string]interface{} "Unauthorized"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /auth/oauth/connections/{connectionId}/repositories [get]
+*/
 func (h *OAuthHandler) ListRepositoriesByConnection(c *gin.Context) {
 	connectionID := c.Param("connectionId")
 	if connectionID == "" {
@@ -337,6 +347,7 @@ func (h *OAuthHandler) ListRepositoriesByConnection(c *gin.Context) {
 }
 
 // GetRepositoryContents lists files and directories at a specific path in a repository
+/*
 // @Summary Get repository contents
 // @Description Get files and directories at a specific path via OAuth connection
 // @Tags OAuth
@@ -353,6 +364,7 @@ func (h *OAuthHandler) ListRepositoriesByConnection(c *gin.Context) {
 // @Failure 401 {object} map[string]interface{} "Unauthorized"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /auth/oauth/connections/{connectionId}/repositories/{owner}/{repo}/contents [get]
+*/
 func (h *OAuthHandler) GetRepositoryContents(c *gin.Context) {
 	connectionID := c.Param("connectionId")
 	owner := c.Param("owner")
@@ -395,6 +407,7 @@ func (h *OAuthHandler) GetRepositoryContents(c *gin.Context) {
 }
 
 // GetRepositoryFileContent gets the content of a specific file
+/*
 // @Summary Get file content
 // @Description Get the content of a specific file via OAuth connection
 // @Tags OAuth
@@ -411,6 +424,7 @@ func (h *OAuthHandler) GetRepositoryContents(c *gin.Context) {
 // @Failure 401 {object} map[string]interface{} "Unauthorized"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /auth/oauth/connections/{connectionId}/repositories/{owner}/{repo}/files/{filePath} [get]
+*/
 func (h *OAuthHandler) GetRepositoryFileContent(c *gin.Context) {
 	connectionID := c.Param("connectionId")
 	owner := c.Param("owner")
@@ -455,6 +469,7 @@ func (h *OAuthHandler) GetRepositoryFileContent(c *gin.Context) {
 }
 
 // GetFileCommitHistory gets commit history for a specific file
+/*
 // @Summary Get file commit history
 // @Description Get the commit history for a specific file via OAuth connection
 // @Tags OAuth
@@ -470,6 +485,7 @@ func (h *OAuthHandler) GetRepositoryFileContent(c *gin.Context) {
 // @Failure 401 {object} map[string]interface{} "Unauthorized"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /auth/oauth/connections/{connectionId}/repositories/{owner}/{repo}/files/history [get]
+*/
 func (h *OAuthHandler) GetFileCommitHistory(c *gin.Context) {
 	connectionID := c.Param("connectionId")
 	owner := c.Param("owner")

@@ -34,6 +34,7 @@ func NewViewHistoryHandler(uc usecase.ViewHistoryUseCase, logger Logger) *ViewHi
 }
 
 // RecordView godoc
+/*
 // @Summary Record a document view
 // @Description Records a view of a document by a user
 // @Tags view-history
@@ -45,6 +46,7 @@ func NewViewHistoryHandler(uc usecase.ViewHistoryUseCase, logger Logger) *ViewHi
 // @Failure 400 {object} schema.ErrorResponse "Invalid request"
 // @Failure 500 {object} schema.ErrorResponse "Internal server error"
 // @Router /api/documents/{docId}/views [post]
+*/
 func (h *ViewHistoryHandler) RecordView(c *gin.Context) {
 	documentID := c.Param("docId")
 	requestID := c.GetString("request_id")
@@ -80,6 +82,7 @@ func (h *ViewHistoryHandler) RecordView(c *gin.Context) {
 }
 
 // GetUserViewHistory godoc
+/*
 // @Summary Get user's view history
 // @Description Retrieves the view history for a specific user
 // @Tags view-history
@@ -91,6 +94,7 @@ func (h *ViewHistoryHandler) RecordView(c *gin.Context) {
 // @Failure 400 {object} schema.ErrorResponse "Invalid request"
 // @Failure 500 {object} schema.ErrorResponse "Internal server error"
 // @Router /api/users/{userId}/view-history [get]
+*/
 func (h *ViewHistoryHandler) GetUserViewHistory(c *gin.Context) {
 	userID := c.Param("userId")
 	requestID := c.GetString("request_id")
@@ -128,6 +132,7 @@ func (h *ViewHistoryHandler) GetUserViewHistory(c *gin.Context) {
 }
 
 // GetDocumentViewHistory godoc
+/*
 // @Summary Get document's view history
 // @Description Retrieves the view history for a specific document
 // @Tags view-history
@@ -139,6 +144,7 @@ func (h *ViewHistoryHandler) GetUserViewHistory(c *gin.Context) {
 // @Failure 400 {object} schema.ErrorResponse "Invalid request"
 // @Failure 500 {object} schema.ErrorResponse "Internal server error"
 // @Router /api/documents/{docId}/view-history [get]
+*/
 func (h *ViewHistoryHandler) GetDocumentViewHistory(c *gin.Context) {
 	documentID := c.Param("docId")
 	requestID := c.GetString("request_id")

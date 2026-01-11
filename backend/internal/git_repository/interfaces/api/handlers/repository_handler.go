@@ -35,6 +35,7 @@ func NewRepositoryHandler(uc repository.RepositoryUseCase, logger Logger) *Repos
 // --- Handler Methods ---
 
 // ListRepositoryFiles godoc
+/*
 // @Summary List files in a repository
 // @Description Retrieves a list of files and directories within a specified repository.
 // @Tags repositories
@@ -47,6 +48,7 @@ func NewRepositoryHandler(uc repository.RepositoryUseCase, logger Logger) *Repos
 // @Failure 404 {object} schema.ErrorResponse "Repository not found"
 // @Failure 500 {object} schema.ErrorResponse "Internal server error"
 // @Router /repositories/{repoId}/files [get]
+*/
 func (h *RepositoryHandler) ListRepositoryFiles(c *gin.Context) {
 	repoId := c.Param("repoId")
 	requestID := c.GetString("request_id")
@@ -86,6 +88,7 @@ func (h *RepositoryHandler) ListRepositoryFiles(c *gin.Context) {
 }
 
 // GetFileContents godoc
+/*
 // @Summary Get file contents from a repository
 // @Description Retrieves the content of a specific file from a repository by its file path provided as a query parameter. Optionally specify a commit hash to retrieve a specific version.
 // @Tags repositories
@@ -100,6 +103,7 @@ func (h *RepositoryHandler) ListRepositoryFiles(c *gin.Context) {
 // @Failure 404 {object} schema.ErrorResponse "Repository or file not found"
 // @Failure 500 {object} schema.ErrorResponse "Internal server error"
 // @Router /repositories/{repoId}/files/content [get]
+*/
 func (h *RepositoryHandler) GetFileContents(c *gin.Context) {
 	repoId := c.Param("repoId")
 	filePath := c.Query("path")
@@ -147,6 +151,7 @@ func (h *RepositoryHandler) GetFileContents(c *gin.Context) {
 }
 
 // GetRepositoryContents godoc
+/*
 // @Summary Get repository contents at a specific path
 // @Description Retrieves files and directories at the specified path (non-recursive). Returns only direct children of the specified directory.
 // @Tags repositories
@@ -160,6 +165,7 @@ func (h *RepositoryHandler) GetFileContents(c *gin.Context) {
 // @Failure 404 {object} schema.ErrorResponse "Repository or path not found"
 // @Failure 500 {object} schema.ErrorResponse "Internal server error"
 // @Router /repositories/{repoId}/contents [get]
+*/
 func (h *RepositoryHandler) GetRepositoryContents(c *gin.Context) {
 	repoId := c.Param("repoId")
 	path := c.DefaultQuery("path", "") // Default to root if not provided
@@ -200,6 +206,7 @@ func (h *RepositoryHandler) GetRepositoryContents(c *gin.Context) {
 }
 
 // ListRepositories godoc
+/*
 // @Summary List all repositories
 // @Description Retrieves a list of all repositories registered in OpsCore
 // @Tags repositories
@@ -208,6 +215,7 @@ func (h *RepositoryHandler) GetRepositoryContents(c *gin.Context) {
 // @Success 200 {object} schema.ListRepositoriesResponse "Successfully retrieved repositories"
 // @Failure 500 {object} schema.ErrorResponse "Internal server error"
 // @Router /repositories [get]
+*/
 func (h *RepositoryHandler) ListRepositories(c *gin.Context) {
 	requestID := c.GetString("request_id") // ミドルウェアから設定されたリクエストID
 
@@ -233,6 +241,7 @@ func (h *RepositoryHandler) ListRepositories(c *gin.Context) {
 }
 
 // GetRepository godoc
+/*
 // @Summary Get repository details
 // @Description Retrieves detailed information about a specific repository by ID
 // @Tags repositories
@@ -244,6 +253,7 @@ func (h *RepositoryHandler) ListRepositories(c *gin.Context) {
 // @Failure 404 {object} schema.ErrorResponse "Repository not found"
 // @Failure 500 {object} schema.ErrorResponse "Internal server error"
 // @Router /repositories/{repoId} [get]
+*/
 func (h *RepositoryHandler) GetRepository(c *gin.Context) {
 	repoId := c.Param("repoId")
 	requestID := c.GetString("request_id")
@@ -272,6 +282,7 @@ func (h *RepositoryHandler) GetRepository(c *gin.Context) {
 }
 
 // GetFileHistory godoc
+/*
 // @Summary Get file commit history
 // @Description Retrieves the commit history for a specific file in a repository
 // @Tags repositories
@@ -284,6 +295,7 @@ func (h *RepositoryHandler) GetRepository(c *gin.Context) {
 // @Failure 404 {object} schema.ErrorResponse "Repository or file not found"
 // @Failure 500 {object} schema.ErrorResponse "Internal server error"
 // @Router /repositories/{repoId}/files/history [get]
+*/
 func (h *RepositoryHandler) GetFileHistory(c *gin.Context) {
 	repoId := c.Param("repoId")
 	filePath := c.Query("path")

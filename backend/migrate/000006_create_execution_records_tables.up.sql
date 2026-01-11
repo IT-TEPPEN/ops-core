@@ -1,4 +1,4 @@
--- Filepath: backend/internal/git_repository/infrastructure/persistence/migrations/000004_create_execution_records_tables.up.sql
+-- Filepath: backend/migrate/000006_create_execution_records_tables.up.sql
 -- Create execution_records, execution_steps, and attachments tables
 
 -- execution_records table

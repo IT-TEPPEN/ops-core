@@ -33,6 +33,7 @@ func NewAttachmentHandler(uc AttachmentUsecase) *AttachmentHandler {
 }
 
 // UploadAttachment godoc
+/*
 // @Summary Upload an attachment
 // @Description Upload a file attachment to an execution record step
 // @Tags attachments
@@ -46,6 +47,7 @@ func NewAttachmentHandler(uc AttachmentUsecase) *AttachmentHandler {
 // @Failure 401 {object} map[string]string "User not authenticated"
 // @Failure 500 {object} map[string]string "Internal server error"
 // @Router /execution-records/{id}/attachments [post]
+*/
 func (h *AttachmentHandler) UploadAttachment(c *gin.Context) {
 	recordID := c.Param("id")
 	if recordID == "" {
@@ -100,6 +102,7 @@ func (h *AttachmentHandler) UploadAttachment(c *gin.Context) {
 }
 
 // GetAttachment godoc
+/*
 // @Summary Get attachment metadata
 // @Description Retrieves metadata information about a specific attachment
 // @Tags attachments
@@ -110,6 +113,7 @@ func (h *AttachmentHandler) UploadAttachment(c *gin.Context) {
 // @Failure 404 {object} map[string]string "Attachment not found"
 // @Failure 500 {object} map[string]string "Internal server error"
 // @Router /attachments/{id} [get]
+*/
 func (h *AttachmentHandler) GetAttachment(c *gin.Context) {
 	attachmentID := c.Param("id")
 	if attachmentID == "" {
@@ -127,6 +131,7 @@ func (h *AttachmentHandler) GetAttachment(c *gin.Context) {
 }
 
 // DownloadAttachment godoc
+/*
 // @Summary Download an attachment file
 // @Description Download the actual file content of an attachment
 // @Tags attachments
@@ -137,6 +142,7 @@ func (h *AttachmentHandler) GetAttachment(c *gin.Context) {
 // @Failure 404 {object} map[string]string "Attachment not found"
 // @Failure 500 {object} map[string]string "Internal server error"
 // @Router /attachments/{id}/download [get]
+*/
 func (h *AttachmentHandler) DownloadAttachment(c *gin.Context) {
 	attachmentID := c.Param("id")
 	if attachmentID == "" {
@@ -157,6 +163,7 @@ func (h *AttachmentHandler) DownloadAttachment(c *gin.Context) {
 }
 
 // ListAttachments godoc
+/*
 // @Summary List attachments for an execution record
 // @Description Retrieves all attachments associated with an execution record
 // @Tags attachments
@@ -166,6 +173,7 @@ func (h *AttachmentHandler) DownloadAttachment(c *gin.Context) {
 // @Failure 400 {object} map[string]string "Invalid record ID"
 // @Failure 500 {object} map[string]string "Internal server error"
 // @Router /execution-records/{id}/attachments [get]
+*/
 func (h *AttachmentHandler) ListAttachments(c *gin.Context) {
 	recordID := c.Param("id")
 	if recordID == "" {
@@ -188,6 +196,7 @@ func (h *AttachmentHandler) ListAttachments(c *gin.Context) {
 }
 
 // ListStepAttachments godoc
+/*
 // @Summary List attachments for an execution step
 // @Description Retrieves all attachments associated with a specific execution step
 // @Tags attachments
@@ -198,6 +207,7 @@ func (h *AttachmentHandler) ListAttachments(c *gin.Context) {
 // @Failure 400 {object} map[string]string "Invalid step ID"
 // @Failure 500 {object} map[string]string "Internal server error"
 // @Router /execution-records/{id}/steps/{stepId}/attachments [get]
+*/
 func (h *AttachmentHandler) ListStepAttachments(c *gin.Context) {
 	stepID := c.Param("stepId")
 	if stepID == "" {
@@ -220,6 +230,7 @@ func (h *AttachmentHandler) ListStepAttachments(c *gin.Context) {
 }
 
 // DeleteAttachment godoc
+/*
 // @Summary Delete an attachment
 // @Description Delete a specific attachment by ID
 // @Tags attachments
@@ -229,6 +240,7 @@ func (h *AttachmentHandler) ListStepAttachments(c *gin.Context) {
 // @Failure 404 {object} map[string]string "Attachment not found"
 // @Failure 500 {object} map[string]string "Internal server error"
 // @Router /attachments/{id} [delete]
+*/
 func (h *AttachmentHandler) DeleteAttachment(c *gin.Context) {
 	attachmentID := c.Param("id")
 	if attachmentID == "" {
@@ -246,6 +258,7 @@ func (h *AttachmentHandler) DeleteAttachment(c *gin.Context) {
 }
 
 // GetAttachmentURL godoc
+/*
 // @Summary Get signed URL for attachment
 // @Description Get a presigned URL for downloading an attachment (for S3 storage) or download endpoint (for local storage)
 // @Tags attachments
@@ -256,6 +269,7 @@ func (h *AttachmentHandler) DeleteAttachment(c *gin.Context) {
 // @Failure 404 {object} map[string]string "Attachment not found"
 // @Failure 500 {object} map[string]string "Internal server error"
 // @Router /attachments/{id}/url [get]
+*/
 func (h *AttachmentHandler) GetAttachmentURL(c *gin.Context) {
 	attachmentID := c.Param("id")
 	if attachmentID == "" {

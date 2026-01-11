@@ -34,6 +34,7 @@ func NewDocumentHandler(uc usecase.DocumentUseCase, logger Logger) *DocumentHand
 }
 
 // CreateDocument godoc
+/*
 // @Summary Create a new document
 // @Description Create a new document with an initial version. Requires repository_id plus provider_repository_id/owner/repository to identify the source repo.
 // @Tags documents
@@ -44,6 +45,7 @@ func NewDocumentHandler(uc usecase.DocumentUseCase, logger Logger) *DocumentHand
 // @Failure 400 {object} schema.ErrorResponse "Invalid request body"
 // @Failure 500 {object} schema.ErrorResponse "Internal server error"
 // @Router /documents [post]
+*/
 func (h *DocumentHandler) CreateDocument(c *gin.Context) {
 	var req schema.CreateDocumentRequest
 	requestID := c.GetString("request_id")
@@ -73,6 +75,7 @@ func (h *DocumentHandler) CreateDocument(c *gin.Context) {
 }
 
 // GetDocument godoc
+/*
 // @Summary Get document details
 // @Description Retrieves detailed information about a specific document by ID
 // @Tags documents
@@ -83,6 +86,7 @@ func (h *DocumentHandler) CreateDocument(c *gin.Context) {
 // @Failure 404 {object} schema.ErrorResponse "Document not found"
 // @Failure 500 {object} schema.ErrorResponse "Internal server error"
 // @Router /documents/{docId} [get]
+*/
 func (h *DocumentHandler) GetDocument(c *gin.Context) {
 	docID := c.Param("docId")
 	requestID := c.GetString("request_id")
@@ -109,6 +113,7 @@ func (h *DocumentHandler) GetDocument(c *gin.Context) {
 }
 
 // UpdateDocument godoc
+/*
 // @Summary Update a document
 // @Description Update an existing document by creating a new version
 // @Tags documents
@@ -121,6 +126,7 @@ func (h *DocumentHandler) GetDocument(c *gin.Context) {
 // @Failure 404 {object} schema.ErrorResponse "Document not found"
 // @Failure 500 {object} schema.ErrorResponse "Internal server error"
 // @Router /documents/{docId} [put]
+*/
 func (h *DocumentHandler) UpdateDocument(c *gin.Context) {
 	docID := c.Param("docId")
 	requestID := c.GetString("request_id")
@@ -157,6 +163,7 @@ func (h *DocumentHandler) UpdateDocument(c *gin.Context) {
 }
 
 // ListDocuments godoc
+/*
 // @Summary List all documents
 // @Description Retrieves a list of all published documents
 // @Tags documents
@@ -168,6 +175,7 @@ func (h *DocumentHandler) UpdateDocument(c *gin.Context) {
 // @Success 200 {object} schema.ListDocumentsResponse "Successfully retrieved documents"
 // @Failure 500 {object} schema.ErrorResponse "Internal server error"
 // @Router /documents [get]
+*/
 func (h *DocumentHandler) ListDocuments(c *gin.Context) {
 	requestID := c.GetString("request_id")
 	repositoryID := c.Query("repository_id")
@@ -196,6 +204,7 @@ func (h *DocumentHandler) ListDocuments(c *gin.Context) {
 }
 
 // GetDocumentVersions godoc
+/*
 // @Summary Get document version history
 // @Description Retrieves all versions for a specific document
 // @Tags documents
@@ -206,6 +215,7 @@ func (h *DocumentHandler) ListDocuments(c *gin.Context) {
 // @Failure 404 {object} schema.ErrorResponse "Document not found"
 // @Failure 500 {object} schema.ErrorResponse "Internal server error"
 // @Router /documents/{docId}/versions [get]
+*/
 func (h *DocumentHandler) GetDocumentVersions(c *gin.Context) {
 	docID := c.Param("docId")
 	requestID := c.GetString("request_id")
@@ -232,6 +242,7 @@ func (h *DocumentHandler) GetDocumentVersions(c *gin.Context) {
 }
 
 // GetDocumentVersion godoc
+/*
 // @Summary Get a specific document version
 // @Description Retrieves details of a specific version of a document
 // @Tags documents
@@ -243,6 +254,7 @@ func (h *DocumentHandler) GetDocumentVersions(c *gin.Context) {
 // @Failure 404 {object} schema.ErrorResponse "Document or version not found"
 // @Failure 500 {object} schema.ErrorResponse "Internal server error"
 // @Router /documents/{docId}/versions/{version} [get]
+*/
 func (h *DocumentHandler) GetDocumentVersion(c *gin.Context) {
 	docID := c.Param("docId")
 	versionStr := c.Param("version")
@@ -277,6 +289,7 @@ func (h *DocumentHandler) GetDocumentVersion(c *gin.Context) {
 }
 
 // PublishDocumentVersion godoc
+/*
 // @Summary Publish a specific document version
 // @Description Publishes a specific version of a document, making it the current version
 // @Tags documents
@@ -289,6 +302,7 @@ func (h *DocumentHandler) GetDocumentVersion(c *gin.Context) {
 // @Failure 404 {object} schema.ErrorResponse "Document or version not found"
 // @Failure 500 {object} schema.ErrorResponse "Internal server error"
 // @Router /documents/{docId}/versions/{version}/publish [post]
+*/
 func (h *DocumentHandler) PublishDocumentVersion(c *gin.Context) {
 	docID := c.Param("docId")
 	versionStr := c.Param("version")
@@ -323,6 +337,7 @@ func (h *DocumentHandler) PublishDocumentVersion(c *gin.Context) {
 }
 
 // RollbackDocumentVersion godoc
+/*
 // @Summary Rollback to a previous document version
 // @Description Rolls back the document to a previous version
 // @Tags documents
@@ -335,6 +350,7 @@ func (h *DocumentHandler) PublishDocumentVersion(c *gin.Context) {
 // @Failure 404 {object} schema.ErrorResponse "Document or version not found"
 // @Failure 500 {object} schema.ErrorResponse "Internal server error"
 // @Router /documents/{docId}/versions/{version}/rollback [post]
+*/
 func (h *DocumentHandler) RollbackDocumentVersion(c *gin.Context) {
 	docID := c.Param("docId")
 	versionStr := c.Param("version")
@@ -369,6 +385,7 @@ func (h *DocumentHandler) RollbackDocumentVersion(c *gin.Context) {
 }
 
 // UpdateDocumentMetadata godoc
+/*
 // @Summary Update document metadata
 // @Description Updates document metadata such as owner, access scope, and auto-update setting
 // @Tags documents
@@ -381,6 +398,7 @@ func (h *DocumentHandler) RollbackDocumentVersion(c *gin.Context) {
 // @Failure 404 {object} schema.ErrorResponse "Document not found"
 // @Failure 500 {object} schema.ErrorResponse "Internal server error"
 // @Router /documents/{docId}/metadata [patch]
+*/
 func (h *DocumentHandler) UpdateDocumentMetadata(c *gin.Context) {
 	docID := c.Param("docId")
 	requestID := c.GetString("request_id")
@@ -417,6 +435,7 @@ func (h *DocumentHandler) UpdateDocumentMetadata(c *gin.Context) {
 }
 
 // PublishDocument godoc
+/*
 // @Summary Publish a document from an OAuth connection
 // @Description Publish a document by fetching it from a Git repository via OAuth connection. Requires provider_repository_id + owner/repository to identify the source repository.
 // @Tags documents
@@ -429,6 +448,7 @@ func (h *DocumentHandler) UpdateDocumentMetadata(c *gin.Context) {
 // @Failure 401 {object} schema.ErrorResponse "Unauthorized"
 // @Failure 500 {object} schema.ErrorResponse "Internal server error"
 // @Router /documents/publish [post]
+*/
 func (h *DocumentHandler) PublishDocument(c *gin.Context) {
 	var req schema.PublishDocumentRequest
 	requestID := c.GetString("request_id")

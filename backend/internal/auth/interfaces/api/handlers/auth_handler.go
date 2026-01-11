@@ -15,12 +15,12 @@ import (
 
 // AuthHandler handles authentication-related HTTP requests
 type AuthHandler struct {
-	providerFactory    *service.ProviderFactory
-	jwtService         *service.JWTService
-	userRepository     domain.UserRepository
-	userIdentityRepo   domain.UserIdentityRepository
-	refreshTokenRepo   domain.RefreshTokenRepository
-	logger             Logger
+	providerFactory  *service.ProviderFactory
+	jwtService       *service.JWTService
+	userRepository   domain.UserRepository
+	userIdentityRepo domain.UserIdentityRepository
+	refreshTokenRepo domain.RefreshTokenRepository
+	logger           Logger
 }
 
 // Logger interface for structured logging
@@ -101,6 +101,7 @@ type IdentityResponse struct {
 }
 
 // ProviderLogin godoc
+/*
 // @Summary Initiate OIDC login
 // @Description Returns OIDC provider authorization URL for user to authenticate
 // @Tags auth
@@ -108,6 +109,7 @@ type IdentityResponse struct {
 // @Param provider path string true "Provider name (google, github, gitlab, microsoft)"
 // @Success 200 {object} ProviderLoginResponse
 // @Router /auth/{provider}/login [get]
+*/
 func (h *AuthHandler) ProviderLogin(c *gin.Context) {
 	provider := c.Param("provider")
 
@@ -136,6 +138,7 @@ func (h *AuthHandler) ProviderLogin(c *gin.Context) {
 }
 
 // ProviderCallback godoc
+/*
 // @Summary Handle OIDC provider callback
 // @Description Exchanges authorization code for JWT token and creates/updates user
 // @Tags auth
@@ -147,6 +150,7 @@ func (h *AuthHandler) ProviderLogin(c *gin.Context) {
 // @Failure 400 {object} map[string]string
 // @Failure 500 {object} map[string]string
 // @Router /auth/{provider}/callback [post]
+*/
 func (h *AuthHandler) ProviderCallback(c *gin.Context) {
 	provider := c.Param("provider")
 
@@ -261,6 +265,7 @@ func (h *AuthHandler) ProviderCallback(c *gin.Context) {
 }
 
 // GetMe godoc
+/*
 // @Summary Get current user information
 // @Description Returns the currently authenticated user's profile
 // @Tags auth
@@ -270,6 +275,7 @@ func (h *AuthHandler) ProviderCallback(c *gin.Context) {
 // @Failure 401 {object} map[string]string
 // @Failure 404 {object} map[string]string
 // @Router /auth/me [get]
+*/
 func (h *AuthHandler) GetMe(c *gin.Context) {
 	// Get user ID from context (set by auth middleware)
 	userID, exists := c.Get("user_id")
@@ -294,6 +300,7 @@ func (h *AuthHandler) GetMe(c *gin.Context) {
 }
 
 // GetIdentity godoc
+/*
 // @Summary Get current user's active identity
 // @Description Returns the identity used for the current login session (most recently used)
 // @Tags auth
@@ -303,6 +310,7 @@ func (h *AuthHandler) GetMe(c *gin.Context) {
 // @Failure 401 {object} map[string]string
 // @Failure 404 {object} map[string]string
 // @Router /auth/identity [get]
+*/
 func (h *AuthHandler) GetIdentity(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {
@@ -345,6 +353,7 @@ func (h *AuthHandler) GetIdentity(c *gin.Context) {
 }
 
 // GetIdentities godoc
+/*
 // @Summary Get user's linked identities
 // @Description Returns all provider identities linked to the current user
 // @Tags auth
@@ -353,6 +362,7 @@ func (h *AuthHandler) GetIdentity(c *gin.Context) {
 // @Success 200 {object} map[string][]IdentityResponse
 // @Failure 401 {object} map[string]string
 // @Router /auth/identities [get]
+*/
 func (h *AuthHandler) GetIdentities(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {
@@ -384,6 +394,7 @@ func (h *AuthHandler) GetIdentities(c *gin.Context) {
 }
 
 // UnlinkIdentity godoc
+/*
 // @Summary Unlink a provider identity
 // @Description Removes a provider identity from the user's account
 // @Tags auth
@@ -395,6 +406,7 @@ func (h *AuthHandler) GetIdentities(c *gin.Context) {
 // @Failure 401 {object} map[string]string
 // @Failure 404 {object} map[string]string
 // @Router /auth/identities/{id} [delete]
+*/
 func (h *AuthHandler) UnlinkIdentity(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {
@@ -443,6 +455,7 @@ func (h *AuthHandler) UnlinkIdentity(c *gin.Context) {
 }
 
 // Logout godoc
+/*
 // @Summary Logout user
 // @Description Revokes all refresh tokens for the user
 // @Tags auth
@@ -450,6 +463,7 @@ func (h *AuthHandler) UnlinkIdentity(c *gin.Context) {
 // @Security BearerAuth
 // @Success 200 {object} map[string]string
 // @Router /auth/logout [post]
+*/
 func (h *AuthHandler) Logout(c *gin.Context) {
 	// Get user ID from context (set by auth middleware)
 	userID, exists := c.Get("user_id")
@@ -466,6 +480,7 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 }
 
 // RefreshToken godoc
+/*
 // @Summary Refresh access token
 // @Description Exchanges a refresh token for a new access token and refresh token pair
 // @Tags auth
@@ -476,6 +491,7 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 // @Failure 400 {object} map[string]string
 // @Failure 401 {object} map[string]string
 // @Router /auth/refresh [post]
+*/
 func (h *AuthHandler) RefreshToken(c *gin.Context) {
 	var req RefreshTokenRequest
 	if err := c.ShouldBindJSON(&req); err != nil {

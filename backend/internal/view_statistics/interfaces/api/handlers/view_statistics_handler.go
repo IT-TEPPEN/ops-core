@@ -33,6 +33,7 @@ func NewViewStatisticsHandler(uc usecase.ViewStatisticsUseCase, logger Logger) *
 }
 
 // GetDocumentStatistics godoc
+/*
 // @Summary Get document statistics
 // @Description Retrieves view statistics for a specific document
 // @Tags statistics
@@ -42,6 +43,7 @@ func NewViewStatisticsHandler(uc usecase.ViewStatisticsUseCase, logger Logger) *
 // @Failure 400 {object} schema.ErrorResponse "Invalid request"
 // @Failure 500 {object} schema.ErrorResponse "Internal server error"
 // @Router /api/documents/{docId}/statistics [get]
+*/
 func (h *ViewStatisticsHandler) GetDocumentStatistics(c *gin.Context) {
 	documentID := c.Param("docId")
 	requestID := c.GetString("request_id")
@@ -66,6 +68,7 @@ func (h *ViewStatisticsHandler) GetDocumentStatistics(c *gin.Context) {
 }
 
 // GetUserStatistics godoc
+/*
 // @Summary Get user statistics
 // @Description Retrieves view statistics for a specific user
 // @Tags statistics
@@ -75,6 +78,7 @@ func (h *ViewStatisticsHandler) GetDocumentStatistics(c *gin.Context) {
 // @Failure 400 {object} schema.ErrorResponse "Invalid request"
 // @Failure 500 {object} schema.ErrorResponse "Internal server error"
 // @Router /api/users/{userId}/statistics [get]
+*/
 func (h *ViewStatisticsHandler) GetUserStatistics(c *gin.Context) {
 	userID := c.Param("userId")
 	requestID := c.GetString("request_id")
@@ -97,6 +101,7 @@ func (h *ViewStatisticsHandler) GetUserStatistics(c *gin.Context) {
 }
 
 // GetPopularDocuments godoc
+/*
 // @Summary Get popular documents
 // @Description Retrieves the most popular documents based on view count
 // @Tags statistics
@@ -106,6 +111,7 @@ func (h *ViewStatisticsHandler) GetUserStatistics(c *gin.Context) {
 // @Success 200 {object} schema.PopularDocumentsResponse "Popular documents retrieved successfully"
 // @Failure 500 {object} schema.ErrorResponse "Internal server error"
 // @Router /api/statistics/popular-documents [get]
+*/
 func (h *ViewStatisticsHandler) GetPopularDocuments(c *gin.Context) {
 	requestID := c.GetString("request_id")
 
@@ -139,6 +145,7 @@ func (h *ViewStatisticsHandler) GetPopularDocuments(c *gin.Context) {
 }
 
 // GetRecentlyViewedDocuments godoc
+/*
 // @Summary Get recently viewed documents
 // @Description Retrieves the most recently viewed documents
 // @Tags statistics
@@ -147,6 +154,7 @@ func (h *ViewStatisticsHandler) GetPopularDocuments(c *gin.Context) {
 // @Success 200 {object} schema.RecentDocumentsResponse "Recent documents retrieved successfully"
 // @Failure 500 {object} schema.ErrorResponse "Internal server error"
 // @Router /api/statistics/recent-documents [get]
+*/
 func (h *ViewStatisticsHandler) GetRecentlyViewedDocuments(c *gin.Context) {
 	requestID := c.GetString("request_id")
 
