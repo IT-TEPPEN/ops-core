@@ -2,12 +2,27 @@ package usecase
 
 import "context"
 
-// UnlinkIdentity removes an identity link from a user
+// UnlinkIdentity removes an identity link from a user.
+// This allows users to remove authentication providers they no longer want to use.
 type UnlinkIdentity interface {
-	// Execute removes the specified identity from the user
-	// Returns error if:
-	// - The identity is the last one (user must have at least one identity)
-	// - The identity is the primary identity (must set another as primary first)
-	// - The identity does not belong to the user
+	// Execute removes the specified identity from the user.
+	// The user must have at least one identity remaining after the operation.
+	// Cannot remove the primary identity without setting another as primary first.
+	//
+	// Parameters:
+	//   - ctx context.Context: The context for cancellation and timeout
+	//   - userID string: The user ID who owns the identity
+	//   - identityID string: The identity ID to remove
+	//
+	// Returns:
+	//   - error: Error if identity unlinking fails
+	//
+	// Errors:
+	//   - application_err.ErrInvalidInput: When userID or identityID format is invalid
+	//   - domain_err.ErrNotFoundUser: When specified user does not exist
+	//   - application_err.ErrResourceNotOwned: When identity does not belong to the user
+	//   - domain_err.ErrCannotRemoveOnlyIdentity: When trying to remove the last identity
+	//   - domain_err.ErrCannotUnlinkPrimaryIdentity: When trying to remove the primary identity
+	//   - domain_err.ErrDataPersistFailure: When saving changes fails
 	Execute(ctx context.Context, userID string, identityID string) error
 }

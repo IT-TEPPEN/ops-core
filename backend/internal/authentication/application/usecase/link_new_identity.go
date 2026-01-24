@@ -6,9 +6,26 @@ import (
 	"opscore/backend/internal/authentication/application/dto"
 )
 
-// LinkNewIdentity links a new external provider identity to an existing user
+// LinkNewIdentity links a new external provider identity to an existing user.
+// This allows users to sign in with multiple authentication providers.
 type LinkNewIdentity interface {
-	// Execute creates a new identity link for the user
-	// Returns error if the identity already exists or is linked to another user
+	// Execute creates a new identity link for the user.
+	// The provider identity must not already be linked to any user (including this one).
+	//
+	// Parameters:
+	//   - ctx context.Context: The context for cancellation and timeout
+	//   - userID string: The user ID to link the identity to
+	//   - providerInfo dto.ProviderUserInfo: Provider information for the new identity
+	//
+	// Returns:
+	//   - *dto.IdentityInfo: The newly created identity information
+	//   - error: Error if identity linking fails
+	//
+	// Errors:
+	//   - application_err.ErrInvalidInput: When userID or provider information is invalid
+	//   - domain_err.ErrNotFoundUser: When specified user does not exist
+	//   - domain_err.ErrDuplicateIdentity: When identity is already linked to this user
+	//   - application_err.ErrIdentityAlreadyLinked: When identity is linked to another user
+	//   - domain_err.ErrDataPersistFailure: When saving identity data fails
 	Execute(ctx context.Context, userID string, providerInfo dto.ProviderUserInfo) (*dto.IdentityInfo, error)
 }
