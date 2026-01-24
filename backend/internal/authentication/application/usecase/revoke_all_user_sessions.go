@@ -1,6 +1,10 @@
 package usecase
 
-import "context"
+import (
+	"context"
+
+	"opscore/backend/internal/authentication/application/dto"
+)
 
 // RevokeAllUserSessions revokes all active sessions for a specific user.
 // This is used for security events (e.g., password change, account compromise).
@@ -10,7 +14,7 @@ type RevokeAllUserSessions interface {
 	//
 	// Parameters:
 	//   - ctx context.Context: The context for cancellation and timeout
-	//   - userID string: The user ID whose sessions to revoke
+	//   - dto dto.UserIDRequest: Request containing userID whose sessions to revoke
 	//
 	// Returns:
 	//   - int: Number of sessions that were revoked
@@ -20,5 +24,5 @@ type RevokeAllUserSessions interface {
 	//   - application_err.ErrInvalidInput: When userID format is invalid
 	//   - domain_err.ErrNotFoundUser: When specified user does not exist
 	//   - domain_err.ErrDataPersistFailure: When revoking sessions fails
-	Execute(ctx context.Context, userID string) (int, error)
+	Execute(ctx context.Context, dto dto.UserIDRequest) (int, error)
 }

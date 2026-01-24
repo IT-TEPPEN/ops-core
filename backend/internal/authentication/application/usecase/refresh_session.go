@@ -14,7 +14,7 @@ type RefreshSession interface {
 	//
 	// Parameters:
 	//   - ctx context.Context: The context for cancellation and timeout
-	//   - sessionID string: The session ID to refresh
+	//   - dto dto.SessionIDRequest: Request containing sessionID to refresh
 	//
 	// Returns:
 	//   - *dto.SessionInfo: Updated session information
@@ -26,5 +26,5 @@ type RefreshSession interface {
 	//   - application_err.ErrSessionExpired: When session has expired
 	//   - application_err.ErrSessionRevoked: When session has been revoked
 	//   - domain_err.ErrDataPersistFailure: When updating session data fails
-	Execute(ctx context.Context, sessionID string) (*dto.SessionInfo, error)
+	Execute(ctx context.Context, dto dto.SessionIDRequest) (*dto.SessionInfo, error)
 }

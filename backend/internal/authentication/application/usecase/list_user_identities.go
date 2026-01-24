@@ -13,7 +13,7 @@ type ListUserIdentities interface {
 	//
 	// Parameters:
 	//   - ctx context.Context: The context for cancellation and timeout
-	//   - userID string: The user ID whose identities to retrieve
+	//   - dto dto.UserIDRequest: Request containing userID whose identities to retrieve
 	//
 	// Returns:
 	//   - []dto.IdentityInfo: List of identities (may be empty)
@@ -23,5 +23,5 @@ type ListUserIdentities interface {
 	//   - application_err.ErrInvalidInput: When userID format is invalid
 	//   - domain_err.ErrNotFoundUser: When specified user does not exist
 	//   - domain_err.ErrDataAccessFailure: When loading identity data fails
-	Execute(ctx context.Context, userID string) ([]dto.IdentityInfo, error)
+	Execute(ctx context.Context, dto dto.UserIDRequest) ([]dto.IdentityInfo, error)
 }

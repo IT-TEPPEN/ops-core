@@ -15,7 +15,7 @@ type AuthenticateUser interface {
 	//
 	// Parameters:
 	//   - ctx context.Context: The context for cancellation and timeout
-	//   - providerInfo dto.ProviderUserInfo: User information from the external provider
+	//   - dto dto.ProviderUserInfo: User information from the external provider
 	//
 	// Returns:
 	//   - *dto.AuthenticationResult: Authentication result with user and identity information
@@ -27,5 +27,5 @@ type AuthenticateUser interface {
 	//   - domain_err.ErrDataPersistFailure: When saving user/identity data fails
 	//   - domain_err.ErrDataConflict: When unique constraint is violated (e.g., email already exists)
 	//   - application_err.ErrUnexpected: When unexpected error occurs
-	Execute(ctx context.Context, providerInfo dto.ProviderUserInfo) (*dto.AuthenticationResult, error)
+	Execute(ctx context.Context, dto dto.ProviderUserInfo) (*dto.AuthenticationResult, error)
 }

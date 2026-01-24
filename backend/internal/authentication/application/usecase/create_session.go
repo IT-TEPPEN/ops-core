@@ -14,8 +14,7 @@ type CreateSession interface {
 	//
 	// Parameters:
 	//   - ctx context.Context: The context for cancellation and timeout
-	//   - userID string: The user ID for whom to create the session
-	//   - sessionType dto.SessionType: Type of session (short or long duration)
+	//   - dto dto.CreateSessionRequest: Request containing userID and sessionType
 	//
 	// Returns:
 	//   - *dto.SessionInfo: Created session information with session ID and expiration
@@ -26,5 +25,5 @@ type CreateSession interface {
 	//   - domain_err.ErrNotFoundUser: When specified user does not exist
 	//   - domain_err.ErrDataPersistFailure: When saving session data fails
 	//   - application_err.ErrUnexpected: When session token generation fails
-	Execute(ctx context.Context, userID string, sessionType dto.SessionType) (*dto.SessionInfo, error)
+	Execute(ctx context.Context, dto dto.CreateSessionRequest) (*dto.SessionInfo, error)
 }

@@ -1,6 +1,10 @@
 package usecase
 
-import "context"
+import (
+	"context"
+
+	"opscore/backend/internal/authentication/application/dto"
+)
 
 // UnlinkIdentity removes an identity link from a user.
 // This allows users to remove authentication providers they no longer want to use.
@@ -11,8 +15,7 @@ type UnlinkIdentity interface {
 	//
 	// Parameters:
 	//   - ctx context.Context: The context for cancellation and timeout
-	//   - userID string: The user ID who owns the identity
-	//   - identityID string: The identity ID to remove
+	//   - dto dto.UnlinkIdentityRequest: Request containing userID and identityID
 	//
 	// Returns:
 	//   - error: Error if identity unlinking fails
@@ -24,5 +27,5 @@ type UnlinkIdentity interface {
 	//   - domain_err.ErrCannotRemoveOnlyIdentity: When trying to remove the last identity
 	//   - domain_err.ErrCannotUnlinkPrimaryIdentity: When trying to remove the primary identity
 	//   - domain_err.ErrDataPersistFailure: When saving changes fails
-	Execute(ctx context.Context, userID string, identityID string) error
+	Execute(ctx context.Context, dto dto.UnlinkIdentityRequest) error
 }

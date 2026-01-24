@@ -14,7 +14,7 @@ type UpdateUserProfile interface {
 	//
 	// Parameters:
 	//   - ctx context.Context: The context for cancellation and timeout
-	//   - profile dto.UserProfile: Profile data to update (userID must be set)
+	//   - dto dto.UserProfile: Profile data to update (userID must be set)
 	//
 	// Returns:
 	//   - *dto.UserProfile: Updated user profile
@@ -24,5 +24,5 @@ type UpdateUserProfile interface {
 	//   - application_err.ErrInvalidInput: When userID is invalid or profile data is malformed
 	//   - domain_err.ErrNotFoundUser: When specified user does not exist
 	//   - domain_err.ErrDataPersistFailure: When saving profile changes fails
-	Execute(ctx context.Context, profile dto.UserProfile) (*dto.UserProfile, error)
+	Execute(ctx context.Context, dto dto.UserProfile) (*dto.UserProfile, error)
 }

@@ -1,6 +1,10 @@
 package usecase
 
-import "context"
+import (
+	"context"
+
+	"opscore/backend/internal/authentication/application/dto"
+)
 
 // RevokeSession revokes a specific authentication session.
 // This usecase marks a session as revoked, preventing further use (logout).
@@ -10,7 +14,7 @@ type RevokeSession interface {
 	//
 	// Parameters:
 	//   - ctx context.Context: The context for cancellation and timeout
-	//   - sessionID string: The session ID to revoke
+	//   - dto dto.SessionIDRequest: Request containing sessionID to revoke
 	//
 	// Returns:
 	//   - error: Error if session revocation fails
@@ -19,5 +23,5 @@ type RevokeSession interface {
 	//   - application_err.ErrInvalidInput: When sessionID format is invalid
 	//   - domain_err.ErrNotFoundSession: When session with given ID does not exist
 	//   - domain_err.ErrDataPersistFailure: When updating session revocation status fails
-	Execute(ctx context.Context, sessionID string) error
+	Execute(ctx context.Context, dto dto.SessionIDRequest) error
 }

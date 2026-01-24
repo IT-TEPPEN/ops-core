@@ -14,7 +14,7 @@ type GetAuthenticatedUser interface {
 	//
 	// Parameters:
 	//   - ctx context.Context: The context for cancellation and timeout
-	//   - sessionID string: The session ID to validate
+	//   - dto dto.SessionIDRequest: Request containing sessionID to validate
 	//
 	// Returns:
 	//   - *dto.UserInfo: Authenticated user's information
@@ -27,5 +27,5 @@ type GetAuthenticatedUser interface {
 	//   - application_err.ErrSessionRevoked: When session has been revoked
 	//   - domain_err.ErrNotFoundUser: When user associated with session does not exist
 	//   - domain_err.ErrDataAccessFailure: When loading session or user data fails
-	Execute(ctx context.Context, sessionID string) (*dto.UserInfo, error)
+	Execute(ctx context.Context, dto dto.SessionIDRequest) (*dto.UserInfo, error)
 }

@@ -14,8 +14,7 @@ type LinkNewIdentity interface {
 	//
 	// Parameters:
 	//   - ctx context.Context: The context for cancellation and timeout
-	//   - userID string: The user ID to link the identity to
-	//   - providerInfo dto.ProviderUserInfo: Provider information for the new identity
+	//   - dto dto.LinkIdentityRequest: Request containing userID and provider information
 	//
 	// Returns:
 	//   - *dto.IdentityInfo: The newly created identity information
@@ -27,5 +26,5 @@ type LinkNewIdentity interface {
 	//   - domain_err.ErrDuplicateIdentity: When identity is already linked to this user
 	//   - application_err.ErrIdentityAlreadyLinked: When identity is linked to another user
 	//   - domain_err.ErrDataPersistFailure: When saving identity data fails
-	Execute(ctx context.Context, userID string, providerInfo dto.ProviderUserInfo) (*dto.IdentityInfo, error)
+	Execute(ctx context.Context, dto dto.LinkIdentityRequest) (*dto.IdentityInfo, error)
 }

@@ -1,6 +1,10 @@
 package usecase
 
-import "context"
+import (
+	"context"
+
+	"opscore/backend/internal/authentication/application/dto"
+)
 
 // SetPrimaryIdentity sets which identity should be used as the user's primary identity.
 // The primary identity's display name and picture are used as defaults for the user.
@@ -10,8 +14,7 @@ type SetPrimaryIdentity interface {
 	//
 	// Parameters:
 	//   - ctx context.Context: The context for cancellation and timeout
-	//   - userID string: The user ID who owns the identity
-	//   - identityID string: The identity ID to set as primary
+	//   - dto dto.SetPrimaryIdentityRequest: Request containing userID and identityID
 	//
 	// Returns:
 	//   - error: Error if setting primary identity fails
@@ -21,5 +24,5 @@ type SetPrimaryIdentity interface {
 	//   - domain_err.ErrNotFoundUser: When specified user does not exist
 	//   - application_err.ErrResourceNotOwned: When identity does not belong to the user
 	//   - domain_err.ErrDataPersistFailure: When saving changes fails
-	Execute(ctx context.Context, userID string, identityID string) error
+	Execute(ctx context.Context, dto dto.SetPrimaryIdentityRequest) error
 }

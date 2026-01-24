@@ -13,7 +13,7 @@ type GetUserSessions interface {
 	//
 	// Parameters:
 	//   - ctx context.Context: The context for cancellation and timeout
-	//   - userID string: The user ID whose sessions to retrieve
+	//   - dto dto.UserIDRequest: Request containing userID whose sessions to retrieve
 	//
 	// Returns:
 	//   - []dto.SessionInfo: List of active sessions (may be empty)
@@ -23,5 +23,5 @@ type GetUserSessions interface {
 	//   - application_err.ErrInvalidInput: When userID format is invalid
 	//   - domain_err.ErrNotFoundUser: When specified user does not exist
 	//   - domain_err.ErrDataAccessFailure: When loading session data fails
-	Execute(ctx context.Context, userID string) ([]dto.SessionInfo, error)
+	Execute(ctx context.Context, dto dto.UserIDRequest) ([]dto.SessionInfo, error)
 }
