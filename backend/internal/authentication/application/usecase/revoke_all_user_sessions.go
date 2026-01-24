@@ -26,3 +26,13 @@ type RevokeAllUserSessions interface {
 	//   - domain_err.ErrDataPersistFailure: When revoking sessions fails
 	Execute(ctx context.Context, dto dto.UserIDRequest) (int, error)
 }
+
+type revokeAllUserSessionsImpl struct{}
+
+func NewRevokeAllUserSessions() RevokeAllUserSessions {
+	return &revokeAllUserSessionsImpl{}
+}
+
+func (r *revokeAllUserSessionsImpl) Execute(ctx context.Context, dto dto.UserIDRequest) (int, error) {
+	return 0, nil
+}

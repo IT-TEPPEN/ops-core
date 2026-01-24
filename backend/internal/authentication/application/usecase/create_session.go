@@ -27,3 +27,13 @@ type CreateSession interface {
 	//   - application_err.ErrUnexpected: When session token generation fails
 	Execute(ctx context.Context, dto dto.CreateSessionRequest) (*dto.SessionInfo, error)
 }
+
+type createSessionImpl struct{}
+
+func NewCreateSession() CreateSession {
+	return &createSessionImpl{}
+}
+
+func (c *createSessionImpl) Execute(ctx context.Context, dto dto.CreateSessionRequest) (*dto.SessionInfo, error) {
+	return nil, nil
+}

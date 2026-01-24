@@ -29,3 +29,13 @@ type AuthenticateUser interface {
 	//   - application_err.ErrUnexpected: When unexpected error occurs
 	Execute(ctx context.Context, dto dto.ProviderUserInfo) (*dto.AuthenticationResult, error)
 }
+
+type authenticateUserImpl struct{}
+
+func NewAuthenticateUser() AuthenticateUser {
+	return &authenticateUserImpl{}
+}
+
+func (a *authenticateUserImpl) Execute(ctx context.Context, dto dto.ProviderUserInfo) (*dto.AuthenticationResult, error) {
+	return nil, nil
+}

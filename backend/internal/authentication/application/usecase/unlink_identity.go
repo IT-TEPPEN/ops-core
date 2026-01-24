@@ -29,3 +29,13 @@ type UnlinkIdentity interface {
 	//   - domain_err.ErrDataPersistFailure: When saving changes fails
 	Execute(ctx context.Context, dto dto.UnlinkIdentityRequest) error
 }
+
+type unlinkIdentityImpl struct{}
+
+func NewUnlinkIdentity() UnlinkIdentity {
+	return &unlinkIdentityImpl{}
+}
+
+func (u *unlinkIdentityImpl) Execute(ctx context.Context, dto dto.UnlinkIdentityRequest) error {
+	return nil
+}

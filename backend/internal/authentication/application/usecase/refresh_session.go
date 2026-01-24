@@ -28,3 +28,13 @@ type RefreshSession interface {
 	//   - domain_err.ErrDataPersistFailure: When updating session data fails
 	Execute(ctx context.Context, dto dto.SessionIDRequest) (*dto.SessionInfo, error)
 }
+
+type refreshSessionImpl struct{}
+
+func NewRefreshSession() RefreshSession {
+	return &refreshSessionImpl{}
+}
+
+func (r *refreshSessionImpl) Execute(ctx context.Context, dto dto.SessionIDRequest) (*dto.SessionInfo, error) {
+	return nil, nil
+}

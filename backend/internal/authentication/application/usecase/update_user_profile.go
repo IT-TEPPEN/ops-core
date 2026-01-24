@@ -26,3 +26,13 @@ type UpdateUserProfile interface {
 	//   - domain_err.ErrDataPersistFailure: When saving profile changes fails
 	Execute(ctx context.Context, dto dto.UserProfile) (*dto.UserProfile, error)
 }
+
+type updateUserProfileImpl struct{}
+
+func NewUpdateUserProfile() UpdateUserProfile {
+	return &updateUserProfileImpl{}
+}
+
+func (u *updateUserProfileImpl) Execute(ctx context.Context, dto dto.UserProfile) (*dto.UserProfile, error) {
+	return nil, nil
+}

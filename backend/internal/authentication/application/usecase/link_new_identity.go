@@ -28,3 +28,13 @@ type LinkNewIdentity interface {
 	//   - domain_err.ErrDataPersistFailure: When saving identity data fails
 	Execute(ctx context.Context, dto dto.LinkIdentityRequest) (*dto.IdentityInfo, error)
 }
+
+type linkNewIdentityImpl struct{}
+
+func NewLinkNewIdentity() LinkNewIdentity {
+	return &linkNewIdentityImpl{}
+}
+
+func (l *linkNewIdentityImpl) Execute(ctx context.Context, dto dto.LinkIdentityRequest) (*dto.IdentityInfo, error) {
+	return nil, nil
+}

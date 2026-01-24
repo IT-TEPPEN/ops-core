@@ -29,3 +29,13 @@ type GetAuthenticatedUser interface {
 	//   - domain_err.ErrDataAccessFailure: When loading session or user data fails
 	Execute(ctx context.Context, dto dto.SessionIDRequest) (*dto.UserInfo, error)
 }
+
+type getAuthenticatedUserImpl struct{}
+
+func NewGetAuthenticatedUser() GetAuthenticatedUser {
+	return &getAuthenticatedUserImpl{}
+}
+
+func (g *getAuthenticatedUserImpl) Execute(ctx context.Context, dto dto.SessionIDRequest) (*dto.UserInfo, error) {
+	return nil, nil
+}

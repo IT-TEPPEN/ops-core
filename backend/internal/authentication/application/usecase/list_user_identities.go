@@ -25,3 +25,13 @@ type ListUserIdentities interface {
 	//   - domain_err.ErrDataAccessFailure: When loading identity data fails
 	Execute(ctx context.Context, dto dto.UserIDRequest) ([]dto.IdentityInfo, error)
 }
+
+type listUserIdentitiesImpl struct{}
+
+func NewListUserIdentities() ListUserIdentities {
+	return &listUserIdentitiesImpl{}
+}
+
+func (l *listUserIdentitiesImpl) Execute(ctx context.Context, dto dto.UserIDRequest) ([]dto.IdentityInfo, error) {
+	return nil, nil
+}

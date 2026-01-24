@@ -25,3 +25,13 @@ type GetUserSessions interface {
 	//   - domain_err.ErrDataAccessFailure: When loading session data fails
 	Execute(ctx context.Context, dto dto.UserIDRequest) ([]dto.SessionInfo, error)
 }
+
+type getUserSessionsImpl struct{}
+
+func NewGetUserSessions() GetUserSessions {
+	return &getUserSessionsImpl{}
+}
+
+func (g *getUserSessionsImpl) Execute(ctx context.Context, dto dto.UserIDRequest) ([]dto.SessionInfo, error) {
+	return nil, nil
+}

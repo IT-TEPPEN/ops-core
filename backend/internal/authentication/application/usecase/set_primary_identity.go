@@ -26,3 +26,13 @@ type SetPrimaryIdentity interface {
 	//   - domain_err.ErrDataPersistFailure: When saving changes fails
 	Execute(ctx context.Context, dto dto.SetPrimaryIdentityRequest) error
 }
+
+type setPrimaryIdentityImpl struct{}
+
+func NewSetPrimaryIdentity() SetPrimaryIdentity {
+	return &setPrimaryIdentityImpl{}
+}
+
+func (s *setPrimaryIdentityImpl) Execute(ctx context.Context, dto dto.SetPrimaryIdentityRequest) error {
+	return nil
+}

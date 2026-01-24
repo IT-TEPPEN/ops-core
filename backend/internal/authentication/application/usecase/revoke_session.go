@@ -25,3 +25,13 @@ type RevokeSession interface {
 	//   - domain_err.ErrDataPersistFailure: When updating session revocation status fails
 	Execute(ctx context.Context, dto dto.SessionIDRequest) error
 }
+
+type revokeSessionImpl struct{}
+
+func NewRevokeSession() RevokeSession {
+	return &revokeSessionImpl{}
+}
+
+func (r *revokeSessionImpl) Execute(ctx context.Context, dto dto.SessionIDRequest) error {
+	return nil
+}
