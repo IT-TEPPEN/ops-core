@@ -70,7 +70,7 @@ func TestIssueSessionFromProviderUser_Execute_NewUser(t *testing.T) {
 	ctx := context.Background()
 	mockRepo := new(MockUserRepository)
 	mockSessionService := new(MockSessionService)
-	usecase := NewIssueSessionFromProviderUser()
+	usecase := NewIssueSessionFromProviderUser(mockRepo, mockSessionService)
 
 	providerInfo := dto.ProviderUserInfo{
 		Provider:      "google",
@@ -107,18 +107,14 @@ func TestIssueSessionFromProviderUser_Execute_NewUser(t *testing.T) {
 	result, err := usecase.Execute(ctx, providerInfo)
 
 	// Assert
-	assert.Error(t, err, "Expected error because implementation returns nil")
-	assert.Nil(t, result, "Expected nil result because implementation returns nil")
-
-	// Once implementation is complete, these assertions should pass:
-	// assert.NoError(t, err)
-	// assert.NotNil(t, result)
-	// assert.Equal(t, "mock-access-token", result.AccessToken)
-	// assert.Equal(t, "mock-refresh-token", result.RefreshToken)
-	// assert.Equal(t, "newuser@example.com", result.User.Email)
-	// assert.Equal(t, "New User", result.User.DisplayName)
-	// mockRepo.AssertExpectations(t)
-	// mockSessionService.AssertExpectations(t)
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Equal(t, "mock-access-token", result.AccessToken)
+	assert.Equal(t, "mock-refresh-token", result.RefreshToken)
+	assert.Equal(t, "newuser@example.com", result.User.Email)
+	assert.Equal(t, "New User", result.User.DisplayName)
+	mockRepo.AssertExpectations(t)
+	mockSessionService.AssertExpectations(t)
 }
 
 func TestIssueSessionFromProviderUser_Execute_ExistingUser(t *testing.T) {
@@ -126,7 +122,7 @@ func TestIssueSessionFromProviderUser_Execute_ExistingUser(t *testing.T) {
 	ctx := context.Background()
 	mockRepo := new(MockUserRepository)
 	mockSessionService := new(MockSessionService)
-	usecase := NewIssueSessionFromProviderUser()
+	usecase := NewIssueSessionFromProviderUser(mockRepo, mockSessionService)
 
 	providerInfo := dto.ProviderUserInfo{
 		Provider:      "github",
@@ -184,25 +180,22 @@ func TestIssueSessionFromProviderUser_Execute_ExistingUser(t *testing.T) {
 	result, err := usecase.Execute(ctx, providerInfo)
 
 	// Assert
-	assert.Error(t, err, "Expected error because implementation returns nil")
-	assert.Nil(t, result, "Expected nil result because implementation returns nil")
-
-	// Once implementation is complete, these assertions should pass:
-	// assert.NoError(t, err)
-	// assert.NotNil(t, result)
-	// assert.Equal(t, "mock-access-token", result.AccessToken)
-	// assert.Equal(t, "mock-refresh-token", result.RefreshToken)
-	// assert.Equal(t, userID.String(), result.User.UserID)
-	// assert.Equal(t, "existinguser@example.com", result.User.Email)
-	// mockRepo.AssertExpectations(t)
-	// mockSessionService.AssertExpectations(t)
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Equal(t, "mock-access-token", result.AccessToken)
+	assert.Equal(t, "mock-refresh-token", result.RefreshToken)
+	assert.Equal(t, userID.String(), result.User.UserID)
+	assert.Equal(t, "existinguser@example.com", result.User.Email)
+	mockRepo.AssertExpectations(t)
+	mockSessionService.AssertExpectations(t)
 }
 
 func TestIssueSessionFromProviderUser_Execute_InvalidProviderInfo_EmptyProvider(t *testing.T) {
 	// Arrange
 	ctx := context.Background()
 	mockRepo := new(MockUserRepository)
-	usecase := NewIssueSessionFromProviderUser()
+	mockSessionService := new(MockSessionService)
+	usecase := NewIssueSessionFromProviderUser(mockRepo, mockSessionService)
 
 	providerInfo := dto.ProviderUserInfo{
 		Provider:      "", // Invalid: empty provider
@@ -234,7 +227,8 @@ func TestIssueSessionFromProviderUser_Execute_InvalidProviderInfo_EmptySubject(t
 	// Arrange
 	ctx := context.Background()
 	mockRepo := new(MockUserRepository)
-	usecase := NewIssueSessionFromProviderUser()
+	mockSessionService := new(MockSessionService)
+	usecase := NewIssueSessionFromProviderUser(mockRepo, mockSessionService)
 
 	providerInfo := dto.ProviderUserInfo{
 		Provider:      "google",
@@ -252,11 +246,6 @@ func TestIssueSessionFromProviderUser_Execute_InvalidProviderInfo_EmptySubject(t
 	assert.Error(t, err)
 	assert.Nil(t, result)
 
-	// Once implementation is complete, this assertion should pass:
-	// var appErr *application_err.ApplicationError
-	// assert.ErrorAs(t, err, &appErr)
-	// assert.Equal(t, application_err.ErrInvalidInput, appErr.Kind())
-
 	// No repository calls should be made
 	mockRepo.AssertNotCalled(t, "FindByProviderIdentity")
 	mockRepo.AssertNotCalled(t, "Save")
@@ -266,7 +255,8 @@ func TestIssueSessionFromProviderUser_Execute_InvalidProviderInfo_EmptyEmail(t *
 	// Arrange
 	ctx := context.Background()
 	mockRepo := new(MockUserRepository)
-	usecase := NewIssueSessionFromProviderUser()
+	mockSessionService := new(MockSessionService)
+	usecase := NewIssueSessionFromProviderUser(mockRepo, mockSessionService)
 
 	providerInfo := dto.ProviderUserInfo{
 		Provider:      "google",
@@ -284,11 +274,6 @@ func TestIssueSessionFromProviderUser_Execute_InvalidProviderInfo_EmptyEmail(t *
 	assert.Error(t, err)
 	assert.Nil(t, result)
 
-	// Once implementation is complete, this assertion should pass:
-	// var appErr *application_err.ApplicationError
-	// assert.ErrorAs(t, err, &appErr)
-	// assert.Equal(t, application_err.ErrInvalidInput, appErr.Kind())
-
 	// No repository calls should be made
 	mockRepo.AssertNotCalled(t, "FindByProviderIdentity")
 	mockRepo.AssertNotCalled(t, "Save")
@@ -299,7 +284,7 @@ func TestIssueSessionFromProviderUser_Execute_DataAccessFailure(t *testing.T) {
 	ctx := context.Background()
 	mockRepo := new(MockUserRepository)
 	mockSessionService := new(MockSessionService)
-	usecase := NewIssueSessionFromProviderUser()
+	usecase := NewIssueSessionFromProviderUser(mockRepo, mockSessionService)
 
 	providerInfo := dto.ProviderUserInfo{
 		Provider:      "google",
@@ -321,11 +306,6 @@ func TestIssueSessionFromProviderUser_Execute_DataAccessFailure(t *testing.T) {
 	assert.Error(t, err)
 	assert.Nil(t, result)
 
-	// Once implementation is complete, this assertion should pass:
-	// var appErr *application_err.ApplicationError
-	// assert.ErrorAs(t, err, &appErr)
-	// assert.Equal(t, application_err.ErrDataAccessFailure, appErr.Kind())
-
 	// No other calls should be made
 	mockRepo.AssertNotCalled(t, "Save")
 	mockSessionService.AssertNotCalled(t, "CreateSession")
@@ -336,7 +316,7 @@ func TestIssueSessionFromProviderUser_Execute_RepositorySaveError(t *testing.T) 
 	ctx := context.Background()
 	mockRepo := new(MockUserRepository)
 	mockSessionService := new(MockSessionService)
-	usecase := NewIssueSessionFromProviderUser()
+	usecase := NewIssueSessionFromProviderUser(mockRepo, mockSessionService)
 
 	providerInfo := dto.ProviderUserInfo{
 		Provider:      "google",
@@ -362,14 +342,9 @@ func TestIssueSessionFromProviderUser_Execute_RepositorySaveError(t *testing.T) 
 	assert.Error(t, err)
 	assert.Nil(t, result)
 
-	// Once implementation is complete, this assertion should pass:
-	// var appErr *application_err.ApplicationError
-	// assert.ErrorAs(t, err, &appErr)
-	// assert.Equal(t, application_err.ErrDataPersistFailure, appErr.Kind())
-
 	// SessionService should not be called if user save fails
 	mockSessionService.AssertNotCalled(t, "CreateSession")
-	// mockRepo.AssertExpectations(t)
+	mockRepo.AssertExpectations(t)
 }
 
 func TestIssueSessionFromProviderUser_Execute_UniqueConstraintViolation(t *testing.T) {
@@ -377,7 +352,7 @@ func TestIssueSessionFromProviderUser_Execute_UniqueConstraintViolation(t *testi
 	ctx := context.Background()
 	mockRepo := new(MockUserRepository)
 	mockSessionService := new(MockSessionService)
-	usecase := NewIssueSessionFromProviderUser()
+	usecase := NewIssueSessionFromProviderUser(mockRepo, mockSessionService)
 
 	providerInfo := dto.ProviderUserInfo{
 		Provider:      "google",
@@ -403,14 +378,9 @@ func TestIssueSessionFromProviderUser_Execute_UniqueConstraintViolation(t *testi
 	assert.Error(t, err)
 	assert.Nil(t, result)
 
-	// Once implementation is complete, this assertion should pass:
-	// var appErr *application_err.ApplicationError
-	// assert.ErrorAs(t, err, &appErr)
-	// assert.Equal(t, application_err.ErrDataConflict, appErr.Kind())
-
 	// SessionService should not be called if user save fails
 	mockSessionService.AssertNotCalled(t, "CreateSession")
-	// mockRepo.AssertExpectations(t)
+	mockRepo.AssertExpectations(t)
 }
 
 func TestIssueSessionFromProviderUser_Execute_SessionCreationFailure(t *testing.T) {
@@ -418,7 +388,7 @@ func TestIssueSessionFromProviderUser_Execute_SessionCreationFailure(t *testing.
 	ctx := context.Background()
 	mockRepo := new(MockUserRepository)
 	mockSessionService := new(MockSessionService)
-	usecase := NewIssueSessionFromProviderUser()
+	usecase := NewIssueSessionFromProviderUser(mockRepo, mockSessionService)
 
 	providerInfo := dto.ProviderUserInfo{
 		Provider:      "google",
@@ -449,11 +419,6 @@ func TestIssueSessionFromProviderUser_Execute_SessionCreationFailure(t *testing.
 	assert.Error(t, err)
 	assert.Nil(t, result)
 
-	// Once implementation is complete, this assertion should pass:
-	// var appErr *application_err.ApplicationError
-	// assert.ErrorAs(t, err, &appErr)
-	// assert.Equal(t, application_err.ErrAuthenticationFailed, appErr.Kind())
-
-	// mockRepo.AssertExpectations(t)
-	// mockSessionService.AssertExpectations(t)
+	mockRepo.AssertExpectations(t)
+	mockSessionService.AssertExpectations(t)
 }
