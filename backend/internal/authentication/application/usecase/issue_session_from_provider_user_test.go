@@ -57,7 +57,7 @@ type MockSessionService struct {
 	mock.Mock
 }
 
-func (m *MockSessionService) CreateSession(ctx context.Context, userID string, rememberMe bool) (*dto.SessionResult, error) {
+func (m *MockSessionService) CreateSession(ctx context.Context, userID value_object.UserID, rememberMe bool) (*dto.SessionResult, error) {
 	args := m.Called(ctx, userID, rememberMe)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -100,7 +100,7 @@ func TestIssueSessionFromProviderUser_Execute_NewUser(t *testing.T) {
 			PictureURL:  "https://example.com/picture.jpg",
 		},
 	}
-	mockSessionService.On("CreateSession", ctx, mock.AnythingOfType("string"), false).
+	mockSessionService.On("CreateSession", ctx, mock.AnythingOfType("value_object.UserID"), false).
 		Return(expectedSession, nil)
 
 	// Act
@@ -173,7 +173,7 @@ func TestIssueSessionFromProviderUser_Execute_ExistingUser(t *testing.T) {
 			PictureURL:  "https://example.com/new-picture.jpg",
 		},
 	}
-	mockSessionService.On("CreateSession", ctx, userID.String(), false).
+	mockSessionService.On("CreateSession", ctx, userID, false).
 		Return(expectedSession, nil)
 
 	// Act
@@ -409,7 +409,7 @@ func TestIssueSessionFromProviderUser_Execute_SessionCreationFailure(t *testing.
 
 	// SessionService fails to create session (e.g., JWT generation failure)
 	// SessionService returns a generic error that the usecase will wrap as ErrAuthenticationFailed
-	mockSessionService.On("CreateSession", ctx, mock.AnythingOfType("string"), false).
+	mockSessionService.On("CreateSession", ctx, mock.AnythingOfType("value_object.UserID"), false).
 		Return(nil, assert.AnError)
 
 	// Act

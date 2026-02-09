@@ -6,6 +6,7 @@ import (
 
 	"opscore/backend/internal/authentication/application/dto"
 	application_err "opscore/backend/internal/authentication/application/err"
+	"opscore/backend/internal/authentication/application/service"
 	"opscore/backend/internal/authentication/domain/entity"
 	domain_err "opscore/backend/internal/authentication/domain/err"
 	"opscore/backend/internal/authentication/domain/repository"
@@ -40,20 +41,14 @@ type IssueSessionFromProviderUser interface {
 	Execute(ctx context.Context, providerUserInfo dto.ProviderUserInfo) (*dto.SessionResult, error)
 }
 
-// SessionService handles session creation and management
-type SessionService interface {
-	// CreateSession creates a new authentication session for the user
-	CreateSession(ctx context.Context, userID string, rememberMe bool) (*dto.SessionResult, error)
-}
-
 type issueSessionFromProviderUserImpl struct {
 	userRepository repository.UserRepository
-	sessionService SessionService
+	sessionService service.SessionService
 }
 
 func NewIssueSessionFromProviderUser(
 	userRepository repository.UserRepository,
-	sessionService SessionService,
+	sessionService service.SessionService,
 ) IssueSessionFromProviderUser {
 	return &issueSessionFromProviderUserImpl{
 		userRepository: userRepository,
@@ -74,7 +69,7 @@ func (u *issueSessionFromProviderUserImpl) Execute(ctx context.Context, provider
 	}
 
 	// Step 3: Issue session
-	session, err := u.sessionService.CreateSession(ctx, user.ID().String(), false)
+	session, err := u.sessionService.CreateSession(ctx, user.ID(), false)
 	if err != nil {
 		return nil, application_err.NewAuthenticationFailedError("session creation failed").WithParent(err)
 	}
