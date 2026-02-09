@@ -1,5 +1,4 @@
 package value_object
-package value_object
 
 import (
 	"testing"
