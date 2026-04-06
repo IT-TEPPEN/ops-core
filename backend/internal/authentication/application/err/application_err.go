@@ -15,6 +15,7 @@ const (
 	ErrAuthenticationFailed       ApplicationErrorKind = "ATA1000"
 	ErrSessionExpired             ApplicationErrorKind = "ATA1001"
 	ErrSessionRevoked             ApplicationErrorKind = "ATA1002"
+	ErrSessionNotFound            ApplicationErrorKind = "ATA1003"
 	ErrTokenGenerationError       ApplicationErrorKind = "ATA1004"
 	ErrTokenValidationError       ApplicationErrorKind = "ATA1005"
 	ErrUnsupportedProvider        ApplicationErrorKind = "ATA1006"
@@ -25,6 +26,11 @@ const (
 
 	// ### Business Logic Errors (3000 - 3999) #################################
 	ErrIdentityAlreadyLinked ApplicationErrorKind = "ATA3000"
+	ErrUserNotFound          ApplicationErrorKind = "ATA3001"
+
+	// ### Data Access Errors (4000 - 4999) ####################################
+	ErrDataAccessFailure  ApplicationErrorKind = "ATA4000"
+	ErrDataPersistFailure ApplicationErrorKind = "ATA4001"
 
 	// ### Unexpected Errors (9000 - 9999) #####################################
 	ErrUnexpected ApplicationErrorKind = "ATA9999"
@@ -37,19 +43,25 @@ var (
 	buildInvalidInputError = factory.MustBuilder(string(ErrInvalidInput))
 
 	// ### Authentication Errors ##############################################
-	buildAuthenticationFailedError       = factory.MustBuilder(string(ErrAuthenticationFailed))
-	buildSessionExpiredError             = factory.MustBuilder(string(ErrSessionExpired))
-	buildSessionRevokedError             = factory.MustBuilder(string(ErrSessionRevoked))
-	buildTokenGenerationError            = factory.MustBuilder(string(ErrTokenGenerationError))
-	buildTokenValidationError            = factory.MustBuilder(string(ErrTokenValidationError))
-	buildUnsupportedProviderError        = factory.MustBuilder(string(ErrUnsupportedProvider))
-	buildProviderConfigurationError      = factory.MustBuilder(string(ErrProviderConfigurationError))
+	buildAuthenticationFailedError  = factory.MustBuilder(string(ErrAuthenticationFailed))
+	buildSessionExpiredError        = factory.MustBuilder(string(ErrSessionExpired))
+	buildSessionRevokedError        = factory.MustBuilder(string(ErrSessionRevoked))
+	buildSessionNotFoundError       = factory.MustBuilder(string(ErrSessionNotFound))
+	buildTokenGenerationError       = factory.MustBuilder(string(ErrTokenGenerationError))
+	buildTokenValidationError       = factory.MustBuilder(string(ErrTokenValidationError))
+	buildUnsupportedProviderError   = factory.MustBuilder(string(ErrUnsupportedProvider))
+	buildProviderConfigurationError = factory.MustBuilder(string(ErrProviderConfigurationError))
 
 	// ### Authorization Errors ###############################################
 	buildResourceNotOwnedError = factory.MustBuilder(string(ErrResourceNotOwned))
 
 	// ### Business Logic Errors ##############################################
 	buildIdentityAlreadyLinkedError = factory.MustBuilder(string(ErrIdentityAlreadyLinked))
+	buildUserNotFoundError          = factory.MustBuilder(string(ErrUserNotFound))
+
+	// ### Data Access Errors #################################################
+	buildDataAccessFailureError  = factory.MustBuilder(string(ErrDataAccessFailure))
+	buildDataPersistFailureError = factory.MustBuilder(string(ErrDataPersistFailure))
 
 	// ### Unexpected Errors ##################################################
 	buildUnexpectedError = factory.MustBuilder(string(ErrUnexpected))
@@ -107,6 +119,13 @@ func NewSessionRevokedError(sessionID string) *ApplicationError {
 	)
 }
 
+func NewSessionNotFoundError(sessionID string) *ApplicationError {
+	return newApplicationError(
+		buildSessionNotFoundError,
+		fmt.Sprintf("Session not found: %s", sessionID),
+	)
+}
+
 func NewTokenGenerationError(tokenType string) *ApplicationError {
 	return newApplicationError(
 		buildTokenGenerationError,
@@ -150,6 +169,29 @@ func NewIdentityAlreadyLinkedError(provider string, userID string) *ApplicationE
 	return newApplicationError(
 		buildIdentityAlreadyLinkedError,
 		fmt.Sprintf("Identity from provider '%s' is already linked to user %s", provider, userID),
+	)
+}
+
+func NewUserNotFoundError(userID string) *ApplicationError {
+	return newApplicationError(
+		buildUserNotFoundError,
+		fmt.Sprintf("User not found: %s", userID),
+	)
+}
+
+// ### Data Access Errors #####################################################
+
+func NewDataAccessFailureError(resource string) *ApplicationError {
+	return newApplicationError(
+		buildDataAccessFailureError,
+		fmt.Sprintf("Failed to access data: %s", resource),
+	)
+}
+
+func NewDataPersistFailureError(resource string) *ApplicationError {
+	return newApplicationError(
+		buildDataPersistFailureError,
+		fmt.Sprintf("Failed to persist data: %s", resource),
 	)
 }
 
