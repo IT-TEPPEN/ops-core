@@ -70,14 +70,36 @@ func main() {
 	// Execute command
 	switch command {
 	case "up":
-		if err := m.Up(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
-			fmt.Fprintf(os.Stderr, "Migration up failed: %v\n", err)
-			os.Exit(1)
-		}
-		if errors.Is(err, migrate.ErrNoChange) {
-			fmt.Println("No migrations to apply")
+		if len(os.Args) > 2 {
+			steps, err := strconv.Atoi(os.Args[2])
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Invalid step count: %s\n", os.Args[2])
+				printUsage()
+				os.Exit(1)
+			}
+			if steps < 1 {
+				fmt.Fprintf(os.Stderr, "Step count must be positive\n")
+				os.Exit(1)
+			}
+			if err := m.Steps(steps); err != nil && !errors.Is(err, migrate.ErrNoChange) {
+				fmt.Fprintf(os.Stderr, "Migration up failed: %v\n", err)
+				os.Exit(1)
+			}
+			if errors.Is(err, migrate.ErrNoChange) {
+				fmt.Println("No migrations to apply")
+			} else {
+				fmt.Printf("Applied %d migration(s) successfully\n", steps)
+			}
 		} else {
-			fmt.Println("Migrations applied successfully")
+			if err := m.Up(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
+				fmt.Fprintf(os.Stderr, "Migration up failed: %v\n", err)
+				os.Exit(1)
+			}
+			if errors.Is(err, migrate.ErrNoChange) {
+				fmt.Println("No migrations to apply")
+			} else {
+				fmt.Println("All migrations applied successfully")
+			}
 		}
 
 	case "down":
@@ -150,7 +172,7 @@ func main() {
 func printUsage() {
 	fmt.Println("Usage: migrate <command> [options]")
 	fmt.Println("\nCommands:")
-	fmt.Println("  up              - Apply all pending migrations")
+	fmt.Println("  up [N]          - Apply N pending migrations (default: all)")
 	fmt.Println("  down [N]        - Rollback N migrations (default: 1)")
 	fmt.Println("  status          - Show current migration status")
 	fmt.Println("  force <version> - Force set migration version (use with caution)")
